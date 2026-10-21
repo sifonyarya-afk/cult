@@ -1,17 +1,14 @@
-# cult_clinic
+# CULT Clinic
 
-A new Flutter project.
+Приложение клиники для iPhone. Запись, услуги, магазин, корзина, кабинет, чат и бонусы хранятся на телефоне.
 
-## Getting Started
+Нужны Mac, Xcode и Flutter.
 
-This project is a starting point for a Flutter application.
+```bash
+flutter pub get
+flutter run
+```
 
-A few resources to get you started if this is your first Flutter project:
+Подключите iPhone кабелем и подтвердите доверие к компьютеру. Либо откройте `ios/Runner.xcworkspace` в Xcode и нажмите Run.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Собрать установочный файл iPhone с Linux нельзя: подпись делает только Xcode.
