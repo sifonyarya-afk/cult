@@ -7,6 +7,7 @@ import 'pages/home.dart';
 import 'pages/info.dart';
 import 'pages/shop.dart';
 import 'pages/talk.dart';
+import 'pages/yclients_page.dart';
 import 'store.dart';
 import 'theme.dart';
 import 'widgets.dart';
@@ -153,6 +154,7 @@ class _ShellState extends State<Shell> {
             ListTile(title: const Text('Врачи'), onTap: () => _go(context, const DoctorsPage())),
             ListTile(title: const Text('Прайс'), onTap: () => _go(context, const PricesPage())),
             ListTile(title: const Text('Запись'), onTap: () => _go(context, const BookingPage())),
+            ListTile(title: const Text('YClients'), onTap: () => _go(context, const YClientsPage())),
             ListTile(title: const Text('Оборудование'), onTap: () => _go(context, const EquipmentPage())),
             ListTile(title: const Text('Кейсы'), onTap: () => _go(context, const CasesPage())),
             ListTile(title: const Text('Блог'), onTap: () => _go(context, const BlogPage())),

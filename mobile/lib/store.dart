@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'yclients.dart';
+
 class CartItem {
   CartItem({required this.id, required this.name, required this.price, this.qty = 1});
 
@@ -30,6 +32,8 @@ class Appointment {
     required this.date,
     required this.time,
     this.status = 'upcoming',
+    this.recordId,
+    this.recordHash,
   });
 
   final String id;
@@ -38,6 +42,8 @@ class Appointment {
   final String date;
   final String time;
   String status;
+  final int? recordId;
+  final String? recordHash;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -46,6 +52,8 @@ class Appointment {
         'date': date,
         'time': time,
         'status': status,
+        'recordId': recordId,
+        'recordHash': recordHash,
       };
 
   factory Appointment.fromJson(Map<String, dynamic> json) => Appointment(
@@ -55,6 +63,8 @@ class Appointment {
         date: json['date'] as String,
         time: json['time'] as String,
         status: json['status'] as String? ?? 'upcoming',
+        recordId: json['recordId'] as int?,
+        recordHash: json['recordHash'] as String?,
       );
 }
 
@@ -136,8 +146,21 @@ class ClinicStore extends ChangeNotifier {
   Map<String, bool> notices = {'visits': true, 'analyses': true, 'pharmacy': true, 'offers': false};
   int spent = 0;
   String profileName = 'Александра В.';
+  String profilePhone = '';
+  String profileEmail = '';
+  String companyId = '';
+  String chainId = '0';
+  String partnerToken = '';
+  String userToken = '';
+  List<YcService> liveServices = [];
+  List<YcCard> loyaltyCards = [];
+  String liveError = '';
+
+  YClientsApi yclients = YClientsApi();
 
   int get balance => max(0, 12450 - spent);
+  int? get companyIdInt => int.tryParse(companyId.trim());
+  bool get yclientsReady => companyIdInt != null && partnerToken.trim().isNotEmpty;
   int get cartCount => cart.fold(0, (sum, item) => sum + item.qty);
   int get cartTotal => cart.fold(0, (sum, item) => sum + item.price * item.qty);
 
@@ -158,6 +181,12 @@ class ClinicStore extends ChangeNotifier {
     favorites = (json['favorites'] as List<dynamic>? ?? []).cast<String>();
     spent = json['spent'] as int? ?? 0;
     profileName = json['profileName'] as String? ?? profileName;
+    profilePhone = json['profilePhone'] as String? ?? '';
+    profileEmail = json['profileEmail'] as String? ?? '';
+    companyId = json['companyId'] as String? ?? '';
+    chainId = json['chainId'] as String? ?? '0';
+    partnerToken = json['partnerToken'] as String? ?? '';
+    userToken = json['userToken'] as String? ?? '';
     final savedNotices = json['notices'] as Map<String, dynamic>?;
     if (savedNotices != null) {
       notices = savedNotices.map((key, value) => MapEntry(key, value as bool));
@@ -194,6 +223,12 @@ class ClinicStore extends ChangeNotifier {
       'favorites': favorites,
       'spent': spent,
       'profileName': profileName,
+      'profilePhone': profilePhone,
+      'profileEmail': profileEmail,
+      'companyId': companyId,
+      'chainId': chainId,
+      'partnerToken': partnerToken,
+      'userToken': userToken,
       'notices': notices,
       'threads': threads.map((key, value) => MapEntry(key, value.map((item) => item.toJson()).toList())),
     };
@@ -229,23 +264,126 @@ class ClinicStore extends ChangeNotifier {
     _save();
   }
 
-  void bookVisit({required String service, required String doctor, required String date, required String time}) {
+  void bookVisit({
+    required String service,
+    required String doctor,
+    required String date,
+    required String time,
+    int? recordId,
+    String? recordHash,
+  }) {
     appointments.insert(
       0,
       Appointment(
-        id: 'visit-${DateTime.now().microsecondsSinceEpoch}',
+        id: recordId == null ? 'visit-${DateTime.now().microsecondsSinceEpoch}' : 'yc-$recordId',
         service: service,
         doctor: doctor,
         date: date,
         time: time,
+        recordId: recordId,
+        recordHash: recordHash,
       ),
     );
     _save();
   }
 
-  void cancelVisit(String id) {
-    appointments.firstWhere((item) => item.id == id).status = 'cancelled';
+  Future<String?> cancelVisit(String id) async {
+    final visit = appointments.where((item) => item.id == id).firstOrNull;
+    if (visit == null || visit.status == 'cancelled') return null;
+    if (yclientsReady && visit.recordId != null && (visit.recordHash ?? '').isNotEmpty) {
+      try {
+        await yclients.cancel(
+          partnerToken: partnerToken,
+          userToken: userToken,
+          recordId: visit.recordId!,
+          recordHash: visit.recordHash!,
+        );
+      } on YcException catch (error) {
+        return error.message;
+      }
+    }
+    visit.status = 'cancelled';
+    await _save();
+    return null;
+  }
+
+  void rememberContact({required String name, required String phone, required String email}) {
+    if (name.trim().isNotEmpty) profileName = name.trim();
+    profilePhone = phone.trim();
+    profileEmail = email.trim();
     _save();
+  }
+
+  Future<String?> connectYclients({
+    required String companyId,
+    required String chainId,
+    required String partnerToken,
+    required String userToken,
+    required String phone,
+    required String email,
+  }) async {
+    final id = int.tryParse(companyId.trim());
+    if (id == null || partnerToken.trim().isEmpty) return 'Укажите ID филиала и партнёрский токен.';
+    try {
+      liveServices = await yclients.services(partnerToken.trim(), id);
+      liveError = '';
+    } on YcException catch (error) {
+      return error.message;
+    }
+    this.companyId = companyId.trim();
+    this.chainId = chainId.trim().isEmpty ? '0' : chainId.trim();
+    this.partnerToken = partnerToken.trim();
+    this.userToken = userToken.trim();
+    profilePhone = phone.trim();
+    profileEmail = email.trim();
+    await _save();
+    return null;
+  }
+
+  Future<void> disconnectYclients() async {
+    companyId = '';
+    chainId = '0';
+    partnerToken = '';
+    userToken = '';
+    liveServices = [];
+    loyaltyCards = [];
+    liveError = '';
+    await _save();
+  }
+
+  Future<String?> refreshCatalog() async {
+    final id = companyIdInt;
+    if (id == null || partnerToken.isEmpty) return 'YClients не подключён.';
+    try {
+      liveServices = await yclients.services(partnerToken, id);
+      liveError = '';
+      notifyListeners();
+      return null;
+    } on YcException catch (error) {
+      liveError = error.message;
+      notifyListeners();
+      return error.message;
+    }
+  }
+
+  Future<String?> refreshLoyalty() async {
+    final id = companyIdInt;
+    final phone = normalizePhone(profilePhone);
+    final chain = int.tryParse(chainId) ?? 0;
+    if (id == null || partnerToken.isEmpty || userToken.isEmpty || phone.length < 11) return null;
+    try {
+      loyaltyCards = await yclients.loyaltyCards(
+        partnerToken: partnerToken,
+        userToken: userToken,
+        phone: phone,
+        companyId: id,
+        chainId: chain,
+      );
+      notifyListeners();
+      return null;
+    } on YcException catch (error) {
+      return error.message;
+    }
   }
 
   bool spendBonus(int amount) {

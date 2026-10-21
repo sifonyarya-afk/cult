@@ -15,6 +15,16 @@ class PricesPage extends StatefulWidget {
 class _PricesPageState extends State<PricesPage> {
   final _query = TextEditingController();
   var _chip = 'Все';
+  var _askedLive = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final store = ClinicScope.of(context);
+    if (_askedLive || !store.yclientsReady) return;
+    _askedLive = true;
+    store.refreshCatalog();
+  }
 
   @override
   void dispose() {
@@ -24,8 +34,11 @@ class _PricesPageState extends State<PricesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final store = ClinicScope.of(context);
     final needle = _query.text.trim().toLowerCase();
     final rows = <({String group, String name, String meta, String price})>[
+      for (final item in store.liveServices)
+        (group: 'YClients', name: item.title, meta: item.durationLabel.isEmpty ? 'филиал' : item.durationLabel, price: item.priceLabel),
       for (final item in services) (group: item.group, name: item.title, meta: item.duration, price: item.priceLabel),
       for (final item in devices) (group: 'Оборудование', name: item.title, meta: item.meta, price: item.price),
       (group: 'Инфузии', name: 'NAD+ Energy', meta: '60 мин', price: '15 000 ₽'),
@@ -36,13 +49,14 @@ class _PricesPageState extends State<PricesPage> {
       final textOk = needle.isEmpty || row.name.toLowerCase().contains(needle);
       return groupOk && textOk;
     }).toList();
-    final chips = ['Все', 'Эстетика и уход', 'Инъекции', 'Оборудование', 'Инфузии'];
+    final chips = ['Все', if (store.liveServices.isNotEmpty) 'YClients', 'Эстетика и уход', 'Инъекции', 'Оборудование', 'Инфузии'];
     return Scaffold(
       appBar: AppBar(title: const Text('Прайс')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text('Интерактивный список. Точная сумма подтверждается на консультации.'),
+          Text(store.yclientsReady ? 'Сверху цены филиала YClients. Ниже — прайс приложения.' : 'Интерактивный список. Точная сумма подтверждается на консультации.'),
+          if (store.liveError.isNotEmpty) Text(store.liveError, style: const TextStyle(color: Cult.error)),
           TextField(
             controller: _query,
             decoration: const InputDecoration(labelText: 'Найти услугу'),

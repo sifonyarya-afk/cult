@@ -39,7 +39,7 @@ void main() {
     await store.load();
     store.bookVisit(service: 'Анализ крови', doctor: 'AlethiaPro', date: '2026-04-12', time: '10:30');
     expect(store.upcoming.length, 2);
-    store.cancelVisit(store.upcoming.first.id);
+    await store.cancelVisit(store.upcoming.first.id);
     expect(store.upcoming.where((visit) => visit.service == 'Анализ крови'), isEmpty);
     expect(store.spendBonus(30000), isFalse);
     final code = store.buyGift(5000, 'Песок');

@@ -5,6 +5,7 @@ import '../theme.dart';
 import '../widgets.dart';
 import 'shop.dart';
 import 'talk.dart';
+import 'yclients_page.dart';
 
 class CabinetPage extends StatelessWidget {
   const CabinetPage({super.key});
@@ -46,6 +47,7 @@ class CabinetPage extends StatelessWidget {
         _Row('Избранное', '${store.favorites.length}', () => pushPage(context, const FavoritesPage())),
         _Row('Бонусы и правила', rub(store.balance), () => pushPage(context, const LoyaltyPage())),
         _Row('Чат с доктором', 'Клинические вопросы', () => pushPage(context, const ChatThreadPage(contactId: 'specialist'))),
+        _Row('YClients', store.yclientsReady ? 'Филиал ${store.companyId}' : 'Подключить запись', () => pushPage(context, const YClientsPage())),
         _Row('Уведомления', 'Визиты, анализы, аптека', () => pushPage(context, const SettingsPage())),
       ],
     );
@@ -94,7 +96,14 @@ class VisitsPage extends StatelessWidget {
                     Text('${formatVisitDate(visit.date)} · ${visit.time}', style: const TextStyle(color: Cult.muted)),
                     Text(visit.service, style: cultHeadline(20)),
                     Text(visit.doctor),
-                    TextButton(onPressed: () => store.cancelVisit(visit.id), child: const Text('Отменить', style: TextStyle(color: Cult.error))),
+                    TextButton(
+                      onPressed: () async {
+                        final message = await store.cancelVisit(visit.id);
+                        if (!context.mounted || message == null) return;
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+                      },
+                      child: const Text('Отменить', style: TextStyle(color: Cult.error)),
+                    ),
                   ],
                 ),
               ),
@@ -262,8 +271,29 @@ class FavoritesPage extends StatelessWidget {
   }
 }
 
-class LoyaltyPage extends StatelessWidget {
+class LoyaltyPage extends StatefulWidget {
   const LoyaltyPage({super.key});
+
+  @override
+  State<LoyaltyPage> createState() => _LoyaltyPageState();
+}
+
+class _LoyaltyPageState extends State<LoyaltyPage> {
+  var _note = '';
+  var _started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    final store = ClinicScope.of(context);
+    if (!store.yclientsReady || store.userToken.isEmpty) return;
+    _started = true;
+    store.refreshLoyalty().then((message) {
+      if (!mounted) return;
+      setState(() => _note = message ?? (store.loyaltyCards.isEmpty ? 'Карт лояльности по этому телефону нет.' : ''));
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -274,6 +304,20 @@ class LoyaltyPage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           Text(rub(store.balance), style: cultHeadline(36)),
+          const SizedBox(height: 8),
+          const Text('Баланс клуба CULT на этом телефоне.'),
+          if (store.loyaltyCards.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text('Карты YClients', style: cultHeadline(22)),
+            for (final card in store.loyaltyCards)
+              ListTile(contentPadding: EdgeInsets.zero, title: Text(card.title), trailing: Text(rub(card.balance))),
+          ] else if (store.yclientsReady && store.userToken.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: Text('Карта филиала появится, когда в разделе YClients будет токен пользователя и телефон.'),
+            )
+          else if (_note.isNotEmpty)
+            Padding(padding: const EdgeInsets.only(top: 12), child: Text(_note)),
           const SizedBox(height: 12),
           for (final rule in loyaltyRules) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(rule)),
           const SizedBox(height: 8),
