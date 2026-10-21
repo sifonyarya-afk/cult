@@ -306,20 +306,30 @@ class YClientsApi {
       if (decoded is Map) {
         final meta = decoded['meta'];
         if (meta is Map && meta['message'] is String && (meta['message'] as String).trim().isNotEmpty) {
-          return meta['message'] as String;
+          return _known(meta['message'] as String);
         }
         if (meta is List && meta.isNotEmpty && meta.first is Map && meta.first['message'] is String) {
-          return meta.first['message'] as String;
+          return _known(meta.first['message'] as String);
+        }
+        if (decoded['message'] is String && (decoded['message'] as String).trim().isNotEmpty) {
+          return _known(decoded['message'] as String);
         }
       }
     } catch (_) {}
     return switch (response.statusCode) {
-      401 => 'Неверный партнёрский токен.',
+      401 => 'Неверный партнёрский токен. Нужен API-ключ из настроек аккаунта в маркетплейсе, не User token приложения.',
       403 => 'Нет доступа к компании.',
       404 => 'Компания не найдена.',
       _ => 'YClients ответил с ошибкой ${response.statusCode}.',
     };
   }
+}
+
+String _known(String message) {
+  if (message.trim().toLowerCase() == 'unknown token') {
+    return 'YClients не знает этот токен. Нужен API-ключ из настроек аккаунта в маркетплейсе, не User token приложения.';
+  }
+  return message;
 }
 
 int _asInt(Object? value) {

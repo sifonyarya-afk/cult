@@ -85,6 +85,27 @@ void main() {
     expect(seen, hasLength(4));
   });
 
+  test('Филиал 988587 подставлен, пока нет своего токена', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    expect(store.companyId, '988587');
+    expect(store.partnerToken, isEmpty);
+    expect(store.yclientsReady, isFalse);
+  });
+
+  test('Незнакомый токен объясняется по-русски', () async {
+    final api = YClientsApi(
+      client: _Scripted(
+        (request) async => http.Response('{"message":"Unknown token"}', 401, headers: {'content-type': 'application/json'}),
+      ),
+    );
+    expect(
+      api.services('x', 988587),
+      throwsA(isA<YcException>().having((error) => error.message, 'message', contains('не знает этот токен'))),
+    );
+  });
+
   test('Ошибка авторизации приходит текстом филиала', () async {
     final api = YClientsApi(
       client: _Scripted(

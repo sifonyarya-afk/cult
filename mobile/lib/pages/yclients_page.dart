@@ -134,7 +134,7 @@ class _YClientsPageState extends State<YClientsPage> {
           Text('Подключение филиала', style: cultHeadline(30)),
           const SizedBox(height: 8),
           const Text(
-            'Партнёрский токен берётся в маркетплейсе YClients: регистрация интеграции, затем «Настройки аккаунта» и API-ключ. ID филиала виден в адресе компании. Ключи остаются на этом телефоне.',
+            'Нужен API-ключ из маркетплейса YClients: откройте кабинет разработчика и «Настройки аккаунта». Поле User token внутри приложения сюда не подходит. ID филиала уже указан. Ключ остаётся только на этом телефоне.',
           ),
           const SizedBox(height: 12),
           Text(store.yclientsReady ? 'Сейчас подключён филиал ${store.companyId}.' : 'Филиал не подключён.'),

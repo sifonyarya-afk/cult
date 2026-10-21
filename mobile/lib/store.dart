@@ -136,6 +136,7 @@ class ClinicStore extends ChangeNotifier {
   }
 
   static const _key = 'cult-flutter';
+  static const branchId = '988587';
 
   List<CartItem> cart = [];
   List<Appointment> appointments = [];
@@ -170,7 +171,9 @@ class ClinicStore extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_key);
     if (raw == null) {
+      companyId = branchId;
       _seedThreads();
+      notifyListeners();
       return;
     }
     final json = jsonDecode(raw) as Map<String, dynamic>;
@@ -183,7 +186,7 @@ class ClinicStore extends ChangeNotifier {
     profileName = json['profileName'] as String? ?? profileName;
     profilePhone = json['profilePhone'] as String? ?? '';
     profileEmail = json['profileEmail'] as String? ?? '';
-    companyId = json['companyId'] as String? ?? '';
+    companyId = json['companyId'] as String? ?? branchId;
     chainId = json['chainId'] as String? ?? '0';
     partnerToken = json['partnerToken'] as String? ?? '';
     userToken = json['userToken'] as String? ?? '';
