@@ -23,7 +23,7 @@ export default function AboutPage() {
         <p className="mb-6 text-on-surface-variant">
           Врачи высшей категории, сертифицированные препараты и аппараты с визуализацией. Запись, трансфер и чат — в этом приложении.
         </p>
-        <ul className="mb-8 divide-y divide-outline-variant/40 rounded-xl bg-white">
+        <ul className="mb-6 divide-y divide-outline-variant/40 rounded-xl bg-white">
           {facts.map(([label, value]) => (
             <li key={label} className="flex justify-between gap-4 px-4 py-4">
               <span className="text-outline">{label}</span>
@@ -31,6 +31,27 @@ export default function AboutPage() {
             </li>
           ))}
         </ul>
+        <section className="mb-6 rounded-xl bg-white p-4">
+          <h2 className="font-headline-sm mb-2">Как добраться</h2>
+          <p className="text-on-surface-variant">
+            От метро «Кропоткинская» семь минут пешком по Клиническому переулку. Въезд во двор со стороны переулка, парковка для гостей у ресепшен.
+          </p>
+        </section>
+        <section className="mb-8">
+          <h2 className="font-headline-sm mb-3">Документы</h2>
+          <ul className="divide-y divide-outline-variant/40 rounded-xl bg-white text-sm">
+            {[
+              ["Публичная оферта", "Услуги и товары оформляются по оферте клиники. Актуальный текст выдают на ресепшен и дублируют в чат по запросу."],
+              ["Согласие на процедуры", "Перед инъекцией, аппаратом или инфузией подписывается информированное согласие."],
+              ["Политика данных", "Имя, визиты и анализы в этом приложении хранятся только на устройстве."],
+            ].map(([title, text]) => (
+              <li key={title} className="px-4 py-4">
+                <p className="font-medium">{title}</p>
+                <p className="mt-1 text-on-surface-variant">{text}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
         <div className="grid grid-cols-2 gap-3 text-center text-sm">
           <Link href="/doctors" className="rounded-xl bg-surface-container-low py-4">
             Врачи

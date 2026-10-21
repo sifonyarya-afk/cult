@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Chrome } from "@/components/clinic/chrome";
 import { Icon } from "@/components/clinic/icon";
 import { Story } from "@/components/clinic/story";
-import { mediaIds, serviceBySlug } from "@/lib/catalog";
+import { contraindications, mediaIds, serviceBySlug, youtubeFor } from "@/lib/catalog";
 import { useClinic } from "@/components/clinic/providers";
 
 export default function ServicePage() {
@@ -37,6 +37,12 @@ export default function ServicePage() {
         </section>
         <article className="relative z-10 -mt-20 px-container-margin">
           <div className="luxury-shadow rounded-lg border border-outline-variant/20 bg-surface p-6">
+            <Link
+              href={`/booking?service=${encodeURIComponent(service.title)}`}
+              className="mb-5 block bg-on-background py-4 text-center font-label-md tracking-widest text-white uppercase"
+            >
+              Записаться
+            </Link>
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <p className="font-label-md mb-1 tracking-widest text-primary uppercase">{service.category}</p>
@@ -71,6 +77,19 @@ export default function ServicePage() {
                   ))}
                 </div>
               </div>
+            </div>
+            <div className="mb-8">
+              <h3 className="font-headline-sm mb-3">Противопоказания</h3>
+              <ul className="space-y-2">
+                {(contraindications[service.slug] ?? ["Индивидуально на консультации"]).map((item) => (
+                  <li key={item} className="text-on-surface-variant">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <a href={youtubeFor(service.title)} target="_blank" rel="noreferrer" className="mt-4 inline-block text-primary underline">
+                Видео процедуры на YouTube
+              </a>
             </div>
             <div className="border-t border-outline-variant/40 pt-6">
               <p className="font-label-md mb-1 text-on-surface-variant">Стоимость процедуры</p>

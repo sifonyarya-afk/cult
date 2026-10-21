@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,6 +29,28 @@ import { Icon } from "./icon";
 
 export type CartItem = { id: string; name: string; price: number; qty: number };
 export type ChatMessage = { id: string; from: "me" | "them"; text: string };
+export type Appointment = {
+  id: string;
+  service: string;
+  doctor: string;
+  date: string;
+  time: string;
+  status: "upcoming" | "cancelled";
+};
+export type ShopOrder = { id: string; title: string; total: number; pay: string; at: string };
+export type GiftCard = { id: string; nominal: number; design: string; code: string; status: "active" | "used" };
+export type Notices = { visits: boolean; analyses: boolean; pharmacy: boolean; offers: boolean };
+
+const seedAppointments: Appointment[] = [
+  {
+    id: "seed-visit",
+    service: "Скульптурный массаж лица",
+    doctor: "AlethiaPro",
+    date: "2026-03-12",
+    time: "10:30",
+    status: "upcoming",
+  },
+];
 
 type Threads = Record<string, ChatMessage[]>;
 
@@ -58,6 +80,18 @@ type ClinicContextValue = {
   setPlayTitle: (title: string | null) => void;
   info: { title: string; body: string } | null;
   setInfo: (info: { title: string; body: string } | null) => void;
+  appointments: Appointment[];
+  bookVisit: (visit: Omit<Appointment, "id" | "status">) => void;
+  cancelVisit: (id: string) => void;
+  orders: ShopOrder[];
+  placeOrder: (order: Omit<ShopOrder, "id" | "at">) => void;
+  gifts: GiftCard[];
+  buyGift: (nominal: number, design: string) => string;
+  favorites: string[];
+  toggleFavorite: (id: string) => void;
+  notices: Notices;
+  setNotice: (key: keyof Notices, value: boolean) => void;
+  spendBonus: (amount: number) => boolean;
 };
 
 const ClinicContext = createContext<ClinicContextValue | null>(null);
@@ -85,13 +119,20 @@ const menuLinks = [
   { href: "/tv", label: "YouTube-канал" },
   { href: "/chat", label: "Чат с клиникой" },
   { href: "/cabinet", label: "Кабинет" },
-  { href: "/pharmacy", label: "Личная аптека" },
+  { href: "/cabinet/visits", label: "Мои записи" },
+  { href: "/cabinet/orders", label: "Мои заказы" },
+  { href: "/cabinet/favorites", label: "Избранное" },
+  { href: "/cabinet/settings", label: "Уведомления" },
+  { href: "/certificates", label: "Сертификаты" },
+  { href: "/pharmacy", label: "Аптечка" },
   { href: "/loyalty", label: "Лояльность" },
+  { href: "/more", label: "Ещё о клинике" },
   { href: "/transfer", label: "Заказ трансфера" },
 ];
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [ready, setReady] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
@@ -110,6 +151,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [checkoutDone, setCheckoutDone] = useState(false);
   const [playTitle, setPlayTitle] = useState<string | null>(null);
   const [info, setInfo] = useState<{ title: string; body: string } | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>(seedAppointments);
+  const [orders, setOrders] = useState<ShopOrder[]>([]);
+  const [gifts, setGifts] = useState<GiftCard[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [spent, setSpent] = useState(0);
+  const [notices, setNotices] = useState<Notices>({ visits: true, analyses: true, pharmacy: true, offers: false });
 
   useEffect(() => {
     try {
@@ -123,6 +170,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
       if (storedName) setProfileName(storedName);
       if (storedGender === "m" || storedGender === "f") setGenderState(storedGender);
       if (storedBonus === "1") setBonusClaimed(true);
+      const account = localStorage.getItem("cult-account");
+      if (account) {
+        const parsed = JSON.parse(account);
+        if (Array.isArray(parsed.appointments)) setAppointments(parsed.appointments);
+        if (Array.isArray(parsed.orders)) setOrders(parsed.orders);
+        if (Array.isArray(parsed.gifts)) setGifts(parsed.gifts);
+        if (Array.isArray(parsed.favorites)) setFavorites(parsed.favorites);
+        if (parsed.notices) setNotices(parsed.notices);
+        if (typeof parsed.spent === "number") setSpent(parsed.spent);
+      }
     } catch {
       /* ignore broken local data */
     }
@@ -138,6 +195,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
     if (!ready) return;
     localStorage.setItem("cult-chat", JSON.stringify(threads));
   }, [threads, ready]);
+
+  useEffect(() => {
+    if (!ready) return;
+    localStorage.setItem(
+      "cult-account",
+      JSON.stringify({ appointments, orders, gifts, favorites, notices, spent }),
+    );
+  }, [appointments, orders, gifts, favorites, notices, spent, ready]);
 
   const addToCart = useCallback((item: { id: string; name: string; price: number }) => {
     setCart((current) => {
@@ -206,7 +271,53 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const balance = 12450 + (bonusClaimed ? 3000 : 0);
+  const balance = Math.max(0, 12450 + (bonusClaimed ? 3000 : 0) - spent);
+
+  const bookVisit = useCallback((visit: Omit<Appointment, "id" | "status">) => {
+    setAppointments((current) => [
+      { ...visit, id: `visit-${Date.now()}`, status: "upcoming" },
+      ...current,
+    ]);
+  }, []);
+
+  const cancelVisit = useCallback((id: string) => {
+    setAppointments((current) =>
+      current.map((visit) => (visit.id === id ? { ...visit, status: "cancelled" } : visit)),
+    );
+  }, []);
+
+  const placeOrder = useCallback((order: Omit<ShopOrder, "id" | "at">) => {
+    setOrders((current) => [
+      { ...order, id: `order-${Date.now()}`, at: new Date().toLocaleDateString("ru-RU") },
+      ...current,
+    ]);
+  }, []);
+
+  const buyGift = useCallback((nominal: number, design: string) => {
+    const code = `CULT-${nominal / 1000}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    setGifts((current) => [
+      { id: `gift-${Date.now()}`, nominal, design, code, status: "active" },
+      ...current,
+    ]);
+    return code;
+  }, []);
+
+  const toggleFavorite = useCallback((id: string) => {
+    setFavorites((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+  }, []);
+
+  const setNotice = useCallback((key: keyof Notices, value: boolean) => {
+    setNotices((current) => ({ ...current, [key]: value }));
+  }, []);
+
+  const spendBonus = useCallback(
+    (amount: number) => {
+      if (amount <= 0 || amount > balance) return false;
+      setSpent((current) => current + amount);
+      return true;
+    },
+    [balance],
+  );
 
   const value = useMemo<ClinicContextValue>(
     () => ({
@@ -235,6 +346,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
       setPlayTitle,
       info,
       setInfo,
+      appointments,
+      bookVisit,
+      cancelVisit,
+      orders,
+      placeOrder,
+      gifts,
+      buyGift,
+      favorites,
+      toggleFavorite,
+      notices,
+      setNotice,
+      spendBonus,
     }),
     [
       ready,
@@ -257,6 +380,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
       balance,
       playTitle,
       info,
+      appointments,
+      bookVisit,
+      cancelVisit,
+      orders,
+      placeOrder,
+      gifts,
+      buyGift,
+      favorites,
+      toggleFavorite,
+      notices,
+      setNotice,
+      spendBonus,
     ],
   );
 
@@ -285,7 +420,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={cartOpen} onOpenChange={setCartOpen}>
+      <Sheet open={cartOpen && pathname !== "/cart"} onOpenChange={setCartOpen}>
         <SheetContent side="bottom" className="max-h-[80dvh] rounded-t-2xl bg-surface">
           <SheetHeader>
             <SheetTitle className="font-headline-sm">Корзина</SheetTitle>

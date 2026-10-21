@@ -57,11 +57,15 @@ export default function ShopPage() {
   const [extra, setExtra] = useState(false);
 
   useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("tab");
+    if (requested === "biohack" || requested === "store") setTab("store");
+    if (requested === "cosmetics" || requested === "supplements") setTab(requested);
     const timer = window.setTimeout(() => setLoading(false), 600);
     return () => window.clearTimeout(timer);
   }, []);
 
-  const visible = products.filter((product) => product.tab === tab).slice(0, extra ? undefined : 4);
+  const cosmetics = products.filter((product) => product.tab === "cosmetics").slice(0, extra ? undefined : 4);
+  const biohack = products.filter((product) => product.tab === "biohack");
 
   return (
     <Chrome active="shop" fab="calendar">
@@ -103,7 +107,7 @@ export default function ShopPage() {
           ) : (
             <>
               <TabsContent value="cosmetics">
-                {visible.map((product) => (
+                {cosmetics.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </TabsContent>
@@ -115,14 +119,13 @@ export default function ShopPage() {
                   ))}
               </TabsContent>
               <TabsContent value="store">
-                <div className="rounded-xl border border-dashed border-outline-variant px-6 py-16 text-center">
-                  <Icon name="inventory_2" className="mb-3 text-outline" />
-                  <p className="font-headline-sm mb-2">Биохакинг-стор пуст</p>
-                  <p className="text-on-surface-variant">Устройства и наборы появятся в следующем поступлении. Пока смотрите БАДы.</p>
-                  <button className="mt-6 font-label-md text-primary underline" onClick={() => setTab("supplements")}>
-                    К БАДам
-                  </button>
-                </div>
+                {biohack.length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-outline-variant px-6 py-16 text-center text-on-surface-variant">
+                    В биохакерском магазине пока нет товаров.
+                  </p>
+                ) : (
+                  biohack.map((product) => <ProductCard key={product.id} product={product} />)
+                )}
               </TabsContent>
             </>
           )}

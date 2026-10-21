@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Chrome } from "@/components/clinic/chrome";
 import { Icon } from "@/components/clinic/icon";
@@ -9,9 +11,29 @@ import { useClinic } from "@/components/clinic/providers";
 export default function ChatPage() {
   const router = useRouter();
   const { setInfo } = useClinic();
+  const [loading, setLoading] = useState(true);
+  const hour = new Date().getHours();
+  const closed = hour < 9 || hour >= 21;
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setLoading(false), 500);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
     <Chrome active="chat" fab="none">
       <main className="px-container-margin pt-6">
+        <div className="mb-6 rounded-xl bg-primary-container/60 px-4 py-4 text-sm">
+          <p className="font-medium">{closed ? "Клиника сейчас закрыта" : "Если линия занята"}</p>
+          <p className="mt-1 text-on-surface-variant">
+            {closed
+              ? "До 9:00 и после 21:00 первым отвечает ИИ-бот. Врач увидит переписку утром."
+              : "При нагрузке первым отвечает ИИ-бот, затем подключается администратор или врач."}
+          </p>
+          <Link href="/chat/bot" className="mt-2 inline-block font-label-md text-primary">
+            Написать боту
+          </Link>
+        </div>
         <div className="mb-8 text-center">
           <h2 className="font-headline-xl text-[40px] leading-tight mb-4">Центр поддержки</h2>
           <p className="font-body-lg text-on-surface-variant">
@@ -19,7 +41,12 @@ export default function ChatPage() {
           </p>
         </div>
         <div className="space-y-4">
-          {contacts.map((contact) => (
+          {loading ? (
+            <div className="space-y-3" aria-busy="true">
+              <div className="h-24 animate-pulse rounded-xl bg-surface-container" />
+              <div className="h-24 animate-pulse rounded-xl bg-surface-container" />
+            </div>
+          ) : contacts.map((contact) => (
             <button
               key={contact.id}
               className="flex w-full items-start gap-4 rounded-xl bg-white p-5 text-left luxury-shadow"

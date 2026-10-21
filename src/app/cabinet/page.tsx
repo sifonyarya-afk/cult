@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Chrome } from "@/components/clinic/chrome";
 import { Icon } from "@/components/clinic/icon";
 import { useClinic } from "@/components/clinic/providers";
-import { analyses, mediaIds } from "@/lib/catalog";
+import { analyses, formatVisitDate, labVisits, mediaIds } from "@/lib/catalog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,18 +17,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const rows: { href?: string; icon: string; title: string; note?: string; action?: "analyses" | "info" }[] = [
-  { href: "/booking", icon: "calendar_today", title: "Мои записи", note: "След: 12 марта, 10:30" },
-  { href: "/cabinet/visits", icon: "history", title: "История визитов" },
-  { icon: "lab_research", title: "Мои анализы", action: "analyses" },
-  { href: "/pharmacy", icon: "medication", title: "Личная аптека" },
-  { href: "/chat/specialist", icon: "chat_bubble", title: "Чат с доктором" },
-  { href: "/transfer", icon: "directions_car", title: "Заказ трансфера" },
-  { icon: "card_giftcard", title: "Купить сертификат", action: "info" },
-  { href: "/pharmacy", icon: "medical_information", title: "Рекомендации врача", note: "3 новых рекомендации" },
-  { href: "/loyalty", icon: "rule", title: "Правила лояльности" },
-  { icon: "description", title: "Юридические документы", action: "info" },
-];
+const statusTone: Record<string, string> = {
+  Назначен: "text-outline",
+  Сдан: "text-secondary",
+  Готов: "text-primary",
+};
 
 export default function CabinetPage() {
   const router = useRouter();
@@ -41,6 +34,28 @@ export default function CabinetPage() {
   const [pdfOk, setPdfOk] = useState<string | null>(null);
   const [infoTitle, setInfoTitle] = useState<string | null>(null);
   const [logout, setLogout] = useState(false);
+  const upcoming = clinic.appointments.filter((visit) => visit.status === "upcoming");
+  const nextVisit = upcoming[0];
+  const rows: { href?: string; icon: string; title: string; note?: string; action?: "analyses" | "info" }[] = [
+    {
+      href: "/cabinet/visits",
+      icon: "calendar_today",
+      title: "Мои записи",
+      note: nextVisit ? `След: ${formatVisitDate(nextVisit.date)}, ${nextVisit.time}` : "Предстоящих нет",
+    },
+    { href: "/cabinet/visits", icon: "history", title: "История визитов" },
+    { icon: "lab_research", title: "Мои анализы", action: "analyses" },
+    { href: "/pharmacy", icon: "medication", title: "Аптечка", note: "Рекомендации врача" },
+    { href: "/cabinet/orders", icon: "shopping_bag", title: "Мои заказы" },
+    { href: "/certificates", icon: "card_giftcard", title: "Сертификаты" },
+    { href: "/cabinet/favorites", icon: "favorite", title: "Избранное" },
+    { href: "/cabinet/settings", icon: "notifications", title: "Уведомления" },
+    { href: "/chat/specialist", icon: "chat_bubble", title: "Чат с доктором" },
+    { href: "/chat", icon: "forum", title: "Чат с клиникой" },
+    { href: "/loyalty", icon: "rule", title: "Бонусы и правила" },
+    { href: "/transfer", icon: "directions_car", title: "Заказ трансфера" },
+    { icon: "description", title: "Юридические документы", action: "info" },
+  ];
 
   function openPdf(id: string, file: string) {
     if (!pdfFailed[id]) {
@@ -132,6 +147,15 @@ export default function CabinetPage() {
                 </button>
                 {row.action === "analyses" && openAnalyses ? (
                   <div className="space-y-3 px-4 pb-4">
+                    {labVisits.map((visit) => (
+                      <div key={visit.id} className="flex items-center justify-between rounded border border-outline-variant/40 bg-surface p-3">
+                        <div>
+                          <p className="text-sm font-medium">{visit.title}</p>
+                          <p className="text-xs text-outline">{visit.date}</p>
+                        </div>
+                        <span className={`text-xs font-bold tracking-wider uppercase ${statusTone[visit.status] ?? ""}`}>{visit.status}</span>
+                      </div>
+                    ))}
                     {analyses.map((file) => (
                       <div key={file.id} className="flex items-center justify-between rounded border border-outline-variant/40 bg-surface p-3">
                         <div className="flex items-center gap-3">
@@ -143,6 +167,9 @@ export default function CabinetPage() {
                         </button>
                       </div>
                     ))}
+                    <Link href="/booking?service=Анализ%20крови" className="block text-center text-sm text-primary underline">
+                      Записать анализ
+                    </Link>
                   </div>
                 ) : null}
               </div>
@@ -223,9 +250,9 @@ export default function CabinetPage() {
                     : "Заявка уйдёт консьержу. Напишите в чат администратору, если нужно сегодня."}
             </DialogDescription>
           </DialogHeader>
-          {infoTitle === "Заказ трансфера" || infoTitle === "Купить сертификат" ? (
-            <Button className="h-11 bg-on-background text-white" onClick={() => router.push("/chat/admin")}>
-              Написать администратору
+          {infoTitle === "Юридические документы" ? (
+            <Button className="h-11 bg-on-background text-white" onClick={() => router.push("/about")}>
+              Открыть на странице клиники
             </Button>
           ) : null}
         </DialogContent>

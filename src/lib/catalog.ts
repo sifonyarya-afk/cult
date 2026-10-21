@@ -169,7 +169,7 @@ export type Product = {
   image: string;
   stock: "in" | "low";
   badge?: string;
-  tab: "cosmetics" | "supplements";
+  tab: "cosmetics" | "supplements" | "biohack";
 };
 
 export const products: Product[] = [
@@ -244,6 +244,37 @@ export const products: Product[] = [
     image: img("AB6AXuBDh2sZNBCIyYHy"),
     stock: "low",
     tab: "cosmetics",
+  },
+  {
+    id: "scan",
+    name: "Home Bio-Scan Kit",
+    blurb: "Домашний набор биомаркеров",
+    price: 32000,
+    priceLabel: "32 000 ₽",
+    image: img("AB6AXuA2hiIUnEENUs"),
+    stock: "in",
+    badge: "Новинка",
+    tab: "biohack",
+  },
+  {
+    id: "light",
+    name: "Circadian Light Panel",
+    blurb: "Панель утреннего света",
+    price: 27500,
+    priceLabel: "27 500 ₽",
+    image: img("AB6AXuD46SLnfL8HM2"),
+    stock: "in",
+    tab: "biohack",
+  },
+  {
+    id: "patch",
+    name: "NAD+ Micro-Patch",
+    blurb: "Пластырь-предшественник на 12 часов",
+    price: 9800,
+    priceLabel: "9 800 ₽",
+    image: img("AB6AXuBns-XjqX4tveqv"),
+    stock: "low",
+    tab: "biohack",
   },
 ];
 
@@ -402,9 +433,39 @@ export const contacts = [
 ];
 
 export const pastVisits = [
-  { date: "2 февраля 2026", title: "Morpheus8", doctor: "AlethiaPro", place: "Кабинет 4" },
-  { date: "18 января 2026", title: "NAD+ Energy", doctor: "Д-р Элара Торн", place: "Инфузионная" },
-  { date: "9 декабря 2025", title: "Консультация", doctor: "AlethiaPro", place: "Кабинет 2" },
+  { date: "2 февраля 2026", title: "Morpheus8", doctor: "AlethiaPro", place: "Кабинет 4", receipt: "42 000 ₽" },
+  { date: "18 января 2026", title: "NAD+ Energy", doctor: "Д-р Элара Торн", place: "Инфузионная", receipt: "15 000 ₽" },
+  { date: "9 декабря 2025", title: "Консультация", doctor: "AlethiaPro", place: "Кабинет 2", receipt: "0 ₽" },
+];
+
+export const labVisits = [
+  { id: "dna", title: "ДНК-тест старения", date: "20 марта 2026", status: "Назначен" },
+  { id: "blood-visit", title: "Анализ крови", date: "2 февраля 2026", status: "Готов" },
+  { id: "hormone-visit", title: "Гормональный тест", date: "18 января 2026", status: "Сдан" },
+];
+
+export const contraindications: Record<string, string[]> = {
+  sculpt: ["Острое воспаление кожи", "Температура", "Пилинг короче 7 дней назад"],
+  rf: ["Металлические импланты в зоне", "Беременность", "Кардиостимулятор"],
+  hydra: ["Активный герпес", "Нарушенный барьер после кислот"],
+  iv: ["Почечная недостаточность", "Аллергия на компоненты коктейля"],
+  peel: ["Свежий загар", "Изотретиноин", "Беременность"],
+  botox: ["Миастения", "Беременность", "Воспаление в точке вкола"],
+  filler: ["Аутоиммунная вспышка", "Инфекция кожи", "Беременность"],
+  meso: ["Нарушение свёртываемости", "Активное акне в зоне"],
+};
+
+export const certificateNominals = [5000, 15000, 30000];
+export const certificateDesigns = [
+  { id: "sand", name: "Песок", className: "bg-[#d7bea0] text-[#1b1c1c]" },
+  { id: "gold", name: "Золото", className: "bg-[#fed488] text-[#5c4300]" },
+  { id: "night", name: "Ночь", className: "bg-[#1b1c1c] text-white" },
+];
+
+export const messengers = [
+  { name: "YouTube", href: "https://www.youtube.com/results?search_query=CULT+Clinic" },
+  { name: "Telegram", href: "https://t.me/cultclinic" },
+  { name: "WhatsApp", href: "https://wa.me/74950000007" },
 ];
 
 export const analyses = [
@@ -538,12 +599,14 @@ export const pharmacy = [
     dose: "1 капсула утром, после еды",
     doctor: "AlethiaPro",
     until: "до апреля 2026",
+    note: "После Morpheus8, вечером, без кислот.",
   },
   {
     productId: "catalyst",
     dose: "по схеме NAD+, 4 недели",
     doctor: "Д-р Элара Торн",
     until: "до марта 2026",
+    note: "Курс энергии, если сон короче 6 часов.",
   },
 ];
 
@@ -552,13 +615,32 @@ export const loyaltyLedger = [
   { date: "Дек 2025", title: "Визит: консультация", points: "+450 ₽" },
   { date: "Янв 2026", title: "Инфузия NAD+", points: "+1 200 ₽" },
   { date: "Фев 2026", title: "Morpheus8", points: "+8 800 ₽" },
+  { date: "Фев 2026", title: "Списание на уход", points: "−1 200 ₽" },
 ];
 
 export const YOUTUBE_CHANNEL = "https://www.youtube.com/results?search_query=CULT+Clinic+%D0%BA%D0%BE%D1%81%D0%BC%D0%B5%D1%82%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%8F";
 
+export function formatVisitDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  return new Date(`${value}T12:00:00`).toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+}
+
 export function youtubeFor(title: string) {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} CULT Clinic`)}`;
 }
+
+export const composition: Record<string, string> = {
+  neuro: "Фосфатидилсерин, цитиколин, витамин B12",
+  catalyst: "Никотинамидрибозид, птеростильбен",
+  gluta: "Липосомальный глутатион, витамин C",
+  mito: "Коэнзим Q10, PQQ, магний",
+  lumen: "Церамиды NP, холестерол, сквалан",
+  veil: "Матриксил, медь, пантенол",
+  aura: "Цинк, термальная вода, ниацинамид",
+  scan: "Ланцеты, полоски, инструкция по 12 маркерам",
+  light: "Светодиоды 480 нм и 650 нм",
+  patch: "Предшественник NAD+, клеевая основа",
+};
 
 export const productNotes: Record<string, { about: string; use: string[] }> = {
   neuro: {
@@ -588,6 +670,18 @@ export const productNotes: Record<string, { about: string; use: string[] }> = {
   aura: {
     about: "Минеральный спрей сияния. Лёгкий шаг в течение дня, когда крем уже есть.",
     use: ["По необходимости", "Не на открытое солнце сразу после", "Можно поверх макияжа"],
+  },
+  scan: {
+    about: "Домашний набор из 12 маркеров. Результат приходит в кабинет как PDF, врач комментирует в чате.",
+    use: ["Утром натощак", "Отправить фото полосок в чат врачу", "Повтор через 8 недель"],
+  },
+  light: {
+    about: "Панель утреннего света для циркадного ритма. Стоит рядом с протоколом сна из блога.",
+    use: ["10 минут в первый час после подъёма", "Не смотреть прямо в диоды", "Вечером не включать"],
+  },
+  patch: {
+    about: "Микропластырь с предшественником NAD+. Носится в дни без инфузии.",
+    use: ["На чистое предплечье", "8 часов", "Снять при раздражении"],
   },
 };
 

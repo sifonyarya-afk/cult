@@ -33,19 +33,19 @@ export default function HomePage() {
             onClick={() => openBooking("Онлайн запись")}
           >
             <Icon name="calendar_month" className="mb-3 text-3xl" />
-            <span className="font-label-md text-center">Онлайн запись</span>
+            <span className="font-label-md text-center">Запись онлайн</span>
           </button>
           <Link href="/cabinet" className="ambient-card flex flex-col items-center rounded-xl bg-surface-container-low p-6">
             <Icon name="biotech" className="mb-3 text-3xl" />
             <span className="font-label-md text-center">Мои анализы</span>
           </Link>
-          <Link href="/shop" className="ambient-card flex flex-col items-center rounded-xl bg-surface-container-low p-6">
+          <Link href="/shop?tab=biohack" className="ambient-card flex flex-col items-center rounded-xl bg-surface-container-low p-6">
             <Icon name="shopping_basket" className="mb-3 text-3xl" />
-            <span className="font-label-md text-center">Магазин биохакинга</span>
+            <span className="font-label-md text-center">Биохакерский магазин</span>
           </Link>
-          <Link href="/chat" className="ambient-card flex flex-col items-center rounded-xl bg-surface-container-low p-6">
+          <Link href="/chat/specialist" className="ambient-card flex flex-col items-center rounded-xl bg-surface-container-low p-6">
             <Icon name="forum" className="mb-3 text-3xl" />
-            <span className="font-label-md text-center">Чат с врачом</span>
+            <span className="font-label-md text-center">Чат с доктором</span>
           </Link>
         </section>
         <section className="mb-10 grid grid-cols-2 gap-3 px-container-margin text-center text-sm">
@@ -61,6 +61,13 @@ export default function HomePage() {
               {label}
             </Link>
           ))}
+        </section>
+        <section className="mb-10 px-container-margin">
+          <Link href="/science" className="block overflow-hidden rounded-2xl bg-on-background p-6 text-white">
+            <p className="font-label-md tracking-widest text-[#fed488] uppercase">Новые технологии</p>
+            <h3 className="font-headline-md mt-2">Обзор аппаратов и протоколов</h3>
+            <p className="mt-2 text-sm text-white/80">Morpheus8, Ultherapy и свежие разборы: что клиника берёт в работу в этом сезоне.</p>
+          </Link>
         </section>
         <section className="mb-14 px-container-margin">
           <div className="ambient-card rounded-2xl border border-outline-variant bg-surface-container-highest p-8 text-center">

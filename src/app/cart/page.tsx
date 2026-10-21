@@ -8,17 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function CartPage() {
-  const { cart, setQty, clearCart, profileName, balance } = useClinic();
+  const { cart, setQty, clearCart, profileName, balance, placeOrder, spendBonus } = useClinic();
   const [name, setName] = useState(profileName);
   const [phone, setPhone] = useState("");
   const [method, setMethod] = useState<"clinic" | "courier">("clinic");
   const [address, setAddress] = useState("");
-  const [pay, setPay] = useState<"card" | "bonus">("card");
+  const [pay, setPay] = useState<"card" | "bonus" | "mixed">("card");
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const bonusPay = Math.min(balance, Math.round(total * 0.3));
-  const due = pay === "bonus" ? total - bonusPay : total;
+  const bonusPay = Math.min(balance, pay === "bonus" ? total : Math.round(total * 0.3));
+  const due = pay === "card" ? total : total - bonusPay;
 
   return (
     <Chrome active="shop" fab="none">
@@ -80,6 +80,15 @@ export default function CartPage() {
                   return;
                 }
                 setError("");
+                if (pay !== "card" && !spendBonus(bonusPay)) {
+                  setError("Бонусов не хватает.");
+                  return;
+                }
+                placeOrder({
+                  title: cart.map((item) => item.name).join(", "),
+                  total: due,
+                  pay: pay === "card" ? "Карта" : pay === "bonus" ? "Бонусы" : "Карта и бонусы",
+                });
                 clearCart();
                 setDone(true);
               }}
@@ -113,7 +122,10 @@ export default function CartPage() {
                   <input type="radio" checked={pay === "card"} onChange={() => setPay("card")} /> Картой при получении
                 </label>
                 <label className="flex gap-2">
-                  <input type="radio" checked={pay === "bonus"} onChange={() => setPay("bonus")} /> Списать бонусы до 30% ({bonusPay.toLocaleString("ru-RU")} ₽)
+                  <input type="radio" checked={pay === "bonus"} onChange={() => setPay("bonus")} /> Бонусами
+                </label>
+                <label className="flex gap-2">
+                  <input type="radio" checked={pay === "mixed"} onChange={() => setPay("mixed")} /> Смешанная оплата, бонусами до 30%
                 </label>
               </fieldset>
               {error ? <p className="text-sm text-error">{error}</p> : null}
