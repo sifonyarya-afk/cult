@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.13.5
+  sdk: ">=3.11.0 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -38,6 +38,12 @@ dependencies:
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.2
+
+# Эти реализации тянут Dart 3.12 и Flutter 3.44. На Mac с Dart 3.11.5
+# остаются последние версии, которые ещё ставятся.
+dependency_overrides:
+  shared_preferences_android: 2.4.23
+  url_launcher_android: 6.3.30
 
 dev_dependencies:
   flutter_test:
