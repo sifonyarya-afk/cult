@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Chrome } from "@/components/clinic/chrome";
 import { Icon } from "@/components/clinic/icon";
 import { products, type Product } from "@/lib/catalog";
@@ -12,7 +13,7 @@ function ProductCard({ product }: { product: Product }) {
   const { addToCart } = useClinic();
   return (
     <article className="mb-12">
-      <div className="relative mb-6 aspect-[4/5] overflow-hidden bg-surface-container-low">
+      <Link href={`/shop/${product.id}`} className="relative mb-6 block aspect-[4/5] overflow-hidden bg-surface-container-low">
         <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
         {product.badge ? (
           <span className="absolute top-4 right-4 bg-secondary px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase">
@@ -31,9 +32,11 @@ function ProductCard({ product }: { product: Product }) {
             <span className="h-1.5 w-1.5 rounded-full bg-secondary" />В наличии
           </span>
         ) : null}
-      </div>
+      </Link>
       <div className="px-2 text-center">
-        <h3 className="font-headline-sm mb-2">{product.name}</h3>
+        <Link href={`/shop/${product.id}`} className="font-headline-sm mb-2 block">
+          {product.name}
+        </Link>
         <p className="mb-4 text-on-surface-variant italic opacity-70">{product.blurb}</p>
         <p className="font-headline-md mb-6 text-primary">{product.priceLabel}</p>
         <Button

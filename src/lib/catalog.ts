@@ -412,6 +412,185 @@ export const analyses = [
   { id: "hormone", name: "Гормональный тест Янв_24.pdf" },
 ];
 
+export const doctors = [
+  {
+    slug: "alethia",
+    name: "AlethiaPro",
+    role: "Специалист эстетической дерматологии",
+    image: img("AB6AXuBWhsXgCtKoSN"),
+    href: "/specialists",
+    chat: "/chat/specialist",
+    exp: "12+ лет",
+  },
+  {
+    slug: "thorne",
+    name: "Д-р Элара Торн, MD",
+    role: "Директор по холистическому здоровью",
+    image: img("AB6AXuC_2g-J0di2yK"),
+    href: "/doctors/thorne",
+    chat: "/chat/specialist",
+    exp: "15+ лет",
+  },
+  {
+    slug: "julian",
+    name: "Д-р Джулиан Торн",
+    role: "Инфузии и нутрициология",
+    image: img("AB6AXuDB0rcVzIawlY4J"),
+    href: "/doctors/julian",
+    chat: "/chat/specialist",
+    exp: "10+ лет",
+  },
+];
+
+export const articles = [
+  {
+    slug: "nad",
+    title: "Правда об инфузиях NAD+",
+    kicker: "CULT TV",
+    minutes: "15:20",
+    author: "Д-р Джулиан Торн",
+    image: img("AB6AXuASlJ4xAxwuwk"),
+    kind: "video" as const,
+    lead: "Коротко о том, что NAD+ делает с клеточной энергией и кому курс действительно нужен.",
+    body: [
+      "NAD+ участвует в восстановлении клеток и в работе митохондрий. С возрастом его уровень падает, поэтому инфузия ощущается как ясность и запас сил, а не как «витаминная капельница».",
+      "В CULT дозу собирают после короткого разбора: сон, нагрузка, анализы. Один сеанс не заменяет режим, но часто становится точкой, с которой человек возвращает утро.",
+      "Курс обычно 4 визита. Между ними не нужны активные кислоты на лице, если в тот же день была эстетическая процедура.",
+    ],
+  },
+  {
+    slug: "sleep",
+    title: "Оптимизация архитектуры сна",
+    kicker: "Нутрициология",
+    minutes: "08:45",
+    author: "Нутрициология и биохакинг",
+    image: img("AB6AXuCKU4PMdaaQHE"),
+    kind: "video" as const,
+    lead: "Как свет, еда и температура собирают глубокий сон без снотворных.",
+    body: [
+      "Архитектура сна ломается не от одного позднего ужина, а от света после 22:00 и кофе после обеда. Мы смотрим на это как на протокол, а не на силу воли.",
+      "В клинике начинают со светового окна утром и тёплого приёма пищи вечером. Добавки подключают только если дневник сна за неделю не сдвигается.",
+    ],
+  },
+  {
+    slug: "sculpt-guide",
+    title: "Как читать результат массажа лица",
+    kicker: "Практика",
+    minutes: "чтение 4 мин",
+    author: "AlethiaPro",
+    image: img("AB6AXuAEwes9nqkcks7V"),
+    kind: "article" as const,
+    lead: "Что считается нормальным на следующий день и когда ждать контур.",
+    body: [
+      "Сразу после скульптурного массажа лицо может быть чуть розовым. Это приток, не воспаление. Отёк, наоборот, обычно спадает к утру.",
+      "Контур читается на 3–5 день, когда уходит лишняя жидкость. Повтор имеет смысл через 7–10 дней, не на следующий день.",
+    ],
+  },
+];
+
+export function articleBySlug(slug: string) {
+  return articles.find((item) => item.slug === slug);
+}
+
+export const cases = [
+  {
+    slug: "oval",
+    title: "Чёткий овал без операции",
+    procedure: "Morpheus8",
+    doctor: "AlethiaPro",
+    image: img("AB6AXuAT42Rrdjnuii"),
+    before: img("AB6AXuDfygIvD0sRch"),
+    after: img("AB6AXuAT42Rrdjnuii"),
+    quote: "Плотность кожи изменилась после первого сеанса. Овал собрался к третьему.",
+    text: "Три сеанса Morpheus8 с паузой четыре недели. Без филлеров. Реабилитация — покраснение на два дня.",
+  },
+  {
+    slug: "tone",
+    title: "Ровный тон за два визита",
+    procedure: "Lumecca IPL",
+    doctor: "AlethiaPro",
+    image: img("AB6AXuDaXMzrLpWHAiJe"),
+    before: img("AB6AXuDfygIvD0sRch"),
+    after: img("AB6AXuDaXMzrLpWHAiJe"),
+    quote: "Пигмент после лета ушёл спокойно, без корочек.",
+    text: "Два сеанса Lumecca. Между ними только восстановление барьера и SPF. Тон выровнялся к третьей неделе.",
+  },
+  {
+    slug: "glow",
+    title: "Сияние изнутри",
+    procedure: "Beauty & Glow",
+    doctor: "Д-р Элара Торн",
+    image: img("AB6AXuCN9PTu3AkRBmoO"),
+    before: img("AB6AXuA6H8w-lkGAbbQ1"),
+    after: img("AB6AXuCN9PTu3AkRBmoO"),
+    quote: "Кожа стала плотнее на ощупь, хотя на лице ничего не кололи.",
+    text: "Курс из трёх инфузий Beauty & Glow и домашний барьерный крем. Без инъекций.",
+  },
+];
+
+export function caseBySlug(slug: string) {
+  return cases.find((item) => item.slug === slug);
+}
+
+export const pharmacy = [
+  {
+    productId: "gluta",
+    dose: "1 капсула утром, после еды",
+    doctor: "AlethiaPro",
+    until: "до апреля 2026",
+  },
+  {
+    productId: "catalyst",
+    dose: "по схеме NAD+, 4 недели",
+    doctor: "Д-р Элара Торн",
+    until: "до марта 2026",
+  },
+];
+
+export const loyaltyLedger = [
+  { date: "Янв 2023", title: "Вступление в клуб", points: "+2 000 ₽" },
+  { date: "Дек 2025", title: "Визит: консультация", points: "+450 ₽" },
+  { date: "Янв 2026", title: "Инфузия NAD+", points: "+1 200 ₽" },
+  { date: "Фев 2026", title: "Morpheus8", points: "+8 800 ₽" },
+];
+
+export const YOUTUBE_CHANNEL = "https://www.youtube.com/results?search_query=CULT+Clinic+%D0%BA%D0%BE%D1%81%D0%BC%D0%B5%D1%82%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%8F";
+
+export function youtubeFor(title: string) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} CULT Clinic`)}`;
+}
+
+export const productNotes: Record<string, { about: string; use: string[] }> = {
+  neuro: {
+    about: "Сыворотка для когнитивного тонуса. В линейке клиники это формула к курсам, где важны ясность и восстановление после нагрузок.",
+    use: ["Утром натощак или по схеме врача", "Курс 30 дней", "Не смешивать с другими стимуляторами в тот же приём"],
+  },
+  catalyst: {
+    about: "Предшественник NAD+. Назначают вместе с инфузией или отдельным курсом, если капельница пока не нужна.",
+    use: ["1 порция в первой половине дня", "Запивать водой", "Контроль самочувствия на 14-й день"],
+  },
+  gluta: {
+    about: "Липосомальный глутатион. В личной аптеке чаще всего стоит как антиоксидантная поддержка после аппаратных процедур.",
+    use: ["1 капсула после завтрака", "Курс совпадает с протоколом врача", "Хранить вдали от света"],
+  },
+  mito: {
+    about: "Поддержка выработки АТФ. Остаток небольшой, перед курсом лучше подтвердить наличие у администратора.",
+    use: ["До тренировки или утром", "Не вечером", "Пауза при бессоннице"],
+  },
+  lumen: {
+    about: "Барьерный крем, который клиника планирует отпускать после пилингов и RF. Восстанавливает липидный слой.",
+    use: ["Вечером на сухое лицо", "Поверх — только SPF утром", "7 дней после процедуры без кислот"],
+  },
+  veil: {
+    about: "Ночная пептидная сыворотка плотности. В плане продаж — домашний шаг между визитами к AlethiaPro.",
+    use: ["2–3 капли на ночь", "После тоника без спирта", "Курс 8 недель"],
+  },
+  aura: {
+    about: "Минеральный спрей сияния. Лёгкий шаг в течение дня, когда крем уже есть.",
+    use: ["По необходимости", "Не на открытое солнце сразу после", "Можно поверх макияжа"],
+  },
+};
+
 export const mediaIds = {
   splash: img("AB6AXuA8Xdrx5MdKtm"),
   logo: img("AB6AXuC9DCI3w4l5Tm"),

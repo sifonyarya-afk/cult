@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Chrome } from "@/components/clinic/chrome";
 import { Icon } from "@/components/clinic/icon";
+import { Story } from "@/components/clinic/story";
 import { mediaIds, serviceBySlug } from "@/lib/catalog";
 import { useClinic } from "@/components/clinic/providers";
 
@@ -43,7 +44,10 @@ export default function ServicePage() {
               </div>
               <p className="font-label-md text-on-surface-variant">{service.duration}</p>
             </div>
-            <p className="font-body-lg mb-8 text-on-surface-variant">{service.long}</p>
+            <p className="font-body-lg mb-6 text-on-surface-variant">{service.long}</p>
+            <div className="mb-8">
+              <Story title={service.title} image={hero} minutes={service.duration} paragraphs={[service.long, ...service.steps]} />
+            </div>
             <div className="mb-8 space-y-8">
               <div>
                 <h3 className="font-headline-sm mb-4 border-b border-outline-variant pb-2">Результат</h3>

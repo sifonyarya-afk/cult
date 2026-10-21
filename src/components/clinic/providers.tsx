@@ -37,6 +37,7 @@ type ClinicContextValue = {
   cart: CartItem[];
   addToCart: (item: { id: string; name: string; price: number }) => void;
   setQty: (id: string, qty: number) => void;
+  clearCart: () => void;
   cartOpen: boolean;
   setCartOpen: (open: boolean) => void;
   menuOpen: boolean;
@@ -70,17 +71,23 @@ const seedThreads = (): Threads =>
   );
 
 const menuLinks = [
-  { href: "/home", label: "Главная" },
-  { href: "/services", label: "Услуги" },
-  { href: "/specialists", label: "AlethiaPro" },
-  { href: "/doctors/thorne", label: "Д-р Элара Торн" },
-  { href: "/hardware", label: "Аппаратная косметология" },
-  { href: "/injection", label: "Инъекционная" },
-  { href: "/infusion", label: "Инфузии" },
-  { href: "/science", label: "Наука" },
-  { href: "/shop", label: "Магазин" },
-  { href: "/chat", label: "Чат" },
-  { href: "/cabinet", label: "Личный кабинет" },
+  { href: "/home", label: "Главный экран" },
+  { href: "/about", label: "О клинике" },
+  { href: "/services", label: "Каталог услуг" },
+  { href: "/prices", label: "Прайс" },
+  { href: "/booking", label: "Запись на услугу" },
+  { href: "/doctors", label: "Врачи" },
+  { href: "/hardware", label: "Оборудование" },
+  { href: "/cases", label: "Кейсы" },
+  { href: "/shop", label: "Каталог косметики" },
+  { href: "/cart", label: "Корзина" },
+  { href: "/blog", label: "Блог" },
+  { href: "/tv", label: "YouTube-канал" },
+  { href: "/chat", label: "Чат с клиникой" },
+  { href: "/cabinet", label: "Кабинет" },
+  { href: "/pharmacy", label: "Личная аптека" },
+  { href: "/loyalty", label: "Лояльность" },
+  { href: "/transfer", label: "Заказ трансфера" },
 ];
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -151,6 +158,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
+  const clearCart = useCallback(() => setCart([]), []);
+
   const openBooking = useCallback((title?: string) => {
     setBookingTitle(title || "Онлайн запись");
     setBookingDone(false);
@@ -205,6 +214,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       cart,
       addToCart,
       setQty,
+      clearCart,
       cartOpen,
       setCartOpen,
       menuOpen,
@@ -231,6 +241,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       cart,
       addToCart,
       setQty,
+      clearCart,
       cartOpen,
       menuOpen,
       openBooking,
@@ -257,7 +268,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <SheetHeader>
             <SheetTitle className="font-headline-md px-2 tracking-[0.3em]">CULT</SheetTitle>
           </SheetHeader>
-          <nav className="flex flex-col">
+          <nav className="flex max-h-[70dvh] flex-col overflow-y-auto pb-8">
             {menuLinks.map((link) => (
               <button
                 key={link.href}
@@ -307,12 +318,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <Button
                 className="h-12 w-full bg-on-background text-white tracking-[0.2em] uppercase"
                 onClick={() => {
-                  setCart([]);
                   setCartOpen(false);
-                  setCheckoutDone(true);
+                  router.push("/cart");
                 }}
               >
-                Оформить
+                К оформлению
               </Button>
             </div>
           )}

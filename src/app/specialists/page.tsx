@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Chrome } from "@/components/clinic/chrome";
 import { Icon } from "@/components/clinic/icon";
+import { Story } from "@/components/clinic/story";
 import { mediaIds } from "@/lib/catalog";
 import { useClinic } from "@/components/clinic/providers";
 
@@ -21,7 +22,7 @@ const reviews = [
 
 export default function SpecialistsPage() {
   const router = useRouter();
-  const { setPlayTitle, setInfo } = useClinic();
+  const { setInfo } = useClinic();
   return (
     <Chrome active="services" fab="none" bookBar={{ label: "Записаться", title: "Приём AlethiaPro" }}>
       <main className="px-container-margin pt-6">
@@ -38,16 +39,16 @@ export default function SpecialistsPage() {
           </button>
         </section>
         <section className="mb-10">
-          <h3 className="font-label-md mb-4 tracking-wider text-outline uppercase">Видео-приветствие</h3>
-          <button className="relative aspect-video w-full overflow-hidden rounded-xl" onClick={() => setPlayTitle("Введение в холистическую терапию кожи (2:45)")}>
-            <img src={mediaIds.alethiaVideo} alt="" className="h-full w-full object-cover" />
-            <span className="absolute inset-0 flex items-center justify-center">
-              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-on-background/80 text-white">
-                <Icon name="play_arrow" fill className="text-4xl" />
-              </span>
-            </span>
-            <span className="absolute bottom-4 left-4 text-sm text-white">Введение в холистическую терапию кожи (2:45)</span>
-          </button>
+          <h3 className="font-label-md mb-4 tracking-wider text-outline uppercase">О враче</h3>
+          <Story
+            title="Введение в холистическую терапию кожи"
+            image={mediaIds.alethiaVideo}
+            minutes="2:45"
+            paragraphs={[
+              "AlethiaPro начинает приём с разговора о цели, а не с прайса. Протокол собирается из диагностики, аппарата и домашнего ухода.",
+              "На видео она объясняет, как выглядит первый визит и чего ждать от курса без спешки.",
+            ]}
+          />
         </section>
         <div className="mb-10 grid grid-cols-2 gap-4">
           <div className="flex flex-col items-center rounded-xl bg-surface-container-low p-6">

@@ -18,14 +18,15 @@ import {
 } from "@/components/ui/dialog";
 
 const rows: { href?: string; icon: string; title: string; note?: string; action?: "analyses" | "info" }[] = [
-  { href: "/cabinet/visits", icon: "calendar_today", title: "Мои записи", note: "След: 12 марта, 10:30" },
+  { href: "/booking", icon: "calendar_today", title: "Мои записи", note: "След: 12 марта, 10:30" },
   { href: "/cabinet/visits", icon: "history", title: "История визитов" },
   { icon: "lab_research", title: "Мои анализы", action: "analyses" },
-  { icon: "inventory_2", title: "Мои пакеты услуг", action: "info" },
-  { icon: "directions_car", title: "Заказ трансфера", action: "info" },
+  { href: "/pharmacy", icon: "medication", title: "Личная аптека" },
+  { href: "/chat/specialist", icon: "chat_bubble", title: "Чат с доктором" },
+  { href: "/transfer", icon: "directions_car", title: "Заказ трансфера" },
   { icon: "card_giftcard", title: "Купить сертификат", action: "info" },
-  { icon: "medical_information", title: "Рекомендации врача", note: "3 новых рекомендации", action: "info" },
-  { icon: "rule", title: "Правила лояльности", action: "info" },
+  { href: "/pharmacy", icon: "medical_information", title: "Рекомендации врача", note: "3 новых рекомендации" },
+  { href: "/loyalty", icon: "rule", title: "Правила лояльности" },
   { icon: "description", title: "Юридические документы", action: "info" },
 ];
 

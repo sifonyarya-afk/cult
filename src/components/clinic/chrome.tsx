@@ -50,7 +50,7 @@ const items: Record<
     { href: "/services", id: "services", icon: "spa", label: "Services" },
     { href: "/shop", id: "shop", icon: "shopping_bag", label: "Shop" },
     { href: "/chat", id: "chat", icon: "chat_bubble", label: "Chat" },
-    { href: "/science", id: "gallery", icon: "auto_awesome", label: "Gallery" },
+    { href: "/cases", id: "gallery", icon: "auto_awesome", label: "Gallery" },
     { href: "/cabinet", id: "profile", icon: "person", label: "Profile" },
   ],
   thorne: [

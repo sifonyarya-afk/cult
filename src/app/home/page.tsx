@@ -7,7 +7,7 @@ import { useClinic } from "@/components/clinic/providers";
 import { mediaIds } from "@/lib/catalog";
 
 export default function HomePage() {
-  const { openBooking, setPlayTitle } = useClinic();
+  const { openBooking } = useClinic();
   return (
     <Chrome active="home" brand="logo" fab="add">
       <main>
@@ -48,6 +48,20 @@ export default function HomePage() {
             <span className="font-label-md text-center">Чат с врачом</span>
           </Link>
         </section>
+        <section className="mb-10 grid grid-cols-2 gap-3 px-container-margin text-center text-sm">
+          {[
+            ["/doctors", "Врачи"],
+            ["/prices", "Прайс"],
+            ["/blog", "Блог"],
+            ["/cases", "Кейсы"],
+            ["/about", "О клинике"],
+            ["/booking", "Запись"],
+          ].map(([href, label]) => (
+            <Link key={href} href={href} className="rounded-xl border border-outline-variant/50 bg-white py-4">
+              {label}
+            </Link>
+          ))}
+        </section>
         <section className="mb-14 px-container-margin">
           <div className="ambient-card rounded-2xl border border-outline-variant bg-surface-container-highest p-8 text-center">
             <span className="mb-4 inline-block rounded-full bg-secondary px-3 py-1 text-[10px] font-label-md tracking-widest text-white uppercase">
@@ -76,16 +90,16 @@ export default function HomePage() {
               <span className="font-label-md text-label-md tracking-widest text-secondary uppercase">CULT TV</span>
               <h2 className="font-headline-md text-headline-md">Свежие новости</h2>
             </div>
-            <button className="border-b border-primary font-label-md text-primary" onClick={() => setPlayTitle("Канал CULT TV")}>
+            <Link href="/tv" className="border-b border-primary font-label-md text-primary">
               Смотреть канал
-            </button>
+            </Link>
           </div>
           <div className="hide-scrollbar flex gap-4 overflow-x-auto px-container-margin">
             {[
               { img: mediaIds.tv1, title: "Правда об инфузиях NAD+", meta: "15:20 • Д-р Джулиан Торн" },
               { img: mediaIds.tv2, title: "Оптимизация архитектуры сна", meta: "08:45 • Нутрициология и биохакинг" },
             ].map((card) => (
-              <button key={card.title} className="min-w-[280px] text-left" onClick={() => setPlayTitle(card.title)}>
+              <Link key={card.title} href={card.title.includes("NAD") ? "/blog/nad" : "/blog/sleep"} className="min-w-[280px] text-left">
                 <div className="ambient-card relative mb-3 aspect-video overflow-hidden rounded-xl">
                   <img src={card.img} alt="" className="h-full w-full object-cover" />
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -96,7 +110,7 @@ export default function HomePage() {
                 </div>
                 <h4 className="font-body-md font-semibold">{card.title}</h4>
                 <p className="font-label-md text-on-surface-variant">{card.meta}</p>
-              </button>
+              </Link>
             ))}
           </div>
         </section>
