@@ -411,6 +411,34 @@ class CultEmpty extends StatelessWidget {
   }
 }
 
+/// Sticky bottom book CTA for detail screens.
+class CultBookBar extends StatelessWidget {
+  const CultBookBar({
+    super.key,
+    required this.onPressed,
+    this.label = 'Записаться',
+  });
+
+  final VoidCallback onPressed;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Cult.bg,
+      elevation: 8,
+      shadowColor: const Color(0x14000000),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+          child: CultButton(label: label, onPressed: onPressed),
+        ),
+      ),
+    );
+  }
+}
+
 class CultSectionLabel extends StatelessWidget {
   const CultSectionLabel(this.text, {super.key});
 

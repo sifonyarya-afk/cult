@@ -266,6 +266,16 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                         ),
                     ],
                   ),
+                ] else ...[
+                  const SizedBox(height: 8),
+                  ActionChip(
+                    avatar: const Icon(
+                      Icons.event_available_outlined,
+                      size: 18,
+                    ),
+                    label: const Text('Записаться'),
+                    onPressed: () => pushPage(context, const BookingPage()),
+                  ),
                 ],
               ],
             ),
@@ -296,14 +306,29 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: () => _send(store, _text.text),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Cult.ink,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(48, 48),
-                      ),
-                      icon: const Icon(Icons.arrow_upward),
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _text,
+                      builder: (_, value, _) {
+                        final canSend = value.text.trim().isNotEmpty;
+                        return IconButton(
+                          tooltip: 'Отправить',
+                          onPressed: canSend
+                              ? () => _send(store, _text.text)
+                              : null,
+                          style: IconButton.styleFrom(
+                            backgroundColor: canSend
+                                ? Cult.ink
+                                : Cult.ink.withValues(alpha: 0.35),
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: Cult.ink.withValues(
+                              alpha: 0.35,
+                            ),
+                            disabledForegroundColor: Colors.white70,
+                            minimumSize: const Size(48, 48),
+                          ),
+                          icon: const Icon(Icons.arrow_upward),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -440,10 +465,16 @@ class _BookingPageState extends State<BookingPage> {
 
   void _applyService(List<YcService> list) {
     if (list.isEmpty) return;
-    final wanted = widget.initialService?.toLowerCase();
-    final match =
-        list.where((item) => item.title.toLowerCase() == wanted).firstOrNull ??
-        list.first;
+    final wanted = widget.initialService?.trim().toLowerCase() ?? '';
+    final match = wanted.isEmpty
+        ? list.first
+        : list
+                  .where((item) => item.title.toLowerCase() == wanted)
+                  .firstOrNull ??
+              list
+                  .where((item) => item.title.toLowerCase().contains(wanted))
+                  .firstOrNull ??
+              list.first;
     _serviceId = match.id;
     _service = match.title;
   }

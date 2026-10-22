@@ -329,6 +329,7 @@ class _ShellState extends State<Shell> {
           bottomNavigationBar: NavigationBar(
             selectedIndex: _index,
             onDestinationSelected: (value) {
+              FocusManager.instance.primaryFocus?.unfocus();
               HapticFeedback.selectionClick();
               if (value == _index) {
                 Navigator.of(context).popUntil((route) => route.isFirst);

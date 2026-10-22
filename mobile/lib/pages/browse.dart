@@ -359,8 +359,12 @@ class LiveServicePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('CULT')),
+      bottomNavigationBar: CultBookBar(
+        onPressed: () =>
+            pushPage(context, BookingPage(initialService: service.title)),
+      ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
           Text(
             (service.category.isEmpty ? 'Филиал' : service.category)
@@ -386,12 +390,6 @@ class LiveServicePage extends StatelessWidget {
             ),
           const SizedBox(height: 16),
           Text(service.priceLabel, style: cultHeadline(24)),
-          const SizedBox(height: 16),
-          CultButton(
-            label: 'Записаться',
-            onPressed: () =>
-                pushPage(context, BookingPage(initialService: service.title)),
-          ),
         ],
       ),
     );
@@ -451,13 +449,11 @@ class ServicePage extends StatelessWidget {
             service.priceLabel,
             style: cultHeadline(28).copyWith(color: Cult.primary),
           ),
-          const SizedBox(height: 22),
-          CultButton(
-            label: 'Записаться',
-            onPressed: () =>
-                pushPage(context, BookingPage(initialService: service.title)),
-          ),
         ],
+      ),
+      bottomNavigationBar: CultBookBar(
+        onPressed: () =>
+            pushPage(context, BookingPage(initialService: service.title)),
       ),
     );
   }

@@ -666,7 +666,10 @@ class SciencePage extends StatelessWidget {
               padding: const EdgeInsets.only(top: 8),
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
-                onTap: () => pushPage(context, const BlogPage()),
+                onTap: () {
+                  cultTapFeedback();
+                  pushPage(context, const BlogPage());
+                },
                 child: CultCard(
                   child: Row(
                     children: [
@@ -685,7 +688,10 @@ class SciencePage extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
-                onTap: () => pushPage(context, DevicePage(device: device)),
+                onTap: () {
+                  cultTapFeedback();
+                  pushPage(context, DevicePage(device: device));
+                },
                 child: CultCard(
                   child: Row(
                     children: [
@@ -726,8 +732,10 @@ class SciencePage extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
-                onTap: () =>
-                    pushPage(context, BookingPage(initialService: row.$2)),
+                onTap: () {
+                  cultTapFeedback();
+                  pushPage(context, BookingPage(initialService: row.$2));
+                },
                 child: CultCard(
                   child: Row(
                     children: [
@@ -772,8 +780,12 @@ class DevicePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('CULT')),
+      bottomNavigationBar: CultBookBar(
+        onPressed: () =>
+            pushPage(context, BookingPage(initialService: device.title)),
+      ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
           CultImage(device.image, aspect: 16 / 10, radius: 18),
           const SizedBox(height: 14),
@@ -890,12 +902,6 @@ class DevicePage extends StatelessWidget {
                 ),
               ),
           ],
-          const SizedBox(height: 22),
-          CultButton(
-            label: 'Записаться',
-            onPressed: () =>
-                pushPage(context, BookingPage(initialService: device.title)),
-          ),
         ],
       ),
     );

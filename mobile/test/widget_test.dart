@@ -1,5 +1,6 @@
 import 'package:cult_clinic/data.dart';
 import 'package:cult_clinic/main.dart';
+import 'package:cult_clinic/pages/browse.dart';
 import 'package:cult_clinic/pages/talk.dart';
 import 'package:cult_clinic/store.dart';
 import 'package:cult_clinic/widgets.dart';
@@ -178,5 +179,20 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('Элара'), findsWidgets);
+  });
+
+  testWidgets('Карточка услуги держит кнопку записи внизу', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    await tester.pumpWidget(
+      ClinicScope(
+        store: store,
+        child: MaterialApp(home: ServicePage(service: services.first)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('ЗАПИСАТЬСЯ'), findsOneWidget);
+    expect(find.byType(CultBookBar), findsOneWidget);
   });
 }
