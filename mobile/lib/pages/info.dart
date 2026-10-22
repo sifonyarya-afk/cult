@@ -423,7 +423,16 @@ class ArticlePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(article.title, style: cultHeadline(28)),
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(
+                ClipboardData(text: '${article.title} — ${article.author}'),
+              );
+              cultTapFeedback();
+              showCultSnack(context, 'Заголовок скопирован');
+            },
+            child: Text(article.title, style: cultHeadline(28)),
+          ),
           const SizedBox(height: 4),
           Text(article.author, style: const TextStyle(color: Cult.muted)),
           const SizedBox(height: 16),
@@ -539,8 +548,13 @@ class CasePage extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: CultBookBar(
-        onPressed: () =>
-            pushPage(context, BookingPage(initialService: item.procedure)),
+        onPressed: () => pushPage(
+          context,
+          BookingPage(
+            initialService: item.procedure,
+            initialDoctor: item.doctor,
+          ),
+        ),
       ),
     );
   }

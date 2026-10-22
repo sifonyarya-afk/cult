@@ -91,31 +91,21 @@ class ChatPage extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Builder(
-                        builder: (_) {
-                          final thread = store.threads[contact.id] ?? [];
-                          final waiting =
-                              thread.isNotEmpty && thread.last.from == 'them';
-                          return Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (waiting)
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  margin: const EdgeInsets.only(right: 6),
-                                  decoration: const BoxDecoration(
-                                    color: Cult.gold,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              const Icon(
-                                Icons.chevron_right,
-                                color: Cult.muted,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (store.isChatUnread(contact.id))
+                            Container(
+                              width: 8,
+                              height: 8,
+                              margin: const EdgeInsets.only(right: 6),
+                              decoration: const BoxDecoration(
+                                color: Cult.gold,
+                                shape: BoxShape.circle,
                               ),
-                            ],
-                          );
-                        },
+                            ),
+                          const Icon(Icons.chevron_right, color: Cult.muted),
+                        ],
                       ),
                     ],
                   ),
@@ -195,6 +185,7 @@ class ChatThreadPage extends StatefulWidget {
 class _ChatThreadPageState extends State<ChatThreadPage> {
   final _text = TextEditingController();
   final _scroll = ScrollController();
+  var _markedRead = false;
 
   static const _quick = <String>[
     'Хочу записаться',
@@ -209,6 +200,17 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
   ];
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_markedRead) return;
+    _markedRead = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ClinicScope.of(context).markChatRead(widget.contactId);
+    });
+  }
+
+  @override
   void dispose() {
     _text.dispose();
     _scroll.dispose();
@@ -220,6 +222,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     if (text.isEmpty) return;
     HapticFeedback.selectionClick();
     store.sendMessage(widget.contactId, text);
+    store.markChatRead(widget.contactId);
     _text.clear();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scroll.hasClients) return;
@@ -752,26 +755,33 @@ class _BookingPageState extends State<BookingPage> {
         : ' ${store.gender!.servicesTitle}.';
     return Scaffold(
       appBar: AppBar(title: const Text('Запись')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text('Запись в филиал', style: cultHeadline(30)),
-          const SizedBox(height: 8),
-          Text(
-            store.signedIn
-                ? 'Запись в филиал CULT, Сочи.$genderNote Контакт уже в базе клиники.'
-                : 'Услуги филиала CULT в Сочи.$genderNote Войдите по телефону в кабинете, чтобы сохраниться в базе.',
-          ),
-          if (_staff.isNotEmpty && _staff.every((item) => !item.bookable))
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text(
-                'Свободных окон для онлайн-записи сейчас нет: расписание в филиале закрыто.',
-              ),
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollStartNotification) {
+            FocusManager.instance.primaryFocus?.unfocus();
+          }
+          return false;
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text('Запись в филиал', style: cultHeadline(30)),
+            const SizedBox(height: 8),
+            Text(
+              store.signedIn
+                  ? 'Запись в филиал CULT, Сочи.$genderNote Контакт уже в базе клиники.'
+                  : 'Услуги филиала CULT в Сочи.$genderNote Войдите по телефону в кабинете, чтобы сохраниться в базе.',
             ),
-          const SizedBox(height: 12),
-          if (_loading) const CultLoading(label: 'Загружаем слоты филиала…'),
-          AnimatedSwitcher(
+            if (_staff.isNotEmpty && _staff.every((item) => !item.bookable))
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'Свободных окон для онлайн-записи сейчас нет: расписание в филиале закрыто.',
+                ),
+              ),
+            const SizedBox(height: 12),
+            if (_loading) const CultLoading(label: 'Загружаем слоты филиала…'),
+            AnimatedSwitcher(
             duration: const Duration(milliseconds: 320),
             child: _done
                 ? KeyedSubtree(key: const ValueKey('done'), child: _doneCard())
@@ -931,8 +941,9 @@ class _BookingPageState extends State<BookingPage> {
                       ],
                     ),
                   ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

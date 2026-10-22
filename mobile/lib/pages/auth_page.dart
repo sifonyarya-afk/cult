@@ -81,9 +81,16 @@ class _AuthPageState extends State<AuthPage> {
           ? AppBar(title: const Text('Вход'))
           : null,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
-          children: [
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification is ScrollStartNotification) {
+              FocusManager.instance.primaryFocus?.unfocus();
+            }
+            return false;
+          },
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+            children: [
             Text(
               'CULT',
               style: cultHeadline(40).copyWith(letterSpacing: 4),
@@ -128,7 +135,8 @@ class _AuthPageState extends State<AuthPage> {
                       },
                 child: const Text('Продолжить без входа'),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

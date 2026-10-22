@@ -169,6 +169,7 @@ class ClinicStore extends ChangeNotifier {
   List<GiftCard> gifts = [];
   List<String> favorites = [];
   Map<String, List<ChatMessage>> threads = {};
+  Map<String, String> chatRead = {};
   Map<String, bool> notices = {
     'visits': true,
     'analyses': true,
@@ -305,6 +306,10 @@ class ClinicStore extends ChangeNotifier {
             .toList();
       }
     }
+    final savedRead = json['chatRead'] as Map<String, dynamic>?;
+    chatRead = savedRead == null
+        ? {}
+        : savedRead.map((key, value) => MapEntry(key, value.toString()));
     _seedThreads();
     notifyListeners();
   }
@@ -346,6 +351,7 @@ class ClinicStore extends ChangeNotifier {
       'partnerToken': partnerToken,
       'userToken': userToken,
       'notices': notices,
+      'chatRead': chatRead,
       'threads': threads.map(
         (key, value) =>
             MapEntry(key, value.map((item) => item.toJson()).toList()),
@@ -380,11 +386,27 @@ class ClinicStore extends ChangeNotifier {
     _save();
   }
 
+  bool isChatUnread(String contactId) {
+    final thread = threads[contactId];
+    if (thread == null || thread.isEmpty) return false;
+    final last = thread.last;
+    return last.from == 'them' && chatRead[contactId] != last.id;
+  }
+
   bool get hasUnreadChat {
-    for (final thread in threads.values) {
-      if (thread.isNotEmpty && thread.last.from == 'them') return true;
+    for (final id in threads.keys) {
+      if (isChatUnread(id)) return true;
     }
     return false;
+  }
+
+  void markChatRead(String contactId) {
+    final thread = threads[contactId];
+    if (thread == null || thread.isEmpty) return;
+    final lastId = thread.last.id;
+    if (chatRead[contactId] == lastId) return;
+    chatRead[contactId] = lastId;
+    _save();
   }
 
   void toggleFavorite(String id) {
@@ -795,6 +817,12 @@ class ClinicStore extends ChangeNotifier {
       }
       if (q.contains('скидк') || q.contains('акци') || q.contains('промо')) {
         return 'Актуальные предложения — на главной. Новым клиентам welcome-бонус 3 000 ₽ после входа по телефону.';
+      }
+      if (q.contains('врач') || q.contains('специалист') || q.contains('доктор')) {
+        return 'Команда врачей — в меню «Врачи». Откройте карточку специалиста и запишитесь или напишите в чат.';
+      }
+      if (q.contains('беремен') || q.contains('кормлен')) {
+        return 'При беременности и лактации часть процедур ограничена. Напишите срок врачу в чате — подскажем безопасный протокол.';
       }
       return 'Клиника открыта ежедневно с 9:00 до 21:00. Запись — в разделе «Запись» или через «+» на главной.';
     }

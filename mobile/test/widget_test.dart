@@ -248,6 +248,20 @@ void main() {
     expect(store.cartCount, 0);
   });
 
+  test('Прочтение чата снимает непрочитанное', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Нужен врач');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('врач'));
+    expect(store.isChatUnread('bot'), isTrue);
+    store.markChatRead('bot');
+    expect(store.isChatUnread('bot'), isFalse);
+    final restored = ClinicStore();
+    await restored.load();
+    expect(restored.isChatUnread('bot'), isFalse);
+  });
+
   test('Корзина сохраняет контакт при оформлении', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();

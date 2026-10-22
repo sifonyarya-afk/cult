@@ -810,6 +810,16 @@ class OrdersPage extends StatelessWidget {
                             'Заказ от ${order.at} · ${order.pay}',
                           );
                         },
+                        onLongPress: () {
+                          Clipboard.setData(
+                            ClipboardData(
+                              text:
+                                  '${order.title} · ${rub(order.total)} · ${order.pay} · ${order.at}',
+                            ),
+                          );
+                          cultTapFeedback();
+                          showCultSnack(context, 'Заказ скопирован');
+                        },
                         child: Row(
                           children: [
                             Expanded(
@@ -1217,7 +1227,10 @@ class _CertificatesPageState extends State<CertificatesPage> {
             contentPadding: EdgeInsets.zero,
             title: Text('Оплатить бонусами, баланс ${rub(store.balance)}'),
             value: _bonus,
-            onChanged: (value) => setState(() => _bonus = value),
+            onChanged: (value) {
+              cultTapFeedback();
+              setState(() => _bonus = value);
+            },
           ),
           if (_error.isNotEmpty) CultErrorBanner(message: _error),
           AnimatedSwitcher(
@@ -1253,6 +1266,7 @@ class _CertificatesPageState extends State<CertificatesPage> {
                         TextButton(
                           onPressed: () {
                             Clipboard.setData(ClipboardData(text: _code));
+                            cultTapFeedback();
                             showCultSnack(context, 'Код скопирован');
                           },
                           child: const Text('Скопировать код'),
@@ -1265,6 +1279,13 @@ class _CertificatesPageState extends State<CertificatesPage> {
           CultButton(
             label: _code.isEmpty ? 'Оплатить сертификат' : 'Купить ещё',
             onPressed: () {
+              if (_code.isNotEmpty) {
+                setState(() {
+                  _code = '';
+                  _error = '';
+                });
+                return;
+              }
               if (_bonus && !store.spendBonus(_nominal)) {
                 setState(() => _error = 'Бонусов не хватает на этот номинал.');
                 return;
@@ -1293,6 +1314,7 @@ class _CertificatesPageState extends State<CertificatesPage> {
                   child: InkWell(
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: gift.code));
+                      cultTapFeedback();
                       showCultSnack(context, 'Код ${gift.code} скопирован');
                     },
                     child: Column(
