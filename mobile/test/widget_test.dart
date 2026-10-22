@@ -177,11 +177,14 @@ void main() {
     final before = store.threads['admin']!.length;
     store.sendMessage(
       'admin',
-      'Трансфер: забрать с «Адлер, отель» → Черноморская, 6.',
+      'Трансфер: забрать с «Адлер, отель» → Черноморская, 6 · к 12:00.',
     );
     final thread = store.threads['admin']!;
     expect(thread.length, greaterThan(before));
     expect(thread.any((m) => m.text.contains('Адлер')), isTrue);
+    expect(thread.any((m) => m.text.contains('12:00')), isTrue);
+    store.sendMessage('bot', 'Какой wifi в клинике?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('guest'));
   });
 
   testWidgets('Запись принимает выбранного врача', (tester) async {

@@ -356,7 +356,9 @@ class _ShellState extends State<Shell> {
               ),
               if (_index == 2 || store.cartCount > 0)
                 IconButton(
-                  tooltip: 'Корзина',
+                  tooltip: store.cartCount > 0
+                      ? 'Корзина, ${store.cartCount}'
+                      : 'Корзина',
                   onPressed: () {
                     cultTapFeedback();
                     pushPage(context, const CartPage());
@@ -364,7 +366,12 @@ class _ShellState extends State<Shell> {
                   icon: Badge(
                     isLabelVisible: store.cartCount > 0,
                     label: Text('${store.cartCount}'),
-                    child: const Icon(Icons.shopping_bag_outlined),
+                    child: Semantics(
+                      label: store.cartCount > 0
+                          ? 'Корзина, ${store.cartCount} позиц.'
+                          : 'Корзина',
+                      child: const Icon(Icons.shopping_bag_outlined),
+                    ),
                   ),
                 ),
             ],

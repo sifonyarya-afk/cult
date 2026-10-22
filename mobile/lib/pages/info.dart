@@ -300,11 +300,41 @@ class AboutPage extends StatelessWidget {
                 },
               ),
               ActionChip(
+                avatar: const Icon(Icons.map_outlined, size: 18),
+                label: const Text('Маршрут'),
+                onPressed: () {
+                  cultTapFeedback();
+                  openExternal(
+                    'https://maps.google.com/?q=${Uri.encodeComponent('Сочи, Черноморская, 6')}',
+                    context: context,
+                  );
+                },
+              ),
+              ActionChip(
+                avatar: const Icon(Icons.phone_outlined, size: 18),
+                label: const Text('Позвонить'),
+                onPressed: () {
+                  cultTapFeedback();
+                  openExternal('tel:+74950000007', context: context);
+                },
+              ),
+              ActionChip(
                 avatar: const Icon(Icons.directions_car_outlined, size: 18),
                 label: const Text('Трансфер'),
                 onPressed: () {
                   cultTapFeedback();
                   pushPage(context, const TransferPage());
+                },
+              ),
+              ActionChip(
+                avatar: const Icon(Icons.wifi_outlined, size: 18),
+                label: const Text('Wi‑Fi Guest'),
+                onPressed: () {
+                  Clipboard.setData(
+                    const ClipboardData(text: 'CULT Guest — пароль на ресепшен'),
+                  );
+                  cultTapFeedback();
+                  showCultSnack(context, 'Подсказка Wi‑Fi скопирована');
                 },
               ),
             ],
@@ -824,11 +854,18 @@ class _TransferPageState extends State<TransferPage> {
   final _from = TextEditingController();
   var _done = false;
   var _error = '';
+  String? _when;
 
   @override
   void dispose() {
     _from.dispose();
     super.dispose();
+  }
+
+  String get _summary {
+    final when = _when;
+    return 'Трансфер CULT: ${_from.text.trim()} → Черноморская, 6'
+        '${when == null ? '' : ' · ко времени $when'}';
   }
 
   @override
@@ -853,137 +890,195 @@ class _TransferPageState extends State<TransferPage> {
               style: TextStyle(color: Cult.muted, height: 1.4),
             ),
             const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: ActionChip(
-                avatar: const Icon(Icons.copy_outlined, size: 18),
-                label: const Text('Скопировать адрес клиники'),
-                onPressed: () {
-                  Clipboard.setData(
-                    const ClipboardData(text: 'Сочи, Черноморская, 6'),
-                  );
-                  cultTapFeedback();
-                  showCultSnack(context, 'Адрес скопирован');
-                },
-              ),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ActionChip(
+                  avatar: const Icon(Icons.copy_outlined, size: 18),
+                  label: const Text('Адрес клиники'),
+                  onPressed: () {
+                    Clipboard.setData(
+                      const ClipboardData(text: 'Сочи, Черноморская, 6'),
+                    );
+                    cultTapFeedback();
+                    showCultSnack(context, 'Адрес скопирован');
+                  },
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.map_outlined, size: 18),
+                  label: const Text('Маршрут'),
+                  onPressed: () {
+                    cultTapFeedback();
+                    openExternal(
+                      'https://maps.google.com/?q=${Uri.encodeComponent('Сочи, Черноморская, 6')}',
+                      context: context,
+                    );
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: _done
-                ? CultCard(
-                    key: const ValueKey('transfer-done'),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF3EFEA),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.directions_car,
-                            color: Cult.primary,
-                            size: 34,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Text('Заявка принята', style: cultHeadline(22)),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Заберём с «${_from.text.trim()}». Водитель напишет в чат администратора.',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Cult.muted,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        CultButton(
-                          label: 'Открыть чат',
-                          onPressed: () => pushPage(
-                            context,
-                            const ChatThreadPage(contactId: 'admin'),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Clipboard.setData(
-                              ClipboardData(
-                                text:
-                                    'Трансфер CULT: ${_from.text.trim()} → Черноморская, 6',
+              duration: const Duration(milliseconds: 300),
+              child: _done
+                  ? Semantics(
+                      label: 'Заявка на трансфер принята',
+                      child: CultCard(
+                        key: const ValueKey('transfer-done'),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 64,
+                              height: 64,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFF3EFEA),
+                                shape: BoxShape.circle,
                               ),
+                              child: const Icon(
+                                Icons.directions_car,
+                                color: Cult.primary,
+                                size: 34,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Text('Заявка принята', style: cultHeadline(22)),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Заберём с «${_from.text.trim()}»'
+                              '${_when == null ? '' : ' ко времени $_when'}'
+                              '. Водитель напишет в чат администратора.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Cult.muted,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            CultButton(
+                              label: 'Открыть чат',
+                              onPressed: () => pushPage(
+                                context,
+                                const ChatThreadPage(contactId: 'admin'),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Clipboard.setData(
+                                  ClipboardData(text: _summary),
+                                );
+                                cultTapFeedback();
+                                showCultSnack(context, 'Заявка скопирована');
+                              },
+                              child: const Text('Скопировать заявку'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : Column(
+                      key: const ValueKey('transfer-form'),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextField(
+                          controller: _from,
+                          textCapitalization: TextCapitalization.sentences,
+                          textInputAction: TextInputAction.done,
+                          autofillHints: const [
+                            AutofillHints.fullStreetAddress,
+                            AutofillHints.streetAddressLine1,
+                          ],
+                          decoration: const InputDecoration(
+                            labelText: 'Откуда забрать',
+                            hintText: 'Отель, аэропорт или адрес',
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final place in const [
+                              'Аэропорт Сочи',
+                              'ЖД вокзал',
+                              'Отель Rixos',
+                              'Центр Сочи',
+                              'Красная Поляна',
+                            ])
+                              ActionChip(
+                                label: Text(place),
+                                onPressed: () {
+                                  cultTapFeedback();
+                                  setState(() {
+                                    _from.text = place;
+                                    _error = '';
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'Ко времени визита',
+                          style: TextStyle(
+                            color: Cult.muted,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final slot in const [
+                              'как можно скорее',
+                              'к 10:00',
+                              'к 12:00',
+                              'к 15:00',
+                              'к 18:00',
+                            ])
+                              ChoiceChip(
+                                label: Text(slot),
+                                selected: _when == slot,
+                                onSelected: (_) {
+                                  cultTapFeedback();
+                                  setState(() {
+                                    _when = _when == slot ? null : slot;
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                        if (_error.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          CultErrorBanner(message: _error),
+                        ],
+                        const SizedBox(height: 12),
+                        CultButton(
+                          label: 'Заказать',
+                          onPressed: () {
+                            if (_from.text.trim().length < 5) {
+                              setState(
+                                () =>
+                                    _error = 'Укажите адрес, откуда забрать.',
+                              );
+                              return;
+                            }
+                            store.sendMessage(
+                              'admin',
+                              'Трансфер: забрать с «${_from.text.trim()}» → Черноморская, 6'
+                              '${_when == null ? '' : ' · $_when'}.',
                             );
-                            cultTapFeedback();
-                            showCultSnack(context, 'Заявка скопирована');
+                            HapticFeedback.mediumImpact();
+                            setState(() {
+                              _error = '';
+                              _done = true;
+                            });
                           },
-                          child: const Text('Скопировать заявку'),
                         ),
                       ],
                     ),
-                  )
-                : Column(
-                    key: const ValueKey('transfer-form'),
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextField(
-                        controller: _from,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: const InputDecoration(
-                          labelText: 'Откуда забрать',
-                          hintText: 'Отель, аэропорт или адрес',
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final place in const [
-                            'Аэропорт Сочи',
-                            'ЖД вокзал',
-                            'Отель Rixos',
-                          ])
-                            ActionChip(
-                              label: Text(place),
-                              onPressed: () {
-                                cultTapFeedback();
-                                setState(() {
-                                  _from.text = place;
-                                  _error = '';
-                                });
-                              },
-                            ),
-                        ],
-                      ),
-                      if (_error.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        CultErrorBanner(message: _error),
-                      ],
-                      const SizedBox(height: 12),
-                      CultButton(
-                        label: 'Заказать',
-                        onPressed: () {
-                          if (_from.text.trim().length < 5) {
-                            setState(
-                              () => _error = 'Укажите адрес, откуда забрать.',
-                            );
-                            return;
-                          }
-                          store.sendMessage(
-                            'admin',
-                            'Трансфер: забрать с «${_from.text.trim()}» → Черноморская, 6.',
-                          );
-                          HapticFeedback.mediumImpact();
-                          setState(() {
-                            _error = '';
-                            _done = true;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
             ),
           ],
         ),
