@@ -619,7 +619,12 @@ class _VisitsPageState extends State<VisitsPage> {
                             Text(visit.service, style: cultHeadline(18)),
                             const SizedBox(height: 4),
                             Text(
-                              '${formatVisitDate(visit.date)} · ${visit.time}',
+                              () {
+                                final weekday = formatVisitWeekday(visit.date);
+                                return '${formatVisitDate(visit.date)}'
+                                    '${weekday.isEmpty ? '' : ', $weekday'}'
+                                    ' · ${visit.time}';
+                              }(),
                               style: const TextStyle(color: Cult.muted),
                             ),
                             Text(

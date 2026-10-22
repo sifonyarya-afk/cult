@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../data.dart';
 import '../theme.dart';
@@ -79,9 +80,26 @@ class HomePage extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(hello, style: cultHeadline(28)),
                 const SizedBox(height: 8),
-                Text(
-                  nextLine,
-                  style: const TextStyle(color: Cult.muted, height: 1.4),
+                GestureDetector(
+                  onLongPress: next == null
+                      ? null
+                      : () {
+                          final weekday = formatVisitWeekday(next.date);
+                          Clipboard.setData(
+                            ClipboardData(
+                              text:
+                                  '${next.service} · ${next.doctor}, ${formatVisitDate(next.date)}'
+                                  '${weekday.isEmpty ? '' : ' ($weekday)'}'
+                                  ' в ${next.time} · CULT Сочи',
+                            ),
+                          );
+                          cultTapFeedback();
+                          showCultSnack(context, 'Визит скопирован');
+                        },
+                  child: Text(
+                    nextLine,
+                    style: const TextStyle(color: Cult.muted, height: 1.4),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextButton(

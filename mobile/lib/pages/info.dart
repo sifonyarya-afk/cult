@@ -800,6 +800,7 @@ class CasePage extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: CultBookBar(
+        label: 'Записаться · ${item.procedure}',
         onPressed: () => pushPage(
           context,
           BookingPage(
@@ -905,6 +906,19 @@ class _TransferPageState extends State<TransferPage> {
                             context,
                             const ChatThreadPage(contactId: 'admin'),
                           ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Clipboard.setData(
+                              ClipboardData(
+                                text:
+                                    'Трансфер CULT: ${_from.text.trim()} → Черноморская, 6',
+                              ),
+                            );
+                            cultTapFeedback();
+                            showCultSnack(context, 'Заявка скопирована');
+                          },
+                          child: const Text('Скопировать заявку'),
                         ),
                       ],
                     ),

@@ -222,6 +222,8 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Купероз',
     'Реабилитация',
     'Противопоказания',
+    'Рассрочка',
+    'Оплата',
   ];
 
   @override
@@ -794,19 +796,35 @@ class _BookingPageState extends State<BookingPage> {
                         '17:30',
                       ]),
                       const SizedBox(height: 8),
-                      TextField(
-                        controller: _name,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: const InputDecoration(labelText: 'Имя'),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _phone,
-                        keyboardType: TextInputType.phone,
-                        inputFormatters: const [CultPhoneInputFormatter()],
-                        decoration: const InputDecoration(
-                          labelText: 'Телефон',
-                          hintText: '+7 (___) ___-__-__',
+                      AutofillGroup(
+                        child: Column(
+                          children: [
+                            TextField(
+                              controller: _name,
+                              textCapitalization: TextCapitalization.words,
+                              textInputAction: TextInputAction.next,
+                              autofillHints: const [AutofillHints.name],
+                              decoration: const InputDecoration(
+                                labelText: 'Имя',
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _phone,
+                              keyboardType: TextInputType.phone,
+                              textInputAction: TextInputAction.done,
+                              autofillHints: const [
+                                AutofillHints.telephoneNumber,
+                              ],
+                              inputFormatters: const [
+                                CultPhoneInputFormatter(),
+                              ],
+                              decoration: const InputDecoration(
+                                labelText: 'Телефон',
+                                hintText: '+7 (___) ___-__-__',
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       if (_error.isNotEmpty) CultErrorBanner(message: _error),
@@ -970,26 +988,46 @@ class _BookingPageState extends State<BookingPage> {
                         ],
                         const SizedBox(height: 6),
                         const _FieldLabel('Контакты'),
-                        TextField(
-                          controller: _name,
-                          textCapitalization: TextCapitalization.words,
-                          decoration: const InputDecoration(labelText: 'Имя'),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _phone,
-                          keyboardType: TextInputType.phone,
-                          inputFormatters: const [CultPhoneInputFormatter()],
-                          decoration: const InputDecoration(
-                            labelText: 'Телефон',
-                            hintText: '+7 (___) ___-__-__',
+                        AutofillGroup(
+                          child: Column(
+                            children: [
+                              TextField(
+                                controller: _name,
+                                textCapitalization: TextCapitalization.words,
+                                textInputAction: TextInputAction.next,
+                                autofillHints: const [AutofillHints.name],
+                                decoration: const InputDecoration(
+                                  labelText: 'Имя',
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: _phone,
+                                keyboardType: TextInputType.phone,
+                                textInputAction: TextInputAction.next,
+                                autofillHints: const [
+                                  AutofillHints.telephoneNumber,
+                                ],
+                                inputFormatters: const [
+                                  CultPhoneInputFormatter(),
+                                ],
+                                decoration: const InputDecoration(
+                                  labelText: 'Телефон',
+                                  hintText: '+7 (___) ___-__-__',
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: _email,
+                                keyboardType: TextInputType.emailAddress,
+                                textInputAction: TextInputAction.done,
+                                autofillHints: const [AutofillHints.email],
+                                decoration: const InputDecoration(
+                                  labelText: 'Почта',
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _email,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(labelText: 'Почта'),
                         ),
                         if (_askCode) ...[
                           const SizedBox(height: 8),

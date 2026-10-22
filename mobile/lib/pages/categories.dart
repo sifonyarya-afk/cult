@@ -898,33 +898,44 @@ class SciencePage extends StatelessWidget {
           ])
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  cultTapFeedback();
-                  pushPage(context, BookingPage(initialService: row.$2));
-                },
-                child: CultCard(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              row.$1.toUpperCase(),
-                              style: const TextStyle(
-                                color: Cult.muted,
-                                fontSize: 11,
-                                letterSpacing: 1,
+              child: Semantics(
+                button: true,
+                label: '${row.$1}, ${row.$2}',
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    cultTapFeedback();
+                    pushPage(context, BookingPage(initialService: row.$2));
+                  },
+                  onLongPress: () {
+                    Clipboard.setData(
+                      ClipboardData(text: '${row.$2} · CULT longevity'),
+                    );
+                    cultTapFeedback();
+                    showCultSnack(context, 'Протокол скопирован');
+                  },
+                  child: CultCard(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                row.$1.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Cult.muted,
+                                  fontSize: 11,
+                                  letterSpacing: 1,
+                                ),
                               ),
-                            ),
-                            Text(row.$2, style: cultHeadline(18)),
-                          ],
+                              Text(row.$2, style: cultHeadline(18)),
+                            ],
+                          ),
                         ),
-                      ),
-                      const Icon(Icons.arrow_forward, color: Cult.muted),
-                    ],
+                        const Icon(Icons.arrow_forward, color: Cult.muted),
+                      ],
+                    ),
                   ),
                 ),
               ),

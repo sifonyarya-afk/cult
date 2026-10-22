@@ -484,6 +484,16 @@ void main() {
     );
   });
 
+  test('Бот отвечает про рассрочку и оплату', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Есть рассрочка?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('рассрочк'));
+    store.sendMessage('bot', 'Как оплатить картой?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('оплат'));
+  });
+
   test('Бот и админ отвечают про отмену записи', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
