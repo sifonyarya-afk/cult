@@ -312,11 +312,17 @@ class _AboutRow extends StatelessWidget {
           const Icon(Icons.chevron_right, color: Cult.muted, size: 20),
       ],
     );
-    if (onTap == null) return row;
     return InkWell(
-      onTap: () {
+      onTap: onTap == null
+          ? null
+          : () {
+              cultTapFeedback();
+              onTap!();
+            },
+      onLongPress: () {
+        Clipboard.setData(ClipboardData(text: text));
         cultTapFeedback();
-        onTap!();
+        showCultSnack(context, 'Скопировано');
       },
       child: row,
     );

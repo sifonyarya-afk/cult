@@ -69,7 +69,8 @@ class HomePage extends StatelessWidget {
                 Text(
                   next == null
                       ? 'Рады видеть вас снова в CULT Clinic. Выберите услугу и врача.'
-                      : 'Следующая процедура: ${formatVisitDate(next.date)} в ${next.time}.',
+                      : 'Следующая: ${formatVisitDate(next.date)} в ${next.time}'
+                            '${next.doctor.trim().isEmpty ? '' : ' · ${next.doctor}'}.',
                   style: const TextStyle(color: Cult.muted, height: 1.4),
                 ),
                 const SizedBox(height: 12),
@@ -79,15 +80,42 @@ class HomePage extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     alignment: Alignment.centerLeft,
                   ),
-                  onPressed: () => pushPage(
-                    context,
-                    next == null ? const BookingPage() : const VisitsPage(),
-                  ),
+                  onPressed: () {
+                    cultTapFeedback();
+                    pushPage(
+                      context,
+                      next == null ? const BookingPage() : const VisitsPage(),
+                    );
+                  },
                   child: Text(next == null ? 'Записаться →' : 'Мои записи →'),
                 ),
               ],
             ),
           ),
+          if (store.welcomeGranted) ...[
+            const SizedBox(height: 12),
+            CultCard(
+              child: Row(
+                children: [
+                  const Icon(Icons.card_giftcard_outlined, color: Cult.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Welcome-бонус ${rub(store.welcomeBonus)} на балансе.',
+                      style: const TextStyle(height: 1.35),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      cultTapFeedback();
+                      pushPage(context, const CertificatesPage());
+                    },
+                    child: const Text('Сертификат'),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           GridView.count(
             crossAxisCount: 2,
@@ -259,10 +287,13 @@ class HomePage extends StatelessWidget {
                 ),
               ),
               TextButton(
-                onPressed: () => openExternal(
-                  'https://www.youtube.com/results?search_query=CULT+Clinic',
-                  context: context,
-                ),
+                onPressed: () {
+                  cultTapFeedback();
+                  openExternal(
+                    'https://www.youtube.com/results?search_query=CULT+Clinic',
+                    context: context,
+                  );
+                },
                 child: const Text('Смотреть канал'),
               ),
             ],

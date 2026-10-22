@@ -505,6 +505,7 @@ class _ShellState extends State<Shell> {
   }
 
   void _go(BuildContext sheetContext, Widget page) {
+    cultTapFeedback();
     Navigator.pop(sheetContext);
     pushPage(context, page);
   }

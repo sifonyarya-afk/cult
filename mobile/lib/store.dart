@@ -442,11 +442,11 @@ class ClinicStore extends ChangeNotifier {
   void rememberContact({
     required String name,
     required String phone,
-    required String email,
+    String email = '',
   }) {
     if (name.trim().isNotEmpty) profileName = name.trim();
     profilePhone = phone.trim();
-    profileEmail = email.trim();
+    if (email.trim().isNotEmpty) profileEmail = email.trim();
     _save();
   }
 
@@ -771,11 +771,23 @@ class ClinicStore extends ChangeNotifier {
       if (q.contains('прайс') || q.contains('цен') || q.contains('стоим')) {
         return 'Актуальный прайс филиала — в меню «Прайс». Там же можно сразу записаться на услугу.';
       }
+      if (q.contains('парков')) {
+        return 'Гостевая парковка у входа на Черноморской, 6. Места для клиентов CULT — бесплатно на время визита.';
+      }
+      if (q.contains('анализ') || q.contains('лаборатор') || q.contains('кровь')) {
+        return 'Анализы и протоколы — в кабинете → «Мои анализы». Запись на забор крови — через «+» или меню «Запись».';
+      }
+      if (q.contains('wifi') || q.contains('wi-fi') || q.contains('вайф')) {
+        return 'Wi‑Fi для гостей на ресепшен: сеть CULT Guest. Пароль выдаст администратор.';
+      }
       return 'Клиника открыта ежедневно с 9:00 до 21:00. Запись — в разделе «Запись» или через «+» на главной.';
     }
     if (contactId == 'specialist') {
       if (q.contains('отёк') || q.contains('сып') || q.contains('боль')) {
         return 'Не наносите активные средства. Опишите зону и когда была процедура — врач ответит в приоритете.';
+      }
+      if (q.contains('анализ') || q.contains('результат')) {
+        return 'Результаты появятся в кабинете → «Мои анализы». Если срочно — пришлите номер протокола.';
       }
       return 'Сообщение у врача. Если это отёк или сыпь после процедуры, не наносите активные средства до ответа.';
     }
@@ -787,6 +799,9 @@ class ClinicStore extends ChangeNotifier {
     }
     if (q.contains('сертификат')) {
       return 'Сертификат оформим в приложении или на ресепшен. Напишите номинал — подскажем оплату.';
+    }
+    if (q.contains('парков')) {
+      return 'Парковка у клиники свободная для гостей. Если места заняты — напишите, подскажем ближайший двор.';
     }
     return 'Администратор получил сообщение и ответит в часы клиники.';
   }

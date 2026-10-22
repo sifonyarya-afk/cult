@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../data.dart';
+import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import '../yclients.dart';
@@ -31,6 +32,7 @@ class _ShopPageState extends State<ShopPage>
 
   @override
   Widget build(BuildContext context) {
+    final store = ClinicScope.of(context);
     return Column(
       children: [
         Padding(
@@ -48,7 +50,7 @@ class _ShopPageState extends State<ShopPage>
                     label: const Text('ИИ Помощник'),
                     onPressed: () {
                       cultTapFeedback();
-                      _openAiPicker(context);
+                      _openAiPicker(context, store);
                     },
                   ),
                 ],
@@ -82,15 +84,42 @@ class _ShopPageState extends State<ShopPage>
             ],
           ),
         ),
+        if (store.cartCount > 0)
+          Material(
+            color: Cult.bg,
+            elevation: 8,
+            shadowColor: const Color(0x14000000),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+                child: CultButton(
+                  label:
+                      'Корзина · ${store.cartCount} · ${rub(store.cartTotal)}',
+                  onPressed: () => pushPage(context, const CartPage()),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
 }
 
-void _openAiPicker(BuildContext context) {
-  final pick = products.isEmpty
+void _openAiPicker(BuildContext context, ClinicStore store) {
+  final pool = products.where((item) {
+    if (store.gender == ClientGender.man) {
+      return item.tab == 'biohack' || item.tab == 'supplements';
+    }
+    if (store.gender == ClientGender.woman) {
+      return item.tab == 'cosmetics' || item.tab == 'supplements';
+    }
+    return true;
+  }).toList();
+  final source = pool.isEmpty ? products : pool;
+  final pick = source.isEmpty
       ? null
-      : products[DateTime.now().millisecond % products.length];
+      : source[DateTime.now().millisecond % source.length];
   showModalBottomSheet<void>(
     context: context,
     builder: (sheet) => SafeArea(
@@ -102,9 +131,11 @@ void _openAiPicker(BuildContext context) {
           children: [
             Text('ИИ-подбор', style: cultHeadline(26)),
             const SizedBox(height: 8),
-            const Text(
-              'По вашему профилю CULT рекомендуем формулу для домашнего протокола.',
-              style: TextStyle(color: Cult.muted, height: 1.4),
+            Text(
+              store.gender == null
+                  ? 'По вашему профилю CULT рекомендуем формулу для домашнего протокола.'
+                  : 'Подбор для профиля «${store.gender!.label}»: формула под домашний протокол.',
+              style: const TextStyle(color: Cult.muted, height: 1.4),
             ),
             if (pick != null) ...[
               const SizedBox(height: 16),
@@ -172,70 +203,82 @@ class _ProductListState extends State<_ProductList> {
       return item.name.toLowerCase().contains(needle) ||
           item.blurb.toLowerCase().contains(needle);
     }).toList();
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        CultSearchField(
-          controller: _query,
-          hint: 'Найти формулу',
-          onChanged: () => setState(() {}),
-        ),
-        const SizedBox(height: 16),
-        if (list.isEmpty)
-          CultEmpty(
-            title: 'Ничего не найдено',
-            note: 'Смягчите запрос или сбросьте поиск.',
-            actionLabel: 'Сбросить',
-            onAction: () {
-              _query.clear();
-              setState(() {});
-            },
-          )
-        else
-          for (final product in list) ...[
-            InkWell(
-              onTap: () => pushPage(context, ProductPage(product: product)),
-              child: Column(
-                children: [
-                  CultImage(product.image, radius: 12),
-                  const SizedBox(height: 10),
-                  Text(
-                    product.name,
-                    style: cultHeadline(22),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    product.blurb,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Cult.muted),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    rub(product.price),
-                    style: cultHeadline(22).copyWith(color: Cult.primary),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            CultButton(
-              label: 'В корзину',
-              onPressed: () {
-                store.addToCart(product.id, product.name, product.price);
-                showCultSnack(
-                  context,
-                  '${product.name} в корзине',
-                  actionLabel: 'Оформить',
-                  onAction: () => pushPage(context, const CartPage()),
-                );
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollStartNotification) {
+          FocusManager.instance.primaryFocus?.unfocus();
+        }
+        return false;
+      },
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+        children: [
+          CultSearchField(
+            controller: _query,
+            hint: 'Найти формулу',
+            onChanged: () => setState(() {}),
+          ),
+          const SizedBox(height: 16),
+          if (list.isEmpty)
+            CultEmpty(
+              title: 'Ничего не найдено',
+              note: 'Смягчите запрос или сбросьте поиск.',
+              actionLabel: 'Сбросить',
+              onAction: () {
+                _query.clear();
+                setState(() {});
               },
-            ),
-            const SizedBox(height: 28),
-          ],
-      ],
+            )
+          else
+            for (final product in list) ...[
+              InkWell(
+                onTap: () {
+                  cultTapFeedback();
+                  pushPage(context, ProductPage(product: product));
+                },
+                child: Column(
+                  children: [
+                    CultImage(product.image, radius: 12),
+                    const SizedBox(height: 10),
+                    Text(
+                      product.name,
+                      style: cultHeadline(22),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      product.blurb,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Cult.muted),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      rub(product.price),
+                      style: cultHeadline(22).copyWith(color: Cult.primary),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              CultButton(
+                label: 'В корзину',
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  store.addToCart(product.id, product.name, product.price);
+                  showCultSnack(
+                    context,
+                    '${product.name} в корзине',
+                    actionLabel: 'Оформить',
+                    onAction: () => pushPage(context, const CartPage()),
+                  );
+                },
+              ),
+              const SizedBox(height: 28),
+            ],
+        ],
+      ),
     );
   }
 }
@@ -318,7 +361,10 @@ class ProductPage extends StatelessWidget {
           if (store.cartCount > 0) ...[
             const SizedBox(height: 16),
             TextButton(
-              onPressed: () => pushPage(context, const CartPage()),
+              onPressed: () {
+                cultTapFeedback();
+                pushPage(context, const CartPage());
+              },
               child: Text('В корзине ${store.cartCount} · оформить'),
             ),
           ],
@@ -592,6 +638,11 @@ class _CartPageState extends State<CartPage> {
                   return;
                 }
                 final due = total - bonusPay;
+                store.rememberContact(
+                  name: _name.text,
+                  phone: _phone.text.trim(),
+                  email: store.profileEmail,
+                );
                 store.placeOrder(
                   title: store.cart.map((item) => item.name).join(', '),
                   total: due,

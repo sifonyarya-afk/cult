@@ -684,10 +684,13 @@ class LiveDoctorPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            onPressed: () => pushPage(
-              context,
-              const ChatThreadPage(contactId: 'specialist'),
-            ),
+            onPressed: () {
+              cultTapFeedback();
+              pushPage(
+                context,
+                const ChatThreadPage(contactId: 'specialist'),
+              );
+            },
             icon: const Icon(Icons.chat_bubble_outline),
             label: const Text(
               'ЧАТ С ВРАЧОМ',
@@ -770,10 +773,13 @@ class DoctorPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            onPressed: () => pushPage(
-              context,
-              const ChatThreadPage(contactId: 'specialist'),
-            ),
+            onPressed: () {
+              cultTapFeedback();
+              pushPage(
+                context,
+                const ChatThreadPage(contactId: 'specialist'),
+              );
+            },
             icon: const Icon(Icons.chat_bubble_outline),
             label: const Text(
               'ЧАТ С ВРАЧОМ',

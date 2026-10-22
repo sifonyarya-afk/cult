@@ -91,7 +91,32 @@ class ChatPage extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right, color: Cult.muted),
+                      Builder(
+                        builder: (_) {
+                          final thread = store.threads[contact.id] ?? [];
+                          final waiting =
+                              thread.isNotEmpty && thread.last.from == 'them';
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (waiting)
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  margin: const EdgeInsets.only(right: 6),
+                                  decoration: const BoxDecoration(
+                                    color: Cult.gold,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: Cult.muted,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -178,6 +203,8 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Бонусы',
     'Сертификат',
     'Трансфер',
+    'Парковка',
+    'Анализы',
   ];
 
   @override
@@ -295,7 +322,10 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                         size: 18,
                       ),
                       label: const Text('Записаться'),
-                      onPressed: () => pushPage(context, const BookingPage()),
+                      onPressed: () {
+                        cultTapFeedback();
+                        pushPage(context, const BookingPage());
+                      },
                     ),
                   ],
                 ],
@@ -899,6 +929,8 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   Widget _doneCard() {
+    final summary =
+        '$_service · $_doctor, ${formatVisitDate(_iso(_date!))} в $_time';
     return CultCard(
       child: Column(
         children: [
@@ -927,6 +959,14 @@ class _BookingPageState extends State<BookingPage> {
           CultButton(
             label: 'Мои записи',
             onPressed: () => pushPage(context, const VisitsPage()),
+          ),
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: summary));
+              cultTapFeedback();
+              showCultSnack(context, 'Детали записи скопированы');
+            },
+            child: const Text('Скопировать детали'),
           ),
           TextButton(
             onPressed: () {
@@ -1191,14 +1231,10 @@ class _ServiceSheetState extends State<_ServiceSheet> {
           children: [
             Text('Услуга', style: cultHeadline(28)),
             const SizedBox(height: 8),
-            TextField(
+            CultSearchField(
               controller: _query,
-              autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'Название или категория',
-                prefixIcon: Icon(Icons.search),
-              ),
-              onChanged: (_) => setState(() {}),
+              hint: 'Название или категория',
+              onChanged: () => setState(() {}),
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -1212,7 +1248,10 @@ class _ServiceSheetState extends State<_ServiceSheet> {
                   return ChoiceChip(
                     label: Text(group),
                     selected: _group == group,
-                    onSelected: (_) => setState(() => _group = group),
+                    onSelected: (_) {
+                      cultTapFeedback();
+                      setState(() => _group = group);
+                    },
                   );
                 },
               ),

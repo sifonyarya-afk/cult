@@ -7,6 +7,7 @@ import 'package:cult_clinic/pages/talk.dart';
 import 'package:cult_clinic/store.dart';
 import 'package:cult_clinic/theme.dart';
 import 'package:cult_clinic/widgets.dart';
+import 'package:cult_clinic/yclients.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -215,6 +216,35 @@ void main() {
       store.threads['admin']!.last.text.toLowerCase(),
       contains('трансфер'),
     );
+  });
+
+  test('Бот отвечает про парковку и анализы', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Где парковка?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('парков'));
+    store.sendMessage('bot', 'Хочу сдать анализы');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('анализ'));
+    store.sendMessage('admin', 'Есть парковка?');
+    expect(
+      store.threads['admin']!.last.text.toLowerCase(),
+      contains('парков'),
+    );
+  });
+
+  test('Корзина сохраняет контакт при оформлении', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.rememberContact(
+      name: 'Ирина К.',
+      phone: '+7 (900) 111-22-33',
+      email: 'irina@cult.sochi',
+    );
+    expect(store.profileName, 'Ирина К.');
+    expect(normalizePhone(store.profilePhone), '79001112233');
+    expect(store.profileEmail, 'irina@cult.sochi');
   });
 
   test('formatVisitDate понимает дату со временем', () {
