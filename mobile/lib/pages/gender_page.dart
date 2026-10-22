@@ -186,28 +186,33 @@ class _GenderCircle extends StatelessWidget {
       customBorder: const CircleBorder(),
       child: Column(
         children: [
-          AnimatedContainer(
+          AnimatedScale(
+            scale: selected ? 1.06 : 1,
             duration: const Duration(milliseconds: 220),
-            width: 68,
-            height: 68,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: selected ? 0.28 : 0.12),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: selected ? 0.85 : 0.35),
-                width: selected ? 1.6 : 1,
+            curve: Curves.easeOutCubic,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: selected ? 0.28 : 0.12),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: selected ? 0.85 : 0.35),
+                  width: selected ? 1.6 : 1,
+                ),
+                boxShadow: selected
+                    ? const [
+                        BoxShadow(
+                          color: Color(0x44000000),
+                          blurRadius: 16,
+                          offset: Offset(0, 6),
+                        ),
+                      ]
+                    : null,
               ),
-              boxShadow: selected
-                  ? const [
-                      BoxShadow(
-                        color: Color(0x44000000),
-                        blurRadius: 16,
-                        offset: Offset(0, 6),
-                      ),
-                    ]
-                  : null,
+              child: Icon(icon, color: Colors.white, size: 34),
             ),
-            child: Icon(icon, color: Colors.white, size: 34),
           ),
           const SizedBox(height: 12),
           Text(

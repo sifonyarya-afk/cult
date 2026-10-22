@@ -323,6 +323,20 @@ void main() {
       store.threads['bot']!.last.text.toLowerCase(),
       contains('консультац'),
     );
+    store.sendMessage('bot', 'Можно ли детям?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('18'));
+  });
+
+  test('Переписку можно очистить', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Хочу записаться');
+    expect(store.threads['bot']!.length, greaterThan(1));
+    store.clearChat('bot');
+    expect(store.threads['bot']!.length, 1);
+    expect(store.threads['bot']!.first.from, 'them');
+    expect(store.isChatUnread('bot'), isFalse);
   });
 
   test('Покупка сертификата пишет администратору', () async {

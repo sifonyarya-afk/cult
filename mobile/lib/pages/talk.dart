@@ -236,6 +236,32 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     });
   }
 
+  Future<void> _confirmClear(ClinicStore store) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Очистить переписку?'),
+        content: const Text(
+          'История сообщений на этом телефоне будет сброшена к приветствию.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Оставить'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Очистить', style: TextStyle(color: Cult.error)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    store.clearChat(widget.contactId);
+    HapticFeedback.mediumImpact();
+    showCultSnack(context, 'Переписка очищена');
+  }
+
   IconData _iconFor(String id) => switch (id) {
     'specialist' => Icons.medical_services_outlined,
     'bot' => Icons.smart_toy_outlined,
@@ -247,6 +273,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     final store = ClinicScope.of(context);
     final contact = contacts.firstWhere((item) => item.id == widget.contactId);
     final messages = store.threads[widget.contactId] ?? [];
+    final canClear = messages.any((m) => m.from == 'me');
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -263,6 +290,14 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
             ),
           ],
         ),
+        actions: [
+          if (canClear)
+            IconButton(
+              tooltip: 'Очистить переписку',
+              onPressed: () => _confirmClear(store),
+              icon: const Icon(Icons.delete_outline),
+            ),
+        ],
       ),
       body: Column(
         children: [

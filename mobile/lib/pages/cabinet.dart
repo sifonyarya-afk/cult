@@ -1554,6 +1554,22 @@ class _SettingsPageState extends State<SettingsPage> {
                 style: const TextStyle(color: Cult.muted),
               ),
             ),
+            if (store.profileEmail.trim().isNotEmpty) ...[
+              const SizedBox(height: 4),
+              InkWell(
+                onLongPress: () {
+                  Clipboard.setData(
+                    ClipboardData(text: store.profileEmail.trim()),
+                  );
+                  cultTapFeedback();
+                  showCultSnack(context, 'Почта скопирована');
+                },
+                child: Text(
+                  'Почта ${store.profileEmail.trim()}',
+                  style: const TextStyle(color: Cult.muted),
+                ),
+              ),
+            ],
             TextButton(
               onPressed: () {
                 cultTapFeedback();

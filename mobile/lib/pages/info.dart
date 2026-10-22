@@ -344,71 +344,116 @@ class _AboutRow extends StatelessWidget {
   }
 }
 
-class BlogPage extends StatelessWidget {
+class BlogPage extends StatefulWidget {
   const BlogPage({super.key});
 
   @override
+  State<BlogPage> createState() => _BlogPageState();
+}
+
+class _BlogPageState extends State<BlogPage> {
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final needle = _query.text.trim().toLowerCase();
+    final list = articles.where((article) {
+      if (needle.isEmpty) return true;
+      return article.title.toLowerCase().contains(needle) ||
+          article.author.toLowerCase().contains(needle) ||
+          article.kicker.toLowerCase().contains(needle);
+    }).toList();
     return Scaffold(
       appBar: AppBar(title: const Text('Блог')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        children: [
-          Text('CULT TV', style: cultHeadline(28)),
-          const SizedBox(height: 6),
-          const Text(
-            'Короткие разборы протоколов и новости клиники.',
-            style: TextStyle(color: Cult.muted),
-          ),
-          const SizedBox(height: 16),
-          for (final article in articles)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  cultTapFeedback();
-                  pushPage(context, ArticlePage(article: article));
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollStartNotification) {
+            FocusManager.instance.primaryFocus?.unfocus();
+          }
+          return false;
+        },
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          children: [
+            Text('CULT TV', style: cultHeadline(28)),
+            const SizedBox(height: 6),
+            const Text(
+              'Короткие разборы протоколов и новости клиники.',
+              style: TextStyle(color: Cult.muted),
+            ),
+            const SizedBox(height: 14),
+            CultSearchField(
+              controller: _query,
+              hint: 'Найти материал',
+              onChanged: () => setState(() {}),
+            ),
+            const SizedBox(height: 16),
+            if (list.isEmpty)
+              CultEmpty(
+                title: 'Ничего не найдено',
+                note: 'Смягчите запрос или сбросьте поиск.',
+                actionLabel: 'Сбросить',
+                onAction: () {
+                  _query.clear();
+                  setState(() {});
                 },
-                child: CultCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CultImage(article.image, aspect: 16 / 9, radius: 16),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              article.kicker.toUpperCase(),
-                              style: const TextStyle(
-                                color: Cult.primary,
-                                letterSpacing: 1.1,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
+              )
+            else
+              for (final article in list)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      cultTapFeedback();
+                      pushPage(context, ArticlePage(article: article));
+                    },
+                    child: CultCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CultImage(article.image, aspect: 16 / 9, radius: 16),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  article.kicker.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Cult.primary,
+                                    letterSpacing: 1.1,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(article.title, style: cultHeadline(22)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  article.author,
+                                  style: const TextStyle(
+                                    color: Cult.muted,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(article.title, style: cultHeadline(22)),
-                            const SizedBox(height: 4),
-                            Text(
-                              article.author,
-                              style: const TextStyle(
-                                color: Cult.muted,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -598,32 +643,39 @@ class _TransferPageState extends State<TransferPage> {
     final store = ClinicScope.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Трансфер')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        children: [
-          Text('VIP-такси до клиники', style: cultHeadline(28)),
-          const SizedBox(height: 8),
-          const Text(
-            'Адрес клиники: Сочи, Черноморская, 6. Машина подаётся к указанному адресу.',
-            style: TextStyle(color: Cult.muted, height: 1.4),
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ActionChip(
-              avatar: const Icon(Icons.copy_outlined, size: 18),
-              label: const Text('Скопировать адрес клиники'),
-              onPressed: () {
-                Clipboard.setData(
-                  const ClipboardData(text: 'Сочи, Черноморская, 6'),
-                );
-                cultTapFeedback();
-                showCultSnack(context, 'Адрес скопирован');
-              },
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollStartNotification) {
+            FocusManager.instance.primaryFocus?.unfocus();
+          }
+          return false;
+        },
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          children: [
+            Text('VIP-такси до клиники', style: cultHeadline(28)),
+            const SizedBox(height: 8),
+            const Text(
+              'Адрес клиники: Сочи, Черноморская, 6. Машина подаётся к указанному адресу.',
+              style: TextStyle(color: Cult.muted, height: 1.4),
             ),
-          ),
-          const SizedBox(height: 16),
-          AnimatedSwitcher(
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ActionChip(
+                avatar: const Icon(Icons.copy_outlined, size: 18),
+                label: const Text('Скопировать адрес клиники'),
+                onPressed: () {
+                  Clipboard.setData(
+                    const ClipboardData(text: 'Сочи, Черноморская, 6'),
+                  );
+                  cultTapFeedback();
+                  showCultSnack(context, 'Адрес скопирован');
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: _done
                 ? CultCard(
@@ -704,8 +756,9 @@ class _TransferPageState extends State<TransferPage> {
                       ),
                     ],
                   ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

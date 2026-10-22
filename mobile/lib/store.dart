@@ -314,13 +314,14 @@ class ClinicStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  static const _chatSeeds = {
+    'admin': 'Здравствуйте. Помогу с записью, трансфером и сертификатом.',
+    'bot': 'Я ассистент CULT. Спросите про услуги, часы или запись.',
+    'specialist': 'Здравствуйте. Я на связи по уходу после процедур.',
+  };
+
   void _seedThreads() {
-    const seeds = {
-      'admin': 'Здравствуйте. Помогу с записью, трансфером и сертификатом.',
-      'bot': 'Я ассистент CULT. Спросите про услуги, часы или запись.',
-      'specialist': 'Здравствуйте. Я на связи по уходу после процедур.',
-    };
-    for (final entry in seeds.entries) {
+    for (final entry in _chatSeeds.entries) {
       if (threads.containsKey(entry.key)) continue;
       final seed = ChatMessage(
         id: '${entry.key}-seed',
@@ -331,6 +332,19 @@ class ClinicStore extends ChangeNotifier {
       // Welcome seeds are not "new" replies — badge only for later messages.
       chatRead.putIfAbsent(entry.key, () => seed.id);
     }
+  }
+
+  void clearChat(String contactId) {
+    final text =
+        _chatSeeds[contactId] ?? 'Здравствуйте. Чем можем помочь?';
+    final seed = ChatMessage(
+      id: '$contactId-seed-${DateTime.now().microsecondsSinceEpoch}',
+      from: 'them',
+      text: text,
+    );
+    threads[contactId] = [seed];
+    chatRead[contactId] = seed.id;
+    _save();
   }
 
   Future<void> _save() async {
@@ -843,6 +857,12 @@ class ClinicStore extends ChangeNotifier {
       }
       if (q.contains('консультац')) {
         return 'Консультацию можно открыть через «+» на главной или в карточке врача. Первый визит часто начинается с осмотра.';
+      }
+      if (q.contains('дет') ||
+          q.contains('ребён') ||
+          q.contains('ребен') ||
+          q.contains('несовершеннолет')) {
+        return 'Большинство эстетических протоколов — с 18 лет. Для подростков нужна очная консультация врача и согласие опекуна.';
       }
       return 'Клиника открыта ежедневно с 9:00 до 21:00. Запись — в разделе «Запись» или через «+» на главной.';
     }
