@@ -23,6 +23,14 @@ class HomePage extends StatelessWidget {
     final hello = first.isEmpty || first == 'Гость'
         ? part
         : '$first, ${part[0].toLowerCase()}${part.substring(1)}';
+    final nextLine = next == null
+        ? 'Рады видеть вас снова в CULT Clinic. Выберите услугу и врача.'
+        : () {
+            final wait = formatVisitCountdown(next.date, next.time);
+            return 'Следующая: ${formatVisitDate(next.date)} в ${next.time}'
+                '${next.doctor.trim().isEmpty ? '' : ' · ${next.doctor}'}'
+                '${wait.isEmpty ? '' : ' · $wait'}.';
+          }();
     return RefreshIndicator(
       color: Cult.primary,
       onRefresh: () => store.syncClinic(),
@@ -69,10 +77,7 @@ class HomePage extends StatelessWidget {
                 Text(hello, style: cultHeadline(28)),
                 const SizedBox(height: 8),
                 Text(
-                  next == null
-                      ? 'Рады видеть вас снова в CULT Clinic. Выберите услугу и врача.'
-                      : 'Следующая: ${formatVisitDate(next.date)} в ${next.time}'
-                            '${next.doctor.trim().isEmpty ? '' : ' · ${next.doctor}'}.',
+                  nextLine,
                   style: const TextStyle(color: Cult.muted, height: 1.4),
                 ),
                 const SizedBox(height: 12),

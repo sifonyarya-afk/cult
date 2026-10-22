@@ -409,37 +409,41 @@ class _Bubble extends StatelessWidget {
   Widget build(BuildContext context) {
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-      child: GestureDetector(
-        onLongPress: () {
-          Clipboard.setData(ClipboardData(text: text));
-          cultTapFeedback();
-          showCultSnack(context, 'Сообщение скопировано');
-        },
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          constraints: const BoxConstraints(maxWidth: 290),
-          decoration: BoxDecoration(
-            color: mine ? Cult.ink : Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(18),
-              topRight: const Radius.circular(18),
-              bottomLeft: Radius.circular(mine ? 18 : 4),
-              bottomRight: Radius.circular(mine ? 4 : 18),
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0F000000),
-                blurRadius: 10,
-                offset: Offset(0, 3),
+      child: Semantics(
+        label: mine ? 'Ваше сообщение' : 'Ответ клиники',
+        hint: 'Удерживайте, чтобы скопировать',
+        child: GestureDetector(
+          onLongPress: () {
+            Clipboard.setData(ClipboardData(text: text));
+            cultTapFeedback();
+            showCultSnack(context, 'Сообщение скопировано');
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            constraints: const BoxConstraints(maxWidth: 290),
+            decoration: BoxDecoration(
+              color: mine ? Cult.ink : Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(18),
+                topRight: const Radius.circular(18),
+                bottomLeft: Radius.circular(mine ? 18 : 4),
+                bottomRight: Radius.circular(mine ? 4 : 18),
               ),
-            ],
-          ),
-          child: Text(
-            text,
-            style: TextStyle(
-              color: mine ? Colors.white : Cult.ink,
-              height: 1.35,
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x0F000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Text(
+              text,
+              style: TextStyle(
+                color: mine ? Colors.white : Cult.ink,
+                height: 1.35,
+              ),
             ),
           ),
         ),

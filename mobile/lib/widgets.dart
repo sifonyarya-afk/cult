@@ -275,7 +275,10 @@ class CultErrorBanner extends StatelessWidget {
                 foregroundColor: Cult.primary,
                 padding: EdgeInsets.zero,
               ),
-              onPressed: onRetry,
+              onPressed: () {
+                cultTapFeedback();
+                onRetry!();
+              },
               child: Text(retryLabel),
             ),
           ],

@@ -22,21 +22,28 @@ class CabinetPage extends StatelessWidget {
     final name = store.displayName.trim().isEmpty
         ? 'Гость CULT'
         : store.displayName;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-      children: [
-        Center(
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: SizedBox(
-                  width: 108,
-                  height: 108,
-                  child: CultImage('avatar', aspect: 1, radius: 0),
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollStartNotification) {
+          FocusManager.instance.primaryFocus?.unfocus();
+        }
+        return false;
+      },
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+        children: [
+          Center(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: SizedBox(
+                    width: 108,
+                    height: 108,
+                    child: CultImage('avatar', aspect: 1, radius: 0),
+                  ),
                 ),
-              ),
               Positioned(
                 right: -4,
                 bottom: -4,
@@ -327,7 +334,8 @@ class CabinetPage extends StatelessWidget {
             ),
           ),
         ],
-      ],
+        ],
+      ),
     );
   }
 }
@@ -496,7 +504,14 @@ class _VisitsPageState extends State<VisitsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${formatVisitDate(visit.date)} · ${visit.time}',
+                              () {
+                                final wait = formatVisitCountdown(
+                                  visit.date,
+                                  visit.time,
+                                );
+                                return '${formatVisitDate(visit.date)} · ${visit.time}'
+                                    '${wait.isEmpty ? '' : ' · $wait'}';
+                              }(),
                               style: const TextStyle(
                                 color: Cult.secondary,
                                 letterSpacing: 0.6,
@@ -518,16 +533,30 @@ class _VisitsPageState extends State<VisitsPage> {
                                 fontSize: 12,
                               ),
                             ),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () =>
-                                    _confirmCancel(store, visit.id),
-                                child: const Text(
-                                  'Отменить',
-                                  style: TextStyle(color: Cult.error),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton(
+                                  onPressed: () {
+                                    cultTapFeedback();
+                                    pushPage(
+                                      context,
+                                      const ChatThreadPage(
+                                        contactId: 'specialist',
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('Написать врачу'),
                                 ),
-                              ),
+                                TextButton(
+                                  onPressed: () =>
+                                      _confirmCancel(store, visit.id),
+                                  child: const Text(
+                                    'Отменить',
+                                    style: TextStyle(color: Cult.error),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

@@ -150,3 +150,34 @@ String formatVisitDate(String iso) {
   if (delta == -1) return 'вчера';
   return '$day ${months[month - 1]}';
 }
+
+/// Relative countdown to a visit datetime, e.g. `через 3 ч`. Empty if past/invalid.
+String formatVisitCountdown(String iso, String time) {
+  final clean = iso.trim().split('T').first.split(' ').first;
+  final dateParts = clean.split('-');
+  if (dateParts.length != 3) return '';
+  final year = int.tryParse(dateParts[0]);
+  final month = int.tryParse(dateParts[1]);
+  final day = int.tryParse(dateParts[2].split('.').first);
+  final clock = time.trim().split(':');
+  if (year == null ||
+      month == null ||
+      day == null ||
+      clock.isEmpty ||
+      month < 1 ||
+      month > 12) {
+    return '';
+  }
+  final hour = int.tryParse(clock[0]) ?? 0;
+  final minute = clock.length > 1 ? (int.tryParse(clock[1]) ?? 0) : 0;
+  final at = DateTime(year, month, day, hour, minute);
+  final diff = at.difference(DateTime.now());
+  if (diff.isNegative) return '';
+  if (diff.inMinutes < 60) {
+    final m = diff.inMinutes.clamp(1, 59);
+    return 'через $m мин';
+  }
+  if (diff.inHours < 24) return 'через ${diff.inHours} ч';
+  if (diff.inDays == 1) return 'завтра';
+  return 'через ${diff.inDays} дн.';
+}

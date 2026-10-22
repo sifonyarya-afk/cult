@@ -169,11 +169,25 @@ void _openAiPicker(BuildContext context, ClinicStore store) {
               ),
               const SizedBox(height: 14),
               CultButton(
-                label: 'Открыть формулу',
+                label: 'В корзину · ${rub(pick.price)}',
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  store.addToCart(pick.id, pick.name, pick.price);
+                  Navigator.pop(sheet);
+                  showCultSnack(
+                    context,
+                    '${pick.name} в корзине',
+                    actionLabel: 'Оформить',
+                    onAction: () => pushPage(context, const CartPage()),
+                  );
+                },
+              ),
+              TextButton(
                 onPressed: () {
                   Navigator.pop(sheet);
                   pushPage(context, ProductPage(product: pick));
                 },
+                child: const Text('Открыть карточку'),
               ),
             ],
           ],

@@ -301,6 +301,30 @@ void main() {
     );
   });
 
+  test('formatVisitCountdown считает ожидание', () {
+    final soon = DateTime.now().add(const Duration(hours: 3, minutes: 5));
+    String iso(DateTime d) =>
+        '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    final clock =
+        '${soon.hour.toString().padLeft(2, '0')}:${soon.minute.toString().padLeft(2, '0')}';
+    expect(formatVisitCountdown(iso(soon), clock), 'через 3 ч');
+    final past = DateTime.now().subtract(const Duration(hours: 2));
+    final pastClock =
+        '${past.hour.toString().padLeft(2, '0')}:${past.minute.toString().padLeft(2, '0')}';
+    expect(formatVisitCountdown(iso(past), pastClock), isEmpty);
+  });
+
+  test('Бот отвечает про консультацию', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Нужна консультация');
+    expect(
+      store.threads['bot']!.last.text.toLowerCase(),
+      contains('консультац'),
+    );
+  });
+
   test('Покупка сертификата пишет администратору', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
