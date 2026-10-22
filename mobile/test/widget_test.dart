@@ -39,9 +39,10 @@ void main() {
     await store.load();
     await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
     await tester.pumpAndSettle();
-    expect(find.text('Для кого протокол?'), findsOneWidget);
-    expect(find.text('Женщина'), findsOneWidget);
-    expect(find.text('Мужчина'), findsOneWidget);
+    expect(find.textContaining('Ваш путь к совершенству'), findsOneWidget);
+    expect(find.text('ЖЕНЩИНА'), findsOneWidget);
+    expect(find.text('МУЖЧИНА'), findsOneWidget);
+    expect(find.text('НАЧАТЬ'), findsOneWidget);
   });
 
   test('Запись отменяется, бонусов не хватает на крупный сертификат', () async {
