@@ -63,15 +63,24 @@ class _GenderPageState extends State<GenderPage> {
               padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
               child: Column(
                 children: [
-                  Text(
-                    'CULT',
-                    style: cultHeadline(40).copyWith(
-                      color: Colors.white,
-                      letterSpacing: 10,
-                      fontWeight: FontWeight.w500,
-                      shadows: const [
-                        Shadow(color: Color(0x66000000), blurRadius: 12),
-                      ],
+                  GestureDetector(
+                    onLongPress: () {
+                      Clipboard.setData(
+                        const ClipboardData(text: 'CULT Clinic · Сочи'),
+                      );
+                      HapticFeedback.selectionClick();
+                      showCultSnack(context, 'CULT скопирован');
+                    },
+                    child: Text(
+                      'CULT',
+                      style: cultHeadline(40).copyWith(
+                        color: Colors.white,
+                        letterSpacing: 10,
+                        fontWeight: FontWeight.w500,
+                        shadows: const [
+                          Shadow(color: Color(0x66000000), blurRadius: 12),
+                        ],
+                      ),
                     ),
                   ),
                   Expanded(

@@ -256,6 +256,8 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Блог CULT TV',
     'Кейсы',
     'Команда врачей',
+    'ИИ-подбор',
+    'Состав средств',
   ];
 
   static const _followUp = <String>[

@@ -1390,7 +1390,18 @@ class _LoyaltyPageState extends State<LoyaltyPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(rub(store.balance), style: cultHeadline(36)),
+                  GestureDetector(
+                    onLongPress: () {
+                      Clipboard.setData(
+                        ClipboardData(
+                          text: 'Баланс клуба CULT: ${rub(store.balance)}',
+                        ),
+                      );
+                      cultTapFeedback();
+                      showCultSnack(context, 'Баланс скопирован');
+                    },
+                    child: Text(rub(store.balance), style: cultHeadline(36)),
+                  ),
                   if (store.welcomeGranted)
                     Text(
                       'включая welcome ${rub(store.welcomeBonus)}',

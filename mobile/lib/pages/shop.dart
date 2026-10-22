@@ -189,6 +189,33 @@ void _openAiPicker(BuildContext context, ClinicStore store) {
                 },
                 child: const Text('Открыть карточку'),
               ),
+              TextButton(
+                onPressed: () {
+                  Clipboard.setData(
+                    ClipboardData(
+                      text:
+                          'ИИ-подбор CULT: ${pick.name} · ${rub(pick.price)} — ${pick.blurb}',
+                    ),
+                  );
+                  cultTapFeedback();
+                  showCultSnack(context, 'Рекомендация скопирована');
+                },
+                child: const Text('Скопировать подбор'),
+              ),
+              TextButton(
+                onPressed: () {
+                  store.sendMessage(
+                    'bot',
+                    'Расскажите про формулу «${pick.name}»',
+                  );
+                  Navigator.pop(sheet);
+                  showCultSnack(
+                    context,
+                    'Спросили бота — откройте вкладку Чат',
+                  );
+                },
+                child: const Text('Спросить бота'),
+              ),
             ],
           ],
         ),
@@ -209,6 +236,7 @@ class _ProductList extends StatefulWidget {
 class _ProductListState extends State<_ProductList> {
   final _query = TextEditingController();
   var _cheapFirst = false;
+  var _inStockOnly = false;
 
   @override
   void dispose() {
@@ -222,9 +250,11 @@ class _ProductListState extends State<_ProductList> {
     final needle = _query.text.trim().toLowerCase();
     final list = products.where((item) {
       if (item.tab != widget.tab) return false;
+      if (_inStockOnly && item.stock == 'low') return false;
       if (needle.isEmpty) return true;
       return item.name.toLowerCase().contains(needle) ||
-          item.blurb.toLowerCase().contains(needle);
+          item.blurb.toLowerCase().contains(needle) ||
+          item.composition.toLowerCase().contains(needle);
     }).toList();
     if (_cheapFirst) {
       list.sort((a, b) => a.price.compareTo(b.price));
@@ -245,18 +275,46 @@ class _ProductListState extends State<_ProductList> {
             onChanged: () => setState(() {}),
           ),
           const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FilterChip(
-              label: const Text('Сначала дешевле'),
-              selected: _cheapFirst,
-              onSelected: (value) {
-                cultTapFeedback();
-                setState(() => _cheapFirst = value);
-              },
-            ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilterChip(
+                label: const Text('Сначала дешевле'),
+                selected: _cheapFirst,
+                onSelected: (value) {
+                  cultTapFeedback();
+                  setState(() => _cheapFirst = value);
+                },
+              ),
+              FilterChip(
+                label: const Text('Без «мало»'),
+                selected: _inStockOnly,
+                onSelected: (value) {
+                  cultTapFeedback();
+                  setState(() => _inStockOnly = value);
+                },
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          if (list.isNotEmpty)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () {
+                  final text = list
+                      .map((item) => '· ${item.name} — ${rub(item.price)}')
+                      .join('\n');
+                  Clipboard.setData(
+                    ClipboardData(text: 'Шоп CULT\n$text'),
+                  );
+                  cultTapFeedback();
+                  showCultSnack(context, 'Список скопирован');
+                },
+                child: Text('Скопировать список · ${list.length}'),
+              ),
+            ),
+          const SizedBox(height: 4),
           if (list.isEmpty)
             CultEmpty(
               title: 'Ничего не найдено',
@@ -431,21 +489,48 @@ class ProductPage extends StatelessWidget {
               );
               showCultSnack(
                 context,
-                'Сообщение врачу отправлено — откройте Чат',
+                'Сообщение врачу отправлено — откройте вкладку Чат',
               );
             },
             child: const Text('Спросить врача о формуле'),
           ),
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(
+                ClipboardData(
+                  text:
+                      '${product.name}\n${rub(product.price)}\nСостав: ${product.composition}\n\n${product.about}',
+                ),
+              );
+              cultTapFeedback();
+              showCultSnack(context, 'Карточка скопирована');
+            },
+            child: const Text('Скопировать карточку'),
+          ),
           const SizedBox(height: 8),
           const CultSectionLabel('Состав'),
           const SizedBox(height: 8),
-          Text(product.composition, style: const TextStyle(height: 1.4)),
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: product.composition));
+              cultTapFeedback();
+              showCultSnack(context, 'Состав скопирован');
+            },
+            child: Text(product.composition, style: const TextStyle(height: 1.4)),
+          ),
           const SizedBox(height: 16),
           const CultSectionLabel('О формуле'),
           const SizedBox(height: 8),
-          Text(
-            product.about,
-            style: const TextStyle(color: Cult.muted, height: 1.4),
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: product.about));
+              cultTapFeedback();
+              showCultSnack(context, 'Описание скопировано');
+            },
+            child: Text(
+              product.about,
+              style: const TextStyle(color: Cult.muted, height: 1.4),
+            ),
           ),
           if (store.cartCount > 0) ...[
             const SizedBox(height: 16),

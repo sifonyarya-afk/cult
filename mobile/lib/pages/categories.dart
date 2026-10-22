@@ -132,7 +132,27 @@ class _HardwareCosmeticsPageState extends State<HardwareCosmeticsPage> {
             hint: 'Найти аппарат',
             onChanged: () => setState(() {}),
           ),
-          const SizedBox(height: 18),
+          if (filtered.isNotEmpty)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () {
+                  final text = filtered
+                      .map(
+                        (device) =>
+                            '· ${device.title} — ${device.price} (${device.meta})',
+                      )
+                      .join('\n');
+                  Clipboard.setData(
+                    ClipboardData(text: 'Аппаратная CULT\n$text'),
+                  );
+                  cultTapFeedback();
+                  showCultSnack(context, 'Список скопирован');
+                },
+                child: Text('Скопировать список · ${filtered.length}'),
+              ),
+            ),
+          const SizedBox(height: 10),
           Text(
             'ПРОЦЕДУРЫ',
             style: cultHeadline(
@@ -992,9 +1012,16 @@ class DevicePage extends StatelessWidget {
             },
             child: Text(device.title, style: cultHeadline(32)),
           ),
-          Text(
-            device.text,
-            style: const TextStyle(color: Cult.muted, height: 1.35),
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: device.text));
+              cultTapFeedback();
+              showCultSnack(context, 'Описание скопировано');
+            },
+            child: Text(
+              device.text,
+              style: const TextStyle(color: Cult.muted, height: 1.35),
+            ),
           ),
           const SizedBox(height: 10),
           TextButton(
@@ -1004,12 +1031,28 @@ class DevicePage extends StatelessWidget {
                 'Вопрос по аппарату «${device.title}» (${device.price}).',
               );
               cultTapFeedback();
-              showCultSnack(
+              pushPage(
                 context,
-                'Сообщение врачу отправлено — откройте Чат',
+                const ChatThreadPage(contactId: 'specialist'),
               );
             },
             child: const Text('Спросить врача'),
+          ),
+          TextButton(
+            onPressed: () {
+              final bits = <String>[
+                summary,
+                if (device.text.isNotEmpty) device.text,
+                if (device.indications.isNotEmpty)
+                  'Показания: ${device.indications.join(', ')}',
+                if (device.benefits.isNotEmpty)
+                  'Эффект: ${device.benefits.join(', ')}',
+              ];
+              Clipboard.setData(ClipboardData(text: bits.join('\n')));
+              cultTapFeedback();
+              showCultSnack(context, 'Карточка скопирована');
+            },
+            child: const Text('Скопировать карточку'),
           ),
           const SizedBox(height: 4),
           Wrap(
@@ -1077,14 +1120,21 @@ class DevicePage extends StatelessWidget {
             for (final item in device.indications)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: Row(
-                  children: [
-                    const Icon(Icons.circle, size: 6, color: Cult.primary),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(item, style: const TextStyle(height: 1.35)),
-                    ),
-                  ],
+                child: GestureDetector(
+                  onLongPress: () {
+                    Clipboard.setData(ClipboardData(text: item));
+                    cultTapFeedback();
+                    showCultSnack(context, 'Показание скопировано');
+                  },
+                  child: Row(
+                    children: [
+                      const Icon(Icons.circle, size: 6, color: Cult.primary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(item, style: const TextStyle(height: 1.35)),
+                      ),
+                    ],
+                  ),
                 ),
               ),
           ],
@@ -1094,18 +1144,25 @@ class DevicePage extends StatelessWidget {
             for (final item in device.benefits)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.check_circle,
-                      color: Cult.primary,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(item, style: const TextStyle(height: 1.35)),
-                    ),
-                  ],
+                child: GestureDetector(
+                  onLongPress: () {
+                    Clipboard.setData(ClipboardData(text: item));
+                    cultTapFeedback();
+                    showCultSnack(context, 'Пункт скопирован');
+                  },
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle,
+                        color: Cult.primary,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(item, style: const TextStyle(height: 1.35)),
+                      ),
+                    ],
+                  ),
                 ),
               ),
           ],

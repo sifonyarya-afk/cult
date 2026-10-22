@@ -580,6 +580,20 @@ void main() {
     expect(store.threads['bot']!.last.text.toLowerCase(), contains('врач'));
   });
 
+  test('Бот отвечает про шоп, состав и наличие', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Где биохакинг-шоп?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('магазин'));
+    store.sendMessage('bot', 'Как работает ИИ-подбор?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('помощник'));
+    store.sendMessage('bot', 'Где смотреть состав средств?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('состав'));
+    store.sendMessage('bot', 'Есть ли в наличии формулы?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('остат'));
+  });
+
   test('Бот и админ отвечают про отмену записи', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
