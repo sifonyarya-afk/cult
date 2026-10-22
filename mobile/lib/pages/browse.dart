@@ -1062,8 +1062,18 @@ class DoctorPage extends StatelessWidget {
           for (final review in doctor.reviews.take(2))
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: CultCard(
-                child: Text('«$review»', style: const TextStyle(height: 1.35)),
+              child: GestureDetector(
+                onLongPress: () {
+                  Clipboard.setData(ClipboardData(text: review));
+                  cultTapFeedback();
+                  showCultSnack(context, 'Отзыв скопирован');
+                },
+                child: CultCard(
+                  child: Text(
+                    '«$review»',
+                    style: const TextStyle(height: 1.35),
+                  ),
+                ),
               ),
             ),
         ],

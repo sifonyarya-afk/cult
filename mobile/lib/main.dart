@@ -556,6 +556,16 @@ class _ShellState extends State<Shell> {
               onTap: () => _go(sheetContext, const FavoritesPage()),
             ),
             ListTile(
+              leading: const Icon(Icons.receipt_long_outlined),
+              title: const Text('Мои заказы'),
+              onTap: () => _go(sheetContext, const OrdersPage()),
+            ),
+            ListTile(
+              leading: const Icon(Icons.loyalty_outlined),
+              title: const Text('Лояльность'),
+              onTap: () => _go(sheetContext, const LoyaltyPage()),
+            ),
+            ListTile(
               leading: const Icon(Icons.directions_car_outlined),
               title: const Text('Трансфер'),
               onTap: () => _go(sheetContext, const TransferPage()),

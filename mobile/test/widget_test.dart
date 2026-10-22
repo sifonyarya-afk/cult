@@ -492,6 +492,8 @@ void main() {
     expect(store.threads['bot']!.last.text.toLowerCase(), contains('рассрочк'));
     store.sendMessage('bot', 'Как оплатить картой?');
     expect(store.threads['bot']!.last.text.toLowerCase(), contains('оплат'));
+    store.sendMessage('bot', 'Какой телефон клиники?');
+    expect(store.threads['bot']!.last.text, contains('495'));
   });
 
   test('Бот и админ отвечают про отмену записи', () async {

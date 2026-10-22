@@ -1370,8 +1370,15 @@ class _LoyaltyPageState extends State<LoyaltyPage> {
           for (final rule in loyaltyRules)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: CultCard(
-                child: Text(rule, style: const TextStyle(height: 1.35)),
+              child: GestureDetector(
+                onLongPress: () {
+                  Clipboard.setData(ClipboardData(text: rule));
+                  cultTapFeedback();
+                  showCultSnack(context, 'Правило скопировано');
+                },
+                child: CultCard(
+                  child: Text(rule, style: const TextStyle(height: 1.35)),
+                ),
               ),
             ),
           const SizedBox(height: 10),
