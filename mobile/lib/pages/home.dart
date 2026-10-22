@@ -27,6 +27,14 @@ class HomePage extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
         children: [
+          if (store.syncing)
+            const CultLoading(label: 'Синхронизация с филиалом…'),
+          if (store.liveError.isNotEmpty)
+            CultErrorBanner(
+              message: store.liveError,
+              onRetry: () => store.syncClinic(),
+              retryLabel: 'Обновить',
+            ),
           CultCard(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
             child: Column(

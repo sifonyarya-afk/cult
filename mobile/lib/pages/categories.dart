@@ -523,12 +523,15 @@ class SciencePage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
+          CultImage('science', aspect: 16 / 9, radius: 18),
+          const SizedBox(height: 16),
           const Text(
             'АКТУАЛЬНОЕ',
             style: TextStyle(
               color: Cult.secondary,
               letterSpacing: 1.6,
               fontSize: 11,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
@@ -536,9 +539,9 @@ class SciencePage extends StatelessWidget {
           const SizedBox(height: 8),
           const Text(
             'Короткие разборы протоколов CULT.',
-            style: TextStyle(color: Cult.muted),
+            style: TextStyle(color: Cult.muted, height: 1.4),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           CultButton(
             label: 'Читать исследование',
             onPressed: () =>
@@ -547,8 +550,9 @@ class SciencePage extends StatelessWidget {
           const SizedBox(height: 22),
           Row(
             children: [
-              Text('Клинические исследования', style: cultHeadline(20)),
-              const Spacer(),
+              const Expanded(
+                child: CultSectionLabel('Клинические исследования'),
+              ),
               TextButton(
                 onPressed: () => pushPage(context, const BlogPage()),
                 child: const Text('Смотреть все'),
@@ -562,19 +566,40 @@ class SciencePage extends StatelessWidget {
           ])
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: CultCard(child: Text(title, style: cultHeadline(18))),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => pushPage(context, const BlogPage()),
+                child: CultCard(
+                  child: Row(
+                    children: [
+                      Expanded(child: Text(title, style: cultHeadline(18))),
+                      const Icon(Icons.chevron_right, color: Cult.muted),
+                    ],
+                  ),
+                ),
+              ),
             ),
           const SizedBox(height: 18),
-          Text('Новые технологии', style: cultHeadline(20)),
+          const CultSectionLabel('Новые технологии'),
           const SizedBox(height: 8),
           for (final device in devices.take(2))
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: InkWell(
+                borderRadius: BorderRadius.circular(16),
                 onTap: () => pushPage(context, DevicePage(device: device)),
                 child: CultCard(
                   child: Row(
                     children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: CultImage(device.image, aspect: 1, radius: 0),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(device.title, style: cultHeadline(18)),
                       ),
@@ -591,7 +616,7 @@ class SciencePage extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 12),
-          Text('Протоколы долголетия', style: cultHeadline(20)),
+          const CultSectionLabel('Протоколы долголетия'),
           const SizedBox(height: 8),
           for (final row in const [
             ('Уровень 01', 'Циркадная перезагрузка'),
@@ -601,33 +626,38 @@ class SciencePage extends StatelessWidget {
           ])
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: CultCard(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            row.$1,
-                            style: const TextStyle(
-                              color: Cult.muted,
-                              fontSize: 12,
-                              letterSpacing: 1,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () =>
+                    pushPage(context, BookingPage(initialService: row.$2)),
+                child: CultCard(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              row.$1.toUpperCase(),
+                              style: const TextStyle(
+                                color: Cult.muted,
+                                fontSize: 11,
+                                letterSpacing: 1,
+                              ),
                             ),
-                          ),
-                          Text(row.$2, style: cultHeadline(18)),
-                        ],
+                            Text(row.$2, style: cultHeadline(18)),
+                          ],
+                        ),
                       ),
-                    ),
-                    const Icon(Icons.arrow_forward, color: Cult.muted),
-                  ],
+                      const Icon(Icons.arrow_forward, color: Cult.muted),
+                    ],
+                  ),
                 ),
               ),
             ),
-          TextButton(
+          CultButton(
+            label: 'Клинические кейсы',
             onPressed: () => pushPage(context, const CasesPage()),
-            child: const Text('Клинические кейсы'),
           ),
         ],
       ),

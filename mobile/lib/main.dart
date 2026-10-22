@@ -278,7 +278,7 @@ class _ShellState extends State<Shell> {
                 onPressed: () => pushPage(context, const SettingsPage()),
                 icon: const Icon(Icons.notifications_none),
               ),
-              if (_index == 2)
+              if (_index == 2 || store.cartCount > 0)
                 IconButton(
                   tooltip: 'Корзина',
                   onPressed: () => pushPage(context, const CartPage()),

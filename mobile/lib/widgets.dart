@@ -248,6 +248,28 @@ class CultErrorBanner extends StatelessWidget {
   }
 }
 
+void showCultSnack(
+  BuildContext context,
+  String message, {
+  String? actionLabel,
+  VoidCallback? onAction,
+}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: Cult.ink,
+      action: actionLabel != null && onAction != null
+          ? SnackBarAction(
+              label: actionLabel,
+              textColor: Cult.gold,
+              onPressed: onAction,
+            )
+          : null,
+    ),
+  );
+}
+
 void pushPage(BuildContext context, Widget page) {
   Navigator.of(context).push(
     PageRouteBuilder<void>(

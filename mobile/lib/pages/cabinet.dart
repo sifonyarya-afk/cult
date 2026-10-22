@@ -1159,9 +1159,7 @@ class _SettingsPageState extends State<SettingsPage> {
             label: 'Сохранить имя',
             onPressed: () {
               store.setProfileName(_name.text);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Имя сохранено')));
+              showCultSnack(context, 'Имя сохранено');
             },
           ),
           const SizedBox(height: 18),

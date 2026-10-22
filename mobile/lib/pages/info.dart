@@ -409,21 +409,43 @@ class CasesPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Кейсы')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
+          Text('Клинические кейсы', style: cultHeadline(28)),
+          const SizedBox(height: 6),
+          const Text(
+            'Результаты протоколов CULT в филиале Сочи.',
+            style: TextStyle(color: Cult.muted),
+          ),
+          const SizedBox(height: 16),
           for (final item in cases)
             Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.only(bottom: 14),
               child: InkWell(
+                borderRadius: BorderRadius.circular(16),
                 onTap: () => pushPage(context, CasePage(item: item)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CultImage(item.image, aspect: 4 / 3, radius: 12),
-                    const SizedBox(height: 8),
-                    Text(item.title, style: cultHeadline(24)),
-                    Text('${item.procedure} · ${item.doctor}'),
-                  ],
+                child: CultCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CultImage(item.image, aspect: 4 / 3, radius: 16),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(item.title, style: cultHeadline(22)),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${item.procedure} · ${item.doctor}',
+                              style: const TextStyle(color: Cult.muted),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

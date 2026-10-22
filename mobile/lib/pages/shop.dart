@@ -184,8 +184,11 @@ class _ProductList extends StatelessWidget {
             label: 'В корзину',
             onPressed: () {
               store.addToCart(product.id, product.name, product.price);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('${product.name} в корзине')),
+              showCultSnack(
+                context,
+                '${product.name} в корзине',
+                actionLabel: 'Оформить',
+                onAction: () => pushPage(context, const CartPage()),
               );
             },
           ),
@@ -269,14 +272,11 @@ class ProductPage extends StatelessWidget {
             label: 'В корзину',
             onPressed: () {
               store.addToCart(product.id, product.name, product.price);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${product.name} в корзине'),
-                  action: SnackBarAction(
-                    label: 'Оформить',
-                    onPressed: () => pushPage(context, const CartPage()),
-                  ),
-                ),
+              showCultSnack(
+                context,
+                '${product.name} в корзине',
+                actionLabel: 'Оформить',
+                onAction: () => pushPage(context, const CartPage()),
               );
             },
           ),
