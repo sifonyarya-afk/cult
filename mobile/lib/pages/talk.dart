@@ -229,6 +229,18 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Документы',
     'Аллергия',
     'Длительность',
+    'Солнце',
+    'Спорт',
+    'Алкоголь',
+    'Натощак',
+  ];
+
+  static const _followUp = <String>[
+    'Подготовка к визиту',
+    'Оплата',
+    'Телефон клиники',
+    'Аллергия',
+    'Солнце',
   ];
 
   @override
@@ -399,16 +411,27 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                     ),
                   ] else ...[
                     const SizedBox(height: 8),
-                    ActionChip(
-                      avatar: const Icon(
-                        Icons.event_available_outlined,
-                        size: 18,
-                      ),
-                      label: const Text('Записаться'),
-                      onPressed: () {
-                        cultTapFeedback();
-                        pushPage(context, const BookingPage());
-                      },
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ActionChip(
+                          avatar: const Icon(
+                            Icons.event_available_outlined,
+                            size: 18,
+                          ),
+                          label: const Text('Записаться'),
+                          onPressed: () {
+                            cultTapFeedback();
+                            pushPage(context, const BookingPage());
+                          },
+                        ),
+                        for (final tip in _followUp)
+                          ActionChip(
+                            label: Text(tip),
+                            onPressed: () => _send(store, tip),
+                          ),
+                      ],
                     ),
                   ],
                 ],
@@ -434,8 +457,12 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                         maxLines: 4,
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _send(store, _text.text),
-                        decoration: const InputDecoration(
-                          hintText: 'Напишите сообщение…',
+                        decoration: InputDecoration(
+                          hintText: widget.contactId == 'bot'
+                              ? 'Спросите про запись, уход, оплату…'
+                              : widget.contactId == 'specialist'
+                              ? 'Опишите симптом или вопрос врачу…'
+                              : 'Напишите администратору…',
                           filled: true,
                         ),
                       ),

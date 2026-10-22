@@ -519,6 +519,22 @@ void main() {
     );
   });
 
+  test('Бот отвечает про солнце, спорт и натощак', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Можно ли на солнце после?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('spf'));
+    store.sendMessage('bot', 'Когда можно спорт?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('спорт'));
+    store.sendMessage('bot', 'Нужно ли натощак на анализы?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('натощак'));
+    store.sendMessage('bot', 'Можно алкоголь после уколов?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('алкогол'));
+    store.sendMessage('specialist', 'Когда можно в бассейн?');
+    expect(store.threads['specialist']!.last.text.toLowerCase(), contains('бассейн'));
+  });
+
   test('Бот и админ отвечают про отмену записи', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();

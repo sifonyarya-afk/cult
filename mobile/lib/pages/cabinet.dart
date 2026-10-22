@@ -735,10 +735,13 @@ class AnalysesPage extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: GestureDetector(
                   onLongPress: () {
+                    final weekday = formatVisitWeekday(visit.date);
                     Clipboard.setData(
                       ClipboardData(
                         text:
-                            '${visit.service} · ${formatVisitDate(visit.date)} в ${visit.time}',
+                            '${visit.service} · ${formatVisitDate(visit.date)}'
+                            '${weekday.isEmpty ? '' : ', $weekday'}'
+                            ' в ${visit.time}',
                       ),
                     );
                     cultTapFeedback();
@@ -1714,7 +1717,14 @@ class _SettingsPageState extends State<SettingsPage> {
           TextField(
             controller: _name,
             textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.done,
+            autofillHints: const [AutofillHints.name],
             decoration: const InputDecoration(labelText: 'Имя в кабинете'),
+            onSubmitted: (_) {
+              store.setProfileName(_name.text);
+              HapticFeedback.mediumImpact();
+              showCultSnack(context, 'Имя сохранено');
+            },
           ),
           const SizedBox(height: 12),
           CultButton(

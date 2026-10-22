@@ -606,6 +606,11 @@ class _ShellState extends State<Shell> {
                     : const AuthPage(allowSkip: false),
               ),
             ),
+            ListTile(
+              leading: const Icon(Icons.settings_outlined),
+              title: const Text('Настройки'),
+              onTap: () => _go(sheetContext, const SettingsPage()),
+            ),
           ],
         ),
       ),

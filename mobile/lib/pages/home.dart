@@ -288,20 +288,39 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  store.gender == ClientGender.man
-                      ? 'Мужской уход за лицом'
-                      : 'Прецизионный анализ кожи',
-                  style: cultHeadline(24),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  store.gender == ClientGender.man
-                      ? 'Очищение, тонус и уход без тяжёлого блеска.'
-                      : 'Мультиспектральная диагностика и прогноз на 10 лет.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Cult.muted, height: 1.35),
+                GestureDetector(
+                  onLongPress: () {
+                    final title = store.gender == ClientGender.man
+                        ? 'Мужской уход за лицом'
+                        : 'Прецизионный анализ кожи';
+                    final price = store.gender == ClientGender.man
+                        ? '6 500 ₽'
+                        : '295 ₽';
+                    Clipboard.setData(
+                      ClipboardData(text: '$title · $price · CULT Сочи'),
+                    );
+                    cultTapFeedback();
+                    showCultSnack(context, 'Предложение скопировано');
+                  },
+                  child: Column(
+                    children: [
+                      Text(
+                        store.gender == ClientGender.man
+                            ? 'Мужской уход за лицом'
+                            : 'Прецизионный анализ кожи',
+                        style: cultHeadline(24),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        store.gender == ClientGender.man
+                            ? 'Очищение, тонус и уход без тяжёлого блеска.'
+                            : 'Мультиспектральная диагностика и прогноз на 10 лет.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Cult.muted, height: 1.35),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
                 const CultImage('offer', aspect: 1, radius: 90),
