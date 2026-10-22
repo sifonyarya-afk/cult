@@ -137,6 +137,8 @@ class ClinicStore extends ChangeNotifier {
 
   static const _key = 'cult-flutter';
   static const branchId = '988587';
+  static const partnerKey = 'Vh91j85a5N2Ugbe78XJE';
+  static const userKey = '45e37b62495cf77d877359a0c9d93751';
 
   List<CartItem> cart = [];
   List<Appointment> appointments = [];
@@ -153,6 +155,7 @@ class ClinicStore extends ChangeNotifier {
   String chainId = '0';
   String partnerToken = '';
   String userToken = '';
+  bool clinicAccount = true;
   List<YcService> liveServices = [];
   List<YcCard> loyaltyCards = [];
   String liveError = '';
@@ -171,7 +174,7 @@ class ClinicStore extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_key);
     if (raw == null) {
-      companyId = branchId;
+      _applyClinicDefaults();
       _seedThreads();
       notifyListeners();
       return;
@@ -186,10 +189,12 @@ class ClinicStore extends ChangeNotifier {
     profileName = json['profileName'] as String? ?? profileName;
     profilePhone = json['profilePhone'] as String? ?? '';
     profileEmail = json['profileEmail'] as String? ?? '';
-    companyId = json['companyId'] as String? ?? branchId;
+    companyId = json['companyId'] as String? ?? '';
     chainId = json['chainId'] as String? ?? '0';
     partnerToken = json['partnerToken'] as String? ?? '';
     userToken = json['userToken'] as String? ?? '';
+    clinicAccount = json['clinicAccount'] as bool? ?? true;
+    if (clinicAccount) _applyClinicDefaults();
     final savedNotices = json['notices'] as Map<String, dynamic>?;
     if (savedNotices != null) {
       notices = savedNotices.map((key, value) => MapEntry(key, value as bool));
@@ -232,6 +237,7 @@ class ClinicStore extends ChangeNotifier {
       'chainId': chainId,
       'partnerToken': partnerToken,
       'userToken': userToken,
+      'clinicAccount': clinicAccount,
       'notices': notices,
       'threads': threads.map((key, value) => MapEntry(key, value.map((item) => item.toJson()).toList())),
     };
@@ -326,13 +332,14 @@ class ClinicStore extends ChangeNotifier {
     required String email,
   }) async {
     final id = int.tryParse(companyId.trim());
-    if (id == null || partnerToken.trim().isEmpty) return 'Укажите ID филиала и партнёрский токен.';
+    if (id == null || partnerToken.trim().isEmpty) return 'Укажите ID филиала и токен партнера.';
     try {
-      liveServices = await yclients.services(partnerToken.trim(), id);
+      liveServices = await _fetchLive(partner: partnerToken.trim(), user: userToken.trim(), companyId: id);
       liveError = '';
     } on YcException catch (error) {
       return error.message;
     }
+    clinicAccount = true;
     this.companyId = companyId.trim();
     this.chainId = chainId.trim().isEmpty ? '0' : chainId.trim();
     this.partnerToken = partnerToken.trim();
@@ -344,6 +351,7 @@ class ClinicStore extends ChangeNotifier {
   }
 
   Future<void> disconnectYclients() async {
+    clinicAccount = false;
     companyId = '';
     chainId = '0';
     partnerToken = '';
@@ -358,7 +366,7 @@ class ClinicStore extends ChangeNotifier {
     final id = companyIdInt;
     if (id == null || partnerToken.isEmpty) return 'YClients не подключён.';
     try {
-      liveServices = await yclients.services(partnerToken, id);
+      liveServices = await _fetchLive(partner: partnerToken, user: userToken, companyId: id);
       liveError = '';
       notifyListeners();
       return null;
@@ -367,6 +375,26 @@ class ClinicStore extends ChangeNotifier {
       notifyListeners();
       return error.message;
     }
+  }
+
+  void _applyClinicDefaults() {
+    if (companyId.trim().isEmpty) companyId = branchId;
+    if (partnerToken.trim().isEmpty) partnerToken = partnerKey;
+    if (userToken.trim().isEmpty) userToken = userKey;
+  }
+
+  Future<List<YcService>> _fetchLive({required String partner, required String user, required int companyId}) async {
+    Map<int, String> names = {};
+    try {
+      names = await yclients.categoryNames(partner, companyId);
+    } on YcException {
+      names = {};
+    }
+    var list = await yclients.services(partner, companyId);
+    if (list.isEmpty && user.trim().isNotEmpty) {
+      list = await yclients.companyServices(partner, user.trim(), companyId);
+    }
+    return [for (final item in list) item.withCategory(names[item.categoryId] ?? item.category)];
   }
 
   Future<String?> refreshLoyalty() async {

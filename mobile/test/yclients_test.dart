@@ -85,13 +85,53 @@ void main() {
     expect(seen, hasLength(4));
   });
 
-  test('Филиал 988587 подставлен, пока нет своего токена', () async {
+  test('Филиал CULT подключён ключами по умолчанию', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
     await store.load();
-    expect(store.companyId, '988587');
-    expect(store.partnerToken, isEmpty);
-    expect(store.yclientsReady, isFalse);
+    expect(store.companyId, ClinicStore.branchId);
+    expect(store.partnerToken, ClinicStore.partnerKey);
+    expect(store.userToken, ClinicStore.userKey);
+    expect(store.yclientsReady, isTrue);
+    await store.disconnectYclients();
+    final next = ClinicStore();
+    await next.load();
+    expect(next.yclientsReady, isFalse);
+    expect(next.partnerToken, isEmpty);
+  });
+
+  test('Пустой онлайн-каталог дополняется услугами филиала', () async {
+    final api = YClientsApi(
+      client: _Scripted((request) async {
+        if (request.url.path.endsWith('/book_services/988587')) {
+          return _json({
+            'success': true,
+            'data': {
+              'services': [],
+              'category': [
+                {'id': 5, 'title': 'Массажи, spa уходы'},
+              ],
+            },
+          });
+        }
+        expect(request.headers['Authorization'], 'Bearer partner, User user');
+        return _json({
+          'success': true,
+          'data': [
+            {'id': 9, 'title': 'Общий массаж тела, 60 минут', 'price_min': 5500, 'price_max': 5500, 'duration': 3600, 'category_id': 5, 'active': 1},
+          ],
+        });
+      }),
+    );
+    final store = ClinicStore();
+    store.yclients = api;
+    store.companyId = '988587';
+    store.partnerToken = 'partner';
+    store.userToken = 'user';
+    expect(await store.refreshCatalog(), isNull);
+    expect(store.liveServices.single.title, 'Общий массаж тела, 60 минут');
+    expect(store.liveServices.single.category, 'Массажи, spa уходы');
+    expect(store.liveServices.single.durationLabel, '1 ч');
   });
 
   test('Незнакомый токен объясняется по-русски', () async {

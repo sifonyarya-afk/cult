@@ -352,7 +352,12 @@ class _BookingPageState extends State<BookingPage> {
         children: [
           Text('Запись в филиал', style: cultHeadline(30)),
           const SizedBox(height: 8),
-          Text('Услуги и свободное время берутся из YClients, филиал ${store.companyId}.'),
+          Text('Услуги и врачи из YClients, филиал ${store.companyId}, CULT, Сочи.'),
+          if (_staff.isNotEmpty && _staff.every((item) => !item.bookable))
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text('Свободных окон для онлайн-записи сейчас нет: расписание в филиале закрыто.'),
+            ),
           const SizedBox(height: 12),
           if (_loading) const LinearProgressIndicator(),
           if (_done)

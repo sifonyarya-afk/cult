@@ -20,8 +20,10 @@ class YcService {
     required this.title,
     required this.priceMin,
     required this.priceMax,
-    required this.seanceLength,
+    required     this.seanceLength,
     this.comment = '',
+    this.categoryId = 0,
+    this.category = '',
   });
 
   final int id;
@@ -30,6 +32,22 @@ class YcService {
   final int priceMax;
   final int seanceLength;
   final String comment;
+  final int categoryId;
+  final String category;
+
+  YcService withCategory(String name) {
+    if (name.isEmpty || name == category) return this;
+    return YcService(
+      id: id,
+      title: title,
+      priceMin: priceMin,
+      priceMax: priceMax,
+      seanceLength: seanceLength,
+      comment: comment,
+      categoryId: categoryId,
+      category: name,
+    );
+  }
 
   String get durationLabel {
     if (seanceLength <= 0) return '';
@@ -112,8 +130,37 @@ class YClientsApi {
             title: '${item['title'] ?? ''}',
             priceMin: _asInt(item['price_min']),
             priceMax: _asInt(item['price_max']),
-            seanceLength: _asInt(item['seance_length']),
+            seanceLength: _asInt(item['seance_length'] ?? item['duration']),
             comment: '${item['comment'] ?? ''}',
+            categoryId: _asInt(item['category_id']),
+          ),
+    ].where((item) => item.id > 0 && item.title.isNotEmpty).toList();
+  }
+
+  Future<Map<int, String>> categoryNames(String partnerToken, int companyId) async {
+    final data = await _get('/book_services/$companyId', partnerToken);
+    final list = data is Map ? (data['category'] ?? data['categories']) : null;
+    if (list is! List) return {};
+    return {
+      for (final item in list)
+        if (item is Map && _asInt(item['id']) > 0) _asInt(item['id']): '${item['title'] ?? ''}',
+    };
+  }
+
+  Future<List<YcService>> companyServices(String partnerToken, String userToken, int companyId) async {
+    final data = await _get('/company/$companyId/services', partnerToken, userToken: userToken);
+    if (data is! List) return [];
+    return [
+      for (final item in data)
+        if (item is Map && item['active'] != 0)
+          YcService(
+            id: _asInt(item['id']),
+            title: '${item['title'] ?? ''}',
+            priceMin: _asInt(item['price_min']),
+            priceMax: _asInt(item['price_max']),
+            seanceLength: _asInt(item['duration'] ?? item['seance_length']),
+            comment: '${item['comment'] ?? ''}',
+            categoryId: _asInt(item['category_id']),
           ),
     ].where((item) => item.id > 0 && item.title.isNotEmpty).toList();
   }

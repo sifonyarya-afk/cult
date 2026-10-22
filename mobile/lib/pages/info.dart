@@ -38,7 +38,12 @@ class _PricesPageState extends State<PricesPage> {
     final needle = _query.text.trim().toLowerCase();
     final rows = <({String group, String name, String meta, String price})>[
       for (final item in store.liveServices)
-        (group: 'YClients', name: item.title, meta: item.durationLabel.isEmpty ? 'филиал' : item.durationLabel, price: item.priceLabel),
+        (
+          group: item.category.isEmpty ? 'YClients' : item.category,
+          name: item.title,
+          meta: item.durationLabel.isEmpty ? 'филиал' : item.durationLabel,
+          price: item.priceLabel,
+        ),
       for (final item in services) (group: item.group, name: item.title, meta: item.duration, price: item.priceLabel),
       for (final item in devices) (group: 'Оборудование', name: item.title, meta: item.meta, price: item.price),
       (group: 'Инфузии', name: 'NAD+ Energy', meta: '60 мин', price: '15 000 ₽'),
@@ -49,7 +54,12 @@ class _PricesPageState extends State<PricesPage> {
       final textOk = needle.isEmpty || row.name.toLowerCase().contains(needle);
       return groupOk && textOk;
     }).toList();
-    final chips = ['Все', if (store.liveServices.isNotEmpty) 'YClients', 'Эстетика и уход', 'Инъекции', 'Оборудование', 'Инфузии'];
+    final liveGroups = <String>[];
+    for (final item in store.liveServices) {
+      final group = item.category.isEmpty ? 'YClients' : item.category;
+      if (!liveGroups.contains(group)) liveGroups.add(group);
+    }
+    final chips = ['Все', ...liveGroups, 'Эстетика и уход', 'Инъекции', 'Оборудование', 'Инфузии'];
     return Scaffold(
       appBar: AppBar(title: const Text('Прайс')),
       body: ListView(
