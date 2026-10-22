@@ -42,6 +42,21 @@ open ios/Runner.xcworkspace
 
 Предупреждение CocoaPods про `platform iOS 15.0` можно игнорировать, если в конце есть `Pod installation complete!`.
 
+### `Exited with status code 127`
+
+Значит Xcode не нашёл Flutter (`FLUTTER_ROOT` / `xcode_backend.sh`). Обычно после `flutter clean` без нового `flutter pub get`, или открыт `.xcodeproj` вместо workspace.
+
+Закройте Xcode и из `mobile`:
+
+```bash
+cd ~/Desktop/cult/cult/mobile
+flutter pub get
+(cd ios && pod install)
+open ios/Runner.xcworkspace
+```
+
+В Xcode: Product → Clean Build Folder, затем Run. В Build Settings у Runner должны быть User-Defined значения `FLUTTER_ROOT` (путь к Flutter SDK на Mac).
+
 В Xcode: цель Runner → Signing & Capabilities → Team. Выберите свой Apple ID (Personal Team). Без команды подписи сборка на iPhone не запускается.
 
 Если CocoaPods не установлен: `brew install cocoapods`.

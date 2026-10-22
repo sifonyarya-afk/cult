@@ -241,7 +241,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" embed_and_thin";
+			shellScript = "if [ -z \"$FLUTTER_ROOT\" ] || [ ! -f \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" ]; then\n  echo \"error: FLUTTER_ROOT is missing. From mobile/ run: flutter pub get\"\n  echo \"Then open ios/Runner.xcworkspace (not .xcodeproj) and build again.\"\n  exit 1\nfi\n/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" embed_and_thin";
 		};
 		9740EEB61CF901F6004384FC /* Run Script */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -256,7 +256,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
+			shellScript = "if [ -z \"$FLUTTER_ROOT\" ] || [ ! -f \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" ]; then\n  echo \"error: FLUTTER_ROOT is missing. From mobile/ run: flutter pub get\"\n  echo \"Then open ios/Runner.xcworkspace (not .xcodeproj) and build again.\"\n  exit 1\nfi\n/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
 		};
 /* End PBXShellScriptBuildPhase section */
 
