@@ -252,6 +252,7 @@ class HomePage extends StatelessWidget {
               TextButton(
                 onPressed: () => openExternal(
                   'https://www.youtube.com/results?search_query=CULT+Clinic',
+                  context: context,
                 ),
                 child: const Text('Смотреть канал'),
               ),
@@ -270,8 +271,10 @@ class HomePage extends StatelessWidget {
                   width: 260,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(14),
-                    onTap: () =>
-                        pushPage(context, ArticlePage(article: article)),
+                    onTap: () {
+                      cultTapFeedback();
+                      pushPage(context, ArticlePage(article: article));
+                    },
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -390,7 +393,10 @@ class _LinkChip extends StatelessWidget {
         label: Text(label),
         backgroundColor: Colors.white,
         side: const BorderSide(color: Cult.line),
-        onPressed: onTap,
+        onPressed: () {
+          cultTapFeedback();
+          onTap();
+        },
       ),
     );
   }

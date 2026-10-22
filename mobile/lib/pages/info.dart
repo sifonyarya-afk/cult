@@ -341,7 +341,10 @@ class BlogPage extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 14),
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
-                onTap: () => pushPage(context, ArticlePage(article: article)),
+                onTap: () {
+                  cultTapFeedback();
+                  pushPage(context, ArticlePage(article: article));
+                },
                 child: CultCard(
                   padding: EdgeInsets.zero,
                   child: Column(
@@ -423,7 +426,18 @@ class ArticlePage extends StatelessWidget {
             label: 'Смотреть на YouTube',
             onPressed: () => openExternal(
               'https://www.youtube.com/results?search_query=${Uri.encodeComponent('${article.title} CULT Clinic')}',
+              context: context,
             ),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Cult.ink,
+              side: const BorderSide(color: Cult.ink),
+              minimumSize: const Size(double.infinity, 48),
+            ),
+            onPressed: () => pushPage(context, const BookingPage()),
+            child: const Text('Записаться на консультацию'),
           ),
         ],
       ),
@@ -453,7 +467,10 @@ class CasesPage extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 14),
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
-                onTap: () => pushPage(context, CasePage(item: item)),
+                onTap: () {
+                  cultTapFeedback();
+                  pushPage(context, CasePage(item: item));
+                },
                 child: CultCard(
                   padding: EdgeInsets.zero,
                   child: Column(
@@ -560,72 +577,88 @@ class _TransferPageState extends State<TransferPage> {
             style: TextStyle(color: Cult.muted, height: 1.4),
           ),
           const SizedBox(height: 16),
-          if (_done)
-            CultCard(
-              child: Column(
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF3EFEA),
-                      shape: BoxShape.circle,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _done
+                ? CultCard(
+                    key: const ValueKey('transfer-done'),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF3EFEA),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.directions_car,
+                            color: Cult.primary,
+                            size: 34,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Text('Заявка принята', style: cultHeadline(22)),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Заберём с «${_from.text.trim()}». Водитель напишет в чат администратора.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Cult.muted,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        CultButton(
+                          label: 'Открыть чат',
+                          onPressed: () => pushPage(
+                            context,
+                            const ChatThreadPage(contactId: 'admin'),
+                          ),
+                        ),
+                      ],
                     ),
-                    child: const Icon(
-                      Icons.directions_car,
-                      color: Cult.primary,
-                      size: 34,
-                    ),
+                  )
+                : Column(
+                    key: const ValueKey('transfer-form'),
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
+                        controller: _from,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
+                          labelText: 'Откуда забрать',
+                          hintText: 'Отель, аэропорт или адрес',
+                        ),
+                      ),
+                      if (_error.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        CultErrorBanner(message: _error),
+                      ],
+                      const SizedBox(height: 12),
+                      CultButton(
+                        label: 'Заказать',
+                        onPressed: () {
+                          if (_from.text.trim().length < 5) {
+                            setState(
+                              () => _error = 'Укажите адрес, откуда забрать.',
+                            );
+                            return;
+                          }
+                          store.sendMessage(
+                            'admin',
+                            'Трансфер: забрать с «${_from.text.trim()}» → Черноморская, 6.',
+                          );
+                          cultTapFeedback();
+                          setState(() {
+                            _error = '';
+                            _done = true;
+                          });
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 14),
-                  Text('Заявка принята', style: cultHeadline(22)),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Консьерж получил адрес. Водитель напишет в чат администратора.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Cult.muted, height: 1.4),
-                  ),
-                  const SizedBox(height: 14),
-                  CultButton(
-                    label: 'Открыть чат',
-                    onPressed: () => pushPage(
-                      context,
-                      const ChatThreadPage(contactId: 'admin'),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else ...[
-            TextField(
-              controller: _from,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(labelText: 'Откуда забрать'),
-            ),
-            if (_error.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(_error, style: const TextStyle(color: Cult.error)),
-              ),
-            const SizedBox(height: 12),
-            CultButton(
-              label: 'Заказать',
-              onPressed: () {
-                if (_from.text.trim().length < 5) {
-                  setState(() => _error = 'Укажите адрес, откуда забрать.');
-                  return;
-                }
-                store.sendMessage(
-                  'admin',
-                  'Трансфер: забрать с «${_from.text.trim()}» → Черноморская, 6.',
-                );
-                setState(() {
-                  _error = '';
-                  _done = true;
-                });
-              },
-            ),
-          ],
+          ),
         ],
       ),
     );

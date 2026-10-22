@@ -34,11 +34,29 @@ class CategoryHubPage extends StatelessWidget {
   }
 }
 
-class HardwareCosmeticsPage extends StatelessWidget {
+class HardwareCosmeticsPage extends StatefulWidget {
   const HardwareCosmeticsPage({super.key});
 
   @override
+  State<HardwareCosmeticsPage> createState() => _HardwareCosmeticsPageState();
+}
+
+class _HardwareCosmeticsPageState extends State<HardwareCosmeticsPage> {
+  var _zone = 'Лицо';
+
+  bool _matchesZone(Device device) {
+    final zone = device.zone.toLowerCase();
+    return switch (_zone) {
+      'Тело' => zone.contains('тело'),
+      'Лицо' =>
+        zone.contains('лицо') || zone.contains('шея') || !zone.contains('тело'),
+      _ => true,
+    };
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final filtered = devices.where(_matchesZone).toList();
     return Scaffold(
       appBar: AppBar(title: const Text('CULT')),
       floatingActionButton: FloatingActionButton(
@@ -50,7 +68,7 @@ class HardwareCosmeticsPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
         children: [
-          CultImage('science', aspect: 4 / 5, radius: 18),
+          const CultImage('science', aspect: 4 / 5, radius: 18),
           const SizedBox(height: 18),
           Text(
             'Аппаратная\nкосметология',
@@ -67,16 +85,25 @@ class HardwareCosmeticsPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Chip(
-                label: const Text('ЛИЦО'),
-                backgroundColor: Cult.ink,
-                labelStyle: const TextStyle(
-                  color: Colors.white,
-                  letterSpacing: 1.2,
+              for (final zone in const ['Лицо', 'Тело']) ...[
+                if (zone != 'Лицо') const SizedBox(width: 8),
+                FilterChip(
+                  label: Text(zone.toUpperCase()),
+                  selected: _zone == zone,
+                  showCheckmark: false,
+                  selectedColor: Cult.ink,
+                  labelStyle: TextStyle(
+                    color: _zone == zone ? Colors.white : Cult.ink,
+                    letterSpacing: 1.2,
+                  ),
+                  backgroundColor: const Color(0xFFF3EFEA),
+                  side: BorderSide.none,
+                  onSelected: (_) {
+                    cultTapFeedback();
+                    setState(() => _zone = zone);
+                  },
                 ),
-              ),
-              const SizedBox(width: 8),
-              const Chip(label: Text('ТЕЛО')),
+              ],
             ],
           ),
           const SizedBox(height: 22),
@@ -88,91 +115,102 @@ class HardwareCosmeticsPage extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 14),
-          for (final device in devices) ...[
-            InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () => pushPage(context, DevicePage(device: device)),
-              child: CultCard(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Stack(
-                      children: [
-                        CultImage(device.image, aspect: 16 / 10, radius: 16),
-                        if (device.badge.isNotEmpty)
-                          Positioned(
-                            left: 12,
-                            top: 12,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Cult.primary,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                device.badge.toUpperCase(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+          if (filtered.isEmpty)
+            CultEmpty(
+              title: 'Аппараты для тела скоро',
+              note: 'Запишитесь — подберём протокол для тела в филиале.',
+              actionLabel: 'Записаться',
+              onAction: () => pushPage(context, const BookingPage()),
+            )
+          else
+            for (final device in filtered) ...[
+              InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () {
+                  cultTapFeedback();
+                  pushPage(context, DevicePage(device: device));
+                },
+                child: CultCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Stack(
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  device.title,
-                                  style: cultHeadline(22),
+                          CultImage(device.image, aspect: 16 / 10, radius: 16),
+                          if (device.badge.isNotEmpty)
+                            Positioned(
+                              left: 12,
+                              top: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
                                 ),
-                              ),
-                              Text(
-                                device.price,
-                                style: const TextStyle(
+                                decoration: BoxDecoration(
                                   color: Cult.primary,
-                                  fontWeight: FontWeight.w600,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  device.badge.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    letterSpacing: 1,
+                                  ),
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            device.text,
-                            style: const TextStyle(
-                              color: Cult.muted,
-                              height: 1.35,
                             ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            '${device.meta} · ${device.tag}',
-                            style: const TextStyle(
-                              color: Cult.muted,
-                              fontSize: 12,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
                         ],
                       ),
-                    ),
-                  ],
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    device.title,
+                                    style: cultHeadline(22),
+                                  ),
+                                ),
+                                Text(
+                                  device.price,
+                                  style: const TextStyle(
+                                    color: Cult.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              device.text,
+                              style: const TextStyle(
+                                color: Cult.muted,
+                                height: 1.35,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              '${device.meta} · ${device.tag}',
+                              style: const TextStyle(
+                                color: Cult.muted,
+                                fontSize: 12,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 14),
-          ],
+              const SizedBox(height: 14),
+            ],
           Container(
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(

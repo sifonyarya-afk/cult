@@ -330,6 +330,10 @@ class _ShellState extends State<Shell> {
             selectedIndex: _index,
             onDestinationSelected: (value) {
               HapticFeedback.selectionClick();
+              if (value == _index) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+                return;
+              }
               setState(() => _index = value);
             },
             destinations: const [

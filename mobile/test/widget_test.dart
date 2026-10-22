@@ -144,4 +144,18 @@ void main() {
     expect(restored.notices['offers'], isTrue);
     expect(restored.favorites, contains('serum-cult'));
   });
+
+  test('Заявка на трансфер уходит администратору', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    final before = store.threads['admin']!.length;
+    store.sendMessage(
+      'admin',
+      'Трансфер: забрать с «Адлер, отель» → Черноморская, 6.',
+    );
+    final thread = store.threads['admin']!;
+    expect(thread.length, greaterThan(before));
+    expect(thread.any((m) => m.text.contains('Адлер')), isTrue);
+  });
 }
