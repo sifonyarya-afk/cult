@@ -15,20 +15,41 @@ class CabinetPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
     final next = store.upcoming.isEmpty ? null : store.upcoming.first;
+    final name = store.displayName.trim().isEmpty ? 'Гость CULT' : store.displayName;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
       children: [
-        Center(child: SizedBox(width: 96, child: CultImage('avatar', aspect: 1, radius: 48))),
-        const SizedBox(height: 8),
-        Center(child: Text(store.displayName, style: cultHeadline(26))),
+        Center(
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: SizedBox(width: 108, height: 108, child: CultImage('avatar', aspect: 1, radius: 0)),
+              ),
+              Positioned(
+                right: -4,
+                bottom: -4,
+                child: Material(
+                  color: Cult.ink,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () => pushPage(context, store.signedIn ? const SettingsPage() : const AuthPage(allowSkip: false)),
+                    child: const SizedBox(width: 34, height: 34, child: Icon(Icons.edit_outlined, size: 16, color: Colors.white)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Center(child: Text(name, style: cultHeadline(28))),
+        const SizedBox(height: 4),
         Center(
           child: Text(
-            [
-              if (store.gender != null) store.gender!.label,
-              if (store.signedIn) _phoneLabel(store.profilePhone),
-              if (!store.signedIn && store.gender == null) 'ПЛАТИНОВЫЙ СТАТУС',
-            ].join(' · '),
-            style: const TextStyle(letterSpacing: 1.2, color: Cult.muted),
+            store.signedIn ? 'ПЛАТИНОВЫЙ СТАТУС' : (store.gender?.label.toUpperCase() ?? 'ГОСТЕВОЙ ПРОФИЛЬ'),
+            style: const TextStyle(letterSpacing: 1.6, color: Cult.muted, fontSize: 12, fontWeight: FontWeight.w600),
             textAlign: TextAlign.center,
           ),
         ),
@@ -40,68 +61,106 @@ class CabinetPage extends StatelessWidget {
               children: [
                 Text('Войдите по телефону', style: cultHeadline(22)),
                 const SizedBox(height: 6),
-                const Text('Сохраним вас в филиале CULT в Сочи вместе с выбранным профилем услуг.'),
+                const Text('Сохраним профиль в филиале CULT Сочи.', style: TextStyle(color: Cult.muted)),
                 const SizedBox(height: 12),
                 CultButton(label: 'Войти', onPressed: () => pushPage(context, const AuthPage(allowSkip: false))),
               ],
             ),
           ),
         ],
-        const SizedBox(height: 12),
-        _Row(
-          'Профиль услуг',
-          store.gender?.servicesTitle ?? 'Не выбран',
-          () => pushPage(context, const GenderPage()),
-        ),
-        if (next != null) ...[
-          const SizedBox(height: 16),
-          InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () => pushPage(context, const VisitsPage()),
-            child: CultCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('СЛЕДУЮЩИЙ ВИЗИТ', style: TextStyle(color: Cult.secondary, letterSpacing: 1.2, fontSize: 12)),
-                  const SizedBox(height: 6),
-                  Text(next.service, style: cultHeadline(22)),
-                  Text('${formatVisitDate(next.date)} · ${next.time} · ${next.doctor}', style: const TextStyle(color: Cult.muted)),
-                ],
-              ),
-            ),
-          ),
-        ],
         const SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: const LinearGradient(colors: [Color(0xFFE7C98A), Color(0xFFC8A15A)]),
+            borderRadius: BorderRadius.circular(18),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFE8CB8E), Color(0xFFC49A4E)],
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('БОНУСНЫЙ БАЛАНС'),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text('БОНУСНЫЙ БАЛАНС', style: TextStyle(letterSpacing: 1.1, fontSize: 12, fontWeight: FontWeight.w600)),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.28),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text('VIP СТАТУС', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
               Text(rub(store.balance), style: cultHeadline(36)),
-              const Text('В клубе с января 2023'),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(text: 'В клубе с  ', style: TextStyle(fontSize: 12)),
+                          TextSpan(text: 'ЯНВ 2023', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.auto_awesome, color: Cult.ink.withValues(alpha: 0.55), size: 20),
+                ],
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        _Row('Мои записи', next == null ? 'Предстоящих нет' : 'След: ${formatVisitDate(next.date)}, ${next.time}', () => pushPage(context, const VisitsPage())),
-        _Row('История визитов', 'Чеки по прошлым визитам', () => pushPage(context, const VisitsPage())),
-        _Row('Мои анализы', 'Назначен, сдан, готов', () => pushPage(context, const AnalysesPage())),
-        _Row('Аптечка', 'Рекомендации врача', () => pushPage(context, const PharmacyPage())),
-        _Row('Мои заказы', '${store.orders.length}', () => pushPage(context, const OrdersPage())),
-        _Row('Сертификаты', 'Номинал и дизайн', () => pushPage(context, const CertificatesPage())),
-        _Row('Избранное', '${store.favorites.length}', () => pushPage(context, const FavoritesPage())),
-        _Row('Бонусы и правила', rub(store.balance), () => pushPage(context, const LoyaltyPage())),
-        _Row('Чат с доктором', 'Клинические вопросы', () => pushPage(context, const ChatThreadPage(contactId: 'specialist'))),
-        _Row('Уведомления', 'Визиты, анализы, аптека', () => pushPage(context, const SettingsPage())),
+        const SizedBox(height: 22),
+        const Text('ОБЗОР АККАУНТА', style: TextStyle(letterSpacing: 1.4, fontSize: 12, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 10),
+        _AccountRow(
+          icon: Icons.wc_outlined,
+          title: 'Профиль услуг',
+          note: store.gender?.servicesTitle ?? 'Не выбран',
+          onTap: () => pushPage(context, const GenderPage()),
+        ),
+        _AccountRow(
+          icon: Icons.calendar_month_outlined,
+          title: 'Мои записи',
+          note: next == null ? 'Предстоящих нет' : 'След: ${formatVisitDate(next.date)}, ${next.time}',
+          onTap: () => pushPage(context, const VisitsPage()),
+        ),
+        _AccountRow(
+          icon: Icons.history,
+          title: 'История визитов',
+          note: 'Чеки и прошлые визиты',
+          onTap: () => pushPage(context, const VisitsPage()),
+        ),
+        _AccountRow(icon: Icons.biotech_outlined, title: 'Мои анализы', note: 'Назначен · сдан · готов', onTap: () => pushPage(context, const AnalysesPage())),
+        _AccountRow(icon: Icons.medical_services_outlined, title: 'Аптечка', note: 'Рекомендации врача', onTap: () => pushPage(context, const PharmacyPage())),
+        _AccountRow(icon: Icons.receipt_long_outlined, title: 'Мои заказы', note: '${store.orders.length}', onTap: () => pushPage(context, const OrdersPage())),
+        _AccountRow(icon: Icons.card_giftcard_outlined, title: 'Сертификаты', note: 'Номинал и дизайн', onTap: () => pushPage(context, const CertificatesPage())),
+        _AccountRow(icon: Icons.favorite_border, title: 'Избранное', note: '${store.favorites.length}', onTap: () => pushPage(context, const FavoritesPage())),
+        _AccountRow(icon: Icons.workspace_premium_outlined, title: 'Бонусы', note: rub(store.balance), onTap: () => pushPage(context, const LoyaltyPage())),
+        _AccountRow(
+          icon: Icons.chat_bubble_outline,
+          title: 'Чат с врачом',
+          note: 'Клинические вопросы',
+          onTap: () => pushPage(context, const ChatThreadPage(contactId: 'specialist')),
+        ),
+        _AccountRow(icon: Icons.notifications_none, title: 'Уведомления', note: 'Визиты и анализы', onTap: () => pushPage(context, const SettingsPage())),
         if (store.signedIn)
-          _Row('Выйти', _phoneLabel(store.profilePhone), () async {
-            await store.signOut();
-          }),
+          _AccountRow(
+            icon: Icons.logout,
+            title: 'Выйти',
+            note: _phoneLabel(store.profilePhone),
+            onTap: () async {
+              await store.signOut();
+            },
+          ),
       ],
     );
   }
@@ -115,22 +174,51 @@ String _phoneLabel(String raw) {
   return raw.isEmpty ? 'Телефон' : raw;
 }
 
-class _Row extends StatelessWidget {
-  const _Row(this.title, this.note, this.onTap);
+class _AccountRow extends StatelessWidget {
+  const _AccountRow({required this.icon, required this.title, required this.note, required this.onTap});
 
+  final IconData icon;
   final String title;
   final String note;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: 2),
-      minVerticalPadding: 12,
-      title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-      subtitle: Text(note, style: const TextStyle(color: Cult.muted)),
-      trailing: const Icon(Icons.chevron_right, color: Cult.muted),
-      onTap: onTap,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(color: const Color(0xFFF3EFEA), borderRadius: BorderRadius.circular(12)),
+                  child: Icon(icon, color: Cult.ink, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 2),
+                      Text(note, style: const TextStyle(color: Cult.muted, fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: Cult.muted),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

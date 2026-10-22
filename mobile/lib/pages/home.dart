@@ -18,27 +18,44 @@ class HomePage extends StatelessWidget {
     final store = ClinicScope.of(context);
     final next = store.upcoming.isEmpty ? null : store.upcoming.first;
     final first = store.displayName.trim().split(RegExp(r'\s+')).first;
-    final hello = first.isEmpty ? 'Добрый день' : first;
+    final hello = first.isEmpty || first == 'Гость' ? 'Доброго дня' : '$first, доброго дня';
+    final status = store.signedIn ? 'ВАШ СТАТУС: PLATINUM' : (store.gender?.servicesTitle.toUpperCase() ?? 'CULT CLINIC');
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
       children: [
-        Text('Сочи · Черноморская, 6', style: const TextStyle(color: Cult.muted, letterSpacing: 0.3)),
-        const SizedBox(height: 10),
         InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           onTap: () => pushPage(context, const VisitsPage()),
           child: CultCard(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  store.gender == null ? 'ПЛАТИНОВЫЙ СТАТУС' : store.gender!.servicesTitle.toUpperCase(),
-                  style: const TextStyle(color: Cult.secondary, letterSpacing: 1.2, fontSize: 12),
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(color: Cult.gold, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        status,
+                        style: const TextStyle(color: Cult.secondary, letterSpacing: 1.3, fontSize: 11, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(hello, style: cultHeadline(28)),
                 const SizedBox(height: 8),
-                Text(next == null ? 'Ближайшей записи нет. Можно выбрать услугу и врача.' : 'Дальше: ${next.service}, ${formatVisitDate(next.date)} в ${next.time}.'),
+                Text(
+                  next == null
+                      ? 'Рады видеть вас в CULT Clinic. Выберите услугу и врача.'
+                      : 'Следующая процедура: ${formatVisitDate(next.date)} в ${next.time}.',
+                  style: const TextStyle(color: Cult.muted, height: 1.4),
+                ),
               ],
             ),
           ),
@@ -50,96 +67,135 @@ class HomePage extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.15,
+          childAspectRatio: 1.12,
           children: [
             _Quick(
-              icon: Icons.calendar_month,
-              label: 'Запись онлайн',
+              icon: Icons.calendar_month_outlined,
+              label: 'Онлайн запись',
               filled: true,
               onTap: () => pushPage(context, const BookingPage()),
             ),
-            _Quick(icon: Icons.biotech, label: 'Мои анализы', onTap: () => pushPage(context, const AnalysesPage())),
-            _Quick(icon: Icons.shopping_basket_outlined, label: 'Биохакерский магазин', onTap: onShop),
-            _Quick(icon: Icons.forum_outlined, label: 'Чат с доктором', onTap: () => pushPage(context, const ChatThreadPage(contactId: 'specialist'))),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _ChipLink('Врачи', () => pushPage(context, const DoctorsPage())),
-            _ChipLink('Прайс', () => pushPage(context, const PricesPage())),
-            _ChipLink('Блог', () => pushPage(context, const BlogPage())),
-            _ChipLink('Кейсы', () => pushPage(context, const CasesPage())),
-            _ChipLink('О клинике', () => pushPage(context, const AboutPage())),
-            _ChipLink('Оборудование', () => pushPage(context, const EquipmentPage())),
-          ],
-        ),
-        const SizedBox(height: 16),
-        InkWell(
-          onTap: () => pushPage(context, const EquipmentPage()),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: Cult.ink, borderRadius: BorderRadius.circular(16)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('НОВЫЕ ТЕХНОЛОГИИ', style: TextStyle(color: Cult.gold, letterSpacing: 1.4, fontSize: 12)),
-                const SizedBox(height: 8),
-                Text('Обзор аппаратов и протоколов', style: cultHeadline(24).copyWith(color: Colors.white)),
-                const SizedBox(height: 8),
-                const Text('Morpheus8, Ultherapy и свежие разборы сезона.', style: TextStyle(color: Colors.white70)),
-              ],
+            _Quick(icon: Icons.biotech_outlined, label: 'Мои анализы', onTap: () => pushPage(context, const AnalysesPage())),
+            _Quick(icon: Icons.shopping_basket_outlined, label: 'Магазин биохакинга', onTap: onShop),
+            _Quick(
+              icon: Icons.chat_bubble_outline,
+              label: 'Чат с врачом',
+              onTap: () => pushPage(context, const ChatThreadPage(contactId: 'specialist')),
             ),
-          ),
+          ],
         ),
-        const SizedBox(height: 16),
-        CultCard(
-          child: Column(
+        const SizedBox(height: 20),
+        SizedBox(
+          height: 38,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
             children: [
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text('ПРЕДЛОЖЕНИЕ ДНЯ', style: TextStyle(color: Cult.secondary, letterSpacing: 1.2, fontSize: 12)),
-              ),
-              const SizedBox(height: 8),
-              Text('Прецизионный анализ кожи', style: cultHeadline(26), textAlign: TextAlign.center),
-              const SizedBox(height: 8),
-              const Text('Мультиспектральная диагностика: прогноз состояния кожи на 10 лет.', textAlign: TextAlign.center),
-              const SizedBox(height: 12),
-              const CultImage('offer', aspect: 1, radius: 80),
-              const SizedBox(height: 12),
-              CultButton(label: 'Получить предложение', onPressed: () => pushPage(context, const BookingPage(initialService: 'Прецизионный анализ кожи'))),
+              _LinkChip('Врачи', () => pushPage(context, const DoctorsPage())),
+              _LinkChip('Аппараты', () => pushPage(context, const EquipmentPage())),
+              _LinkChip('Инъекции', () => pushPage(context, const CategoryHubPage(slug: 'injections'))),
+              _LinkChip('Инфузии', () => pushPage(context, const CategoryHubPage(slug: 'infusions'))),
+              _LinkChip('Наука', () => pushPage(context, const CategoryHubPage(slug: 'science'))),
+              _LinkChip('Прайс', () => pushPage(context, const PricesPage())),
             ],
           ),
         ),
         const SizedBox(height: 20),
-        Text('CULT TV', style: cultHeadline(22)),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 180,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
+        InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => pushPage(context, const BookingPage(initialService: 'Прецизионный анализ кожи')),
+          child: Stack(
             children: [
-              for (final article in articles)
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: SizedBox(
-                    width: 240,
-                    child: InkWell(
-                      onTap: () => pushPage(context, ArticlePage(article: article)),
+              CultCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                      child: CultImage('offer', aspect: 16 / 10, radius: 0),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          CultImage(article.image, aspect: 16 / 9, radius: 12),
-                          const SizedBox(height: 8),
-                          Text(article.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Cult.secondary,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'ОГРАНИЧЕННОЕ ПРЕДЛОЖЕНИЕ',
+                              style: TextStyle(color: Colors.white, fontSize: 10, letterSpacing: 1.1, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text('Прецизионный анализ кожи', style: cultHeadline(24)),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Мультиспектральная диагностика и прогноз на 10 лет.',
+                            style: TextStyle(color: Cult.muted, height: 1.35),
+                          ),
                         ],
                       ),
                     ),
+                  ],
+                ),
+              ),
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: Material(
+                  color: Cult.ink,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () => pushPage(context, const BookingPage(initialService: 'Прецизионный анализ кожи')),
+                    child: const SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: Icon(Icons.add, color: Colors.white),
+                    ),
                   ),
                 ),
+              ),
             ],
+          ),
+        ),
+        const SizedBox(height: 22),
+        Row(
+          children: [
+            Text('CULT TV', style: cultHeadline(22)),
+            const Spacer(),
+            TextButton(onPressed: () => pushPage(context, const BlogPage()), child: const Text('Все')),
+          ],
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          height: 168,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: articles.length.clamp(0, 6),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final article = articles[index];
+              return SizedBox(
+                width: 220,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => pushPage(context, ArticlePage(article: article)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CultImage(article.image, aspect: 16 / 9, radius: 12),
+                      const SizedBox(height: 8),
+                      Text(article.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(height: 1.25)),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -159,39 +215,42 @@ class _Quick extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: filled ? Cult.gold : const Color(0xFFF3EFEA),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Cult.ink),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(label, textAlign: TextAlign.center),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Cult.ink, size: 28),
+              const SizedBox(height: 10),
+              Text(label, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w500, height: 1.2)),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _ChipLink extends StatelessWidget {
-  const _ChipLink(this.label, this.onTap);
+class _LinkChip extends StatelessWidget {
+  const _LinkChip(this.label, this.onTap);
 
   final String label;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return ActionChip(
-      label: Text(label),
-      backgroundColor: Colors.white,
-      side: const BorderSide(color: Cult.line),
-      onPressed: onTap,
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ActionChip(
+        label: Text(label),
+        backgroundColor: Colors.white,
+        side: const BorderSide(color: Cult.line),
+        onPressed: onTap,
+      ),
     );
   }
 }

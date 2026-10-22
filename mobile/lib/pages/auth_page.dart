@@ -78,55 +78,74 @@ class _AuthPageState extends State<AuthPage> {
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
           children: [
             Text('CULT', style: cultHeadline(40).copyWith(letterSpacing: 4), textAlign: TextAlign.center),
-            const SizedBox(height: 8),
-            const Text('Войдите по телефону', textAlign: TextAlign.center, style: TextStyle(color: Cult.muted)),
-            const SizedBox(height: 8),
-            Text(
-              ClinicScope.of(context).gender == null
-                  ? 'Мы сохраним вас в базе филиала CULT в Сочи. Запись и кабинет будут на этом номере.'
-                  : 'Сохраним вас в филиале CULT как «${ClinicScope.of(context).gender!.label.toLowerCase()}». Запись и кабинет — на этом номере.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _name,
-              textCapitalization: TextCapitalization.words,
-              textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(labelText: 'Имя'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _phone,
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.next,
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s()-]'))],
-              decoration: const InputDecoration(labelText: 'Телефон', hintText: '+7 900 000-00-00'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _email,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.done,
-              decoration: const InputDecoration(labelText: 'Почта, по желанию'),
-              onSubmitted: (_) {
-                if (!_busy) _submit();
-              },
-            ),
-            if (_error.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFFF8E8E6), borderRadius: BorderRadius.circular(12)),
-                child: Text(_error, style: const TextStyle(color: Cult.error)),
+            const SizedBox(height: 18),
+            CultCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text('WELCOME BONUS', style: TextStyle(color: Cult.secondary, letterSpacing: 1.6, fontSize: 11, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Text('Подарок новым клиентам', style: cultHeadline(26)),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Войдите по телефону — сохраним вас в филиале Сочи и начислим 3 000 ₽ на бонусный счёт.',
+                    style: TextStyle(color: Cult.muted, height: 1.4),
+                  ),
+                  const SizedBox(height: 18),
+                  TextField(
+                    controller: _name,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(labelText: 'Имя'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _phone,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
+                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s()-]'))],
+                    decoration: const InputDecoration(labelText: 'Номер телефона', hintText: '+7 (___) ___-__-__', prefixIcon: Icon(Icons.phone_outlined)),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.done,
+                    decoration: const InputDecoration(labelText: 'Почта, по желанию'),
+                    onSubmitted: (_) {
+                      if (!_busy) _submit();
+                    },
+                  ),
+                  if (_error.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: const Color(0xFFF8E8E6), borderRadius: BorderRadius.circular(12)),
+                      child: Text(_error, style: const TextStyle(color: Cult.error)),
+                    ),
+                  ],
+                  const SizedBox(height: 18),
+                  CultButton(
+                    label: _busy ? 'Сохраняем' : 'Получить бонус',
+                    onPressed: () {
+                      if (!_busy) _submit();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Нажимая кнопку, вы принимаете правила бонусной программы и обработку данных.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Cult.muted, fontSize: 11, height: 1.35),
+                  ),
+                ],
               ),
-            ],
+            ),
             const SizedBox(height: 20),
-            CultButton(
-              label: _busy ? 'Сохраняем' : 'Войти',
-              onPressed: () {
-                if (!_busy) _submit();
-              },
+            Text(
+              'EXCLUSIVE CLINICAL SANCTUARY',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Cult.muted.withValues(alpha: 0.7), letterSpacing: 2.2, fontSize: 10),
             ),
             if (widget.allowSkip)
               TextButton(

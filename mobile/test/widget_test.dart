@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Главная ведёт в анализы и биохакерский магазин', (tester) async {
+  testWidgets('Главная ведёт в анализы и магазин биохакинга', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
     await store.load();
@@ -16,9 +16,9 @@ void main() {
     await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
     await tester.pumpAndSettle();
 
-    expect(find.text('Запись онлайн'), findsOneWidget);
-    expect(find.text('Биохакерский магазин'), findsOneWidget);
-    expect(find.text('Чат с доктором'), findsOneWidget);
+    expect(find.text('Онлайн запись'), findsOneWidget);
+    expect(find.text('Магазин биохакинга'), findsOneWidget);
+    expect(find.text('Чат с врачом'), findsOneWidget);
 
     await tester.tap(find.text('Мои анализы'));
     await tester.pumpAndSettle();
@@ -26,11 +26,22 @@ void main() {
 
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Биохакерский магазин'));
+    await tester.ensureVisible(find.text('Магазин биохакинга'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Биохакерский магазин'));
+    await tester.tap(find.text('Магазин биохакинга'));
     await tester.pumpAndSettle();
     expect(find.text('Home Bio-Scan Kit'), findsOneWidget);
+  });
+
+  testWidgets('После сплэша спрашивает пол', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
+    await tester.pumpAndSettle();
+    expect(find.text('Для кого протокол?'), findsOneWidget);
+    expect(find.text('Женщина'), findsOneWidget);
+    expect(find.text('Мужчина'), findsOneWidget);
   });
 
   test('Запись отменяется, бонусов не хватает на крупный сертификат', () async {

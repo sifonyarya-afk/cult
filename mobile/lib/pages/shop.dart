@@ -27,8 +27,15 @@ class _ShopPageState extends State<ShopPage> with SingleTickerProviderStateMixin
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-          child: Align(alignment: Alignment.centerLeft, child: Text('Биохакинг-шоп', style: cultHeadline(32))),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Магазин', style: cultHeadline(30)),
+              const SizedBox(height: 4),
+              const Text('Уход, БАДы и наборы для дома.', style: TextStyle(color: Cult.muted)),
+            ],
+          ),
         ),
         TabBar(
           controller: _tabs,
@@ -73,7 +80,13 @@ class _ProductList extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(product.name, style: cultHeadline(22), textAlign: TextAlign.center),
                 const SizedBox(height: 4),
-                Text(product.blurb, style: const TextStyle(color: Cult.muted), textAlign: TextAlign.center),
+                Text(
+                  product.blurb,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Cult.muted),
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 6),
                 Text(rub(product.price), style: cultHeadline(22).copyWith(color: Cult.primary)),
               ],

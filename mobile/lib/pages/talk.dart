@@ -15,40 +15,61 @@ class ChatPage extends StatelessWidget {
     final hour = DateTime.now().hour;
     final closed = hour < 9 || hour >= 21;
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
+        Text('Чат', style: cultHeadline(30)),
+        const SizedBox(height: 4),
+        const Text('Врач, администратор или бот — ответим по делу.', style: TextStyle(color: Cult.muted)),
+        const SizedBox(height: 14),
         CultCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(closed ? 'Клиника сейчас закрыта' : 'Если линия занята', style: cultHeadline(22)),
+              Text(closed ? 'Сейчас отвечает бот' : 'Линия открыта', style: cultHeadline(22)),
               const SizedBox(height: 6),
-              Text(closed
-                  ? 'До 9:00 и после 21:00 первым отвечает ИИ-бот. Врач увидит переписку утром.'
-                  : 'При нагрузке первым отвечает ИИ-бот, затем подключается администратор или врач.'),
+              Text(
+                closed ? 'До 9:00 и после 21:00 первым отвечает ИИ. Врач увидит чат утром.' : 'При нагрузке первым отвечает бот, затем врач.',
+                style: const TextStyle(color: Cult.muted, height: 1.35),
+              ),
+              const SizedBox(height: 8),
               TextButton(onPressed: () => pushPage(context, const ChatThreadPage(contactId: 'bot')), child: const Text('Написать боту')),
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        Text('Центр поддержки', style: cultHeadline(32)),
-        const SizedBox(height: 12),
+        const SizedBox(height: 18),
+        Text('Диалоги', style: cultHeadline(22)),
+        const SizedBox(height: 10),
         for (final contact in contacts)
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: 10),
             child: InkWell(
+              borderRadius: BorderRadius.circular(16),
               onTap: () => pushPage(context, ChatThreadPage(contactId: contact.id)),
               child: CultCard(
                 child: Row(
                   children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(color: const Color(0xFFF3EFEA), borderRadius: BorderRadius.circular(14)),
+                      child: Icon(
+                        contact.id == 'specialist'
+                            ? Icons.medical_services_outlined
+                            : contact.id == 'bot'
+                                ? Icons.smart_toy_outlined
+                                : Icons.support_agent_outlined,
+                        color: Cult.ink,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(contact.name, style: cultHeadline(22)),
-                          Text(contact.role.toUpperCase(), style: const TextStyle(color: Cult.primary, letterSpacing: 1, fontSize: 12)),
+                          Text(contact.name, style: cultHeadline(20)),
+                          Text(contact.role.toUpperCase(), style: const TextStyle(color: Cult.primary, letterSpacing: 1, fontSize: 11)),
                           const SizedBox(height: 4),
-                          Text(contact.seed),
+                          Text(contact.seed, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Cult.muted)),
                         ],
                       ),
                     ),
