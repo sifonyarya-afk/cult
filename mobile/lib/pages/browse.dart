@@ -417,8 +417,8 @@ class ServicePage extends StatelessWidget {
           const SizedBox(height: 4),
           Text(service.title, style: cultHeadline(30)),
           Text(service.duration, style: const TextStyle(color: Cult.muted)),
-          const SizedBox(height: 14),
-          Text('Результат', style: cultHeadline(22)),
+          const SizedBox(height: 16),
+          const CultSectionLabel('Результат'),
           for (final item in service.results)
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -426,25 +426,30 @@ class ServicePage extends StatelessWidget {
                 children: [
                   const Icon(Icons.check_circle, color: Cult.primary, size: 18),
                   const SizedBox(width: 8),
-                  Expanded(child: Text(item)),
+                  Expanded(
+                    child: Text(item, style: const TextStyle(height: 1.35)),
+                  ),
                 ],
               ),
             ),
-          const SizedBox(height: 16),
-          Text('Как проходит', style: cultHeadline(22)),
+          const SizedBox(height: 18),
+          const CultSectionLabel('Как проходит'),
           for (var i = 0; i < service.steps.length; i++)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Text('${i + 1}.  ${service.steps[i]}'),
+              child: Text(
+                '${i + 1}.  ${service.steps[i]}',
+                style: const TextStyle(height: 1.35),
+              ),
             ),
-          const SizedBox(height: 16),
-          Text('Стоимость процедуры', style: cultHeadline(22)),
-          const SizedBox(height: 6),
+          const SizedBox(height: 18),
+          const CultSectionLabel('Стоимость процедуры'),
+          const SizedBox(height: 8),
           Text(
             service.priceLabel,
             style: cultHeadline(28).copyWith(color: Cult.primary),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
           CultButton(
             label: 'Записаться',
             onPressed: () =>

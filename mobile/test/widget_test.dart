@@ -82,4 +82,17 @@ void main() {
     expect(restored.welcomeBonus, 3000);
     expect(restored.balance, before + 3000);
   });
+
+  test('Бот отвечает на быстрые вопросы в чате', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    final before = store.threads['bot']!.length;
+    store.sendMessage('bot', 'Хочу записаться');
+    final thread = store.threads['bot']!;
+    expect(thread.length, before + 2);
+    expect(thread[thread.length - 2].from, 'me');
+    expect(thread.last.from, 'them');
+    expect(thread.last.text.toLowerCase(), contains('запись'));
+  });
 }

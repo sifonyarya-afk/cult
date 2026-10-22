@@ -139,12 +139,43 @@ class ChatThreadPage extends StatefulWidget {
 
 class _ChatThreadPageState extends State<ChatThreadPage> {
   final _text = TextEditingController();
+  final _scroll = ScrollController();
+
+  static const _quick = <String>[
+    'Хочу записаться',
+    'Часы работы',
+    'Как добраться',
+    'Бонусы',
+  ];
 
   @override
   void dispose() {
     _text.dispose();
+    _scroll.dispose();
     super.dispose();
   }
+
+  void _send(ClinicStore store, String raw) {
+    final text = raw.trim();
+    if (text.isEmpty) return;
+    HapticFeedback.selectionClick();
+    store.sendMessage(widget.contactId, text);
+    _text.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      _scroll.animateTo(
+        _scroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  IconData _iconFor(String id) => switch (id) {
+    'specialist' => Icons.medical_services_outlined,
+    'bot' => Icons.smart_toy_outlined,
+    _ => Icons.support_agent_outlined,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -152,91 +183,151 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     final contact = contacts.firstWhere((item) => item.id == widget.contactId);
     final messages = store.threads[widget.contactId] ?? [];
     return Scaffold(
-      appBar: AppBar(title: Text(contact.name)),
+      appBar: AppBar(
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(contact.name),
+            Text(
+              contact.role,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Cult.muted,
+                fontSize: 11,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
+      ),
       body: Column(
         children: [
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(20),
+              controller: _scroll,
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               children: [
-                if (messages.isEmpty)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      constraints: const BoxConstraints(maxWidth: 280),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(contact.seed),
-                    ),
-                  ),
-                for (final message in messages)
-                  Align(
-                    alignment: message.from == 'me'
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      constraints: const BoxConstraints(maxWidth: 280),
-                      decoration: BoxDecoration(
-                        color: message.from == 'me' ? Cult.ink : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        message.text,
-                        style: TextStyle(
-                          color: message.from == 'me' ? Colors.white : Cult.ink,
-                          height: 1.35,
+                Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3EFEA),
+                          borderRadius: BorderRadius.circular(18),
                         ),
+                        child: Icon(_iconFor(contact.id), color: Cult.ink),
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      Text(contact.name, style: cultHeadline(20)),
+                      Text(
+                        contact.role,
+                        style: const TextStyle(color: Cult.muted, fontSize: 13),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                   ),
+                ),
+                if (messages.isEmpty) _Bubble(text: contact.seed, mine: false),
+                for (final message in messages)
+                  _Bubble(text: message.text, mine: message.from == 'me'),
+                if (!messages.any((m) => m.from == 'me')) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final tip in _quick)
+                        ActionChip(
+                          label: Text(tip),
+                          onPressed: () => _send(store, tip),
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _text,
-                      textCapitalization: TextCapitalization.sentences,
-                      minLines: 1,
-                      maxLines: 4,
-                      decoration: const InputDecoration(hintText: 'Сообщение'),
+          Material(
+            color: Colors.white,
+            elevation: 6,
+            shadowColor: const Color(0x14000000),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _text,
+                        textCapitalization: TextCapitalization.sentences,
+                        minLines: 1,
+                        maxLines: 4,
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (_) => _send(store, _text.text),
+                        decoration: const InputDecoration(
+                          hintText: 'Напишите сообщение…',
+                          filled: true,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () {
-                      if (_text.text.trim().isEmpty) return;
-                      store.sendMessage(widget.contactId, _text.text);
-                      _text.clear();
-                    },
-                    style: IconButton.styleFrom(
-                      backgroundColor: Cult.ink,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(48, 48),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => _send(store, _text.text),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Cult.ink,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(48, 48),
+                      ),
+                      icon: const Icon(Icons.arrow_upward),
                     ),
-                    icon: const Icon(Icons.send),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _Bubble extends StatelessWidget {
+  const _Bubble({required this.text, required this.mine});
+
+  final String text;
+  final bool mine;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        constraints: const BoxConstraints(maxWidth: 290),
+        decoration: BoxDecoration(
+          color: mine ? Cult.ink : Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: Radius.circular(mine ? 18 : 4),
+            bottomRight: Radius.circular(mine ? 4 : 18),
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0F000000),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Text(
+          text,
+          style: TextStyle(color: mine ? Colors.white : Cult.ink, height: 1.35),
+        ),
       ),
     );
   }

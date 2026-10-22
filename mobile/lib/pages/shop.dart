@@ -43,7 +43,7 @@ class _ShopPageState extends State<ShopPage>
                   ),
                   ActionChip(
                     avatar: const Icon(Icons.smart_toy_outlined, size: 18),
-                    label: const Text('ИИ'),
+                    label: const Text('ИИ Помощник'),
                     onPressed: () => _openAiPicker(context),
                   ),
                 ],
@@ -211,22 +211,28 @@ class ProductPage extends StatelessWidget {
         ? 'Биохакинг'
         : 'БАДы';
     return Scaffold(
-      appBar: AppBar(title: const Text('Товар')),
+      appBar: AppBar(title: const Text('CULT')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
-          CultImage(product.image, radius: 12),
-          const SizedBox(height: 12),
+          CultImage(product.image, aspect: 1, radius: 18),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: Text(
                   '$kind · ${product.stock == 'low' ? 'Мало' : 'В наличии'}'
                       .toUpperCase(),
-                  style: const TextStyle(color: Cult.primary, letterSpacing: 1),
+                  style: const TextStyle(
+                    color: Cult.primary,
+                    letterSpacing: 1.2,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               IconButton(
+                tooltip: liked ? 'Убрать из избранного' : 'В избранное',
                 onPressed: () => store.toggleFavorite(product.id),
                 icon: Icon(
                   liked ? Icons.favorite : Icons.favorite_border,
@@ -238,25 +244,39 @@ class ProductPage extends StatelessWidget {
           ),
           Text(product.name, style: cultHeadline(28)),
           const SizedBox(height: 6),
-          Text(product.blurb),
-          const SizedBox(height: 8),
+          Text(
+            product.blurb,
+            style: const TextStyle(color: Cult.muted, height: 1.4),
+          ),
+          const SizedBox(height: 10),
           Text(
             rub(product.price),
-            style: cultHeadline(26).copyWith(color: Cult.primary),
+            style: cultHeadline(28).copyWith(color: Cult.primary),
           ),
-          const SizedBox(height: 12),
-          Text('Состав', style: cultHeadline(20)),
-          const SizedBox(height: 4),
-          Text(product.composition),
-          const SizedBox(height: 12),
-          Text(product.about),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
+          const CultSectionLabel('Состав'),
+          const SizedBox(height: 8),
+          Text(product.composition, style: const TextStyle(height: 1.4)),
+          const SizedBox(height: 16),
+          const CultSectionLabel('О формуле'),
+          const SizedBox(height: 8),
+          Text(
+            product.about,
+            style: const TextStyle(color: Cult.muted, height: 1.4),
+          ),
+          const SizedBox(height: 22),
           CultButton(
             label: 'В корзину',
             onPressed: () {
               store.addToCart(product.id, product.name, product.price);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Добавлено в корзину')),
+                SnackBar(
+                  content: Text('${product.name} в корзине'),
+                  action: SnackBarAction(
+                    label: 'Оформить',
+                    onPressed: () => pushPage(context, const CartPage()),
+                  ),
+                ),
               );
             },
           ),

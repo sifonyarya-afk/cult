@@ -378,7 +378,7 @@ class _VisitsPageState extends State<VisitsPage> {
     final store = ClinicScope.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Визиты'),
+        title: const Text('Мои записи'),
         actions: [
           IconButton(
             tooltip: 'Обновить',
@@ -387,100 +387,139 @@ class _VisitsPageState extends State<VisitsPage> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          if (!store.signedIn)
-            CultCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Войдите по телефону', style: cultHeadline(22)),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Покажем ваши реальные записи из филиала CULT в Сочи.',
-                  ),
-                  const SizedBox(height: 12),
-                  CultButton(
-                    label: 'Войти',
-                    onPressed: () =>
-                        pushPage(context, const AuthPage(allowSkip: false)),
-                  ),
-                ],
-              ),
-            )
-          else ...[
-            if (store.visitsLoading) const LinearProgressIndicator(),
-            if (store.visitsError.isNotEmpty)
-              Text(
-                store.visitsError,
-                style: const TextStyle(color: Cult.error),
-              ),
-            Text('Предстоящие', style: cultHeadline(22)),
-            if (store.upcoming.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('Предстоящих визитов нет.'),
+      body: RefreshIndicator(
+        color: Cult.primary,
+        onRefresh: () async {
+          if (store.signedIn) await store.refreshVisits();
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            if (!store.signedIn)
+              CultEmpty(
+                title: 'Войдите по телефону',
+                note: 'Покажем ваши реальные записи из филиала CULT в Сочи.',
+                actionLabel: 'Войти',
+                onAction: () =>
+                    pushPage(context, const AuthPage(allowSkip: false)),
               )
-            else
-              for (final visit in store.upcoming)
+            else ...[
+              if (store.visitsLoading) const LinearProgressIndicator(),
+              if (store.visitsError.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  store.visitsError,
+                  style: const TextStyle(color: Cult.error),
+                ),
+              ],
+              Text('Предстоящие', style: cultHeadline(22)),
+              if (store.upcoming.isEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
-                  child: CultCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${formatVisitDate(visit.date)} · ${visit.time}',
-                          style: const TextStyle(color: Cult.muted),
-                        ),
-                        Text(visit.service, style: cultHeadline(20)),
-                        Text(visit.doctor),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton(
-                            onPressed: () async {
-                              final message = await store.cancelVisit(visit.id);
-                              if (!context.mounted) return;
-                              if (message != null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(message)),
-                                );
-                              }
-                            },
-                            child: const Text(
-                              'Отменить',
-                              style: TextStyle(color: Cult.error),
+                  child: CultEmpty(
+                    title: 'Записей пока нет',
+                    note: 'Выберите услугу и врача — визит появится здесь.',
+                    actionLabel: 'Записаться',
+                    onAction: () => pushPage(context, const BookingPage()),
+                  ),
+                )
+              else
+                for (final visit in store.upcoming)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: CultCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${formatVisitDate(visit.date)} · ${visit.time}',
+                            style: const TextStyle(
+                              color: Cult.secondary,
+                              letterSpacing: 0.6,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          Text(visit.service, style: cultHeadline(20)),
+                          Text(
+                            visit.doctor,
+                            style: const TextStyle(color: Cult.muted),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'CULT · Сочи',
+                            style: TextStyle(color: Cult.muted, fontSize: 12),
+                          ),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () async {
+                                final message = await store.cancelVisit(
+                                  visit.id,
+                                );
+                                if (!context.mounted) return;
+                                if (message != null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(message)),
+                                  );
+                                }
+                              },
+                              child: const Text(
+                                'Отменить',
+                                style: TextStyle(color: Cult.error),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+              if (store.upcoming.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                CultButton(
+                  label: 'Новая запись',
+                  onPressed: () => pushPage(context, const BookingPage()),
                 ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () => pushPage(context, const BookingPage()),
-              child: const Text('Записаться'),
-            ),
-            Text('История', style: cultHeadline(22)),
-            if (store.past.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('Истории визитов пока нет.'),
-              )
-            else
-              for (final visit in store.past)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(visit.service),
-                  subtitle: Text(
-                    '${formatVisitDate(visit.date)} · ${visit.time}\n${visit.doctor} · CULT Сочи',
+              ],
+              const SizedBox(height: 20),
+              Text('История', style: cultHeadline(22)),
+              if (store.past.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'Истории визитов пока нет.',
+                    style: TextStyle(color: Cult.muted),
                   ),
-                  isThreeLine: true,
-                ),
+                )
+              else
+                for (final visit in store.past)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: CultCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(visit.service, style: cultHeadline(18)),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${formatVisitDate(visit.date)} · ${visit.time}',
+                            style: const TextStyle(color: Cult.muted),
+                          ),
+                          Text(
+                            '${visit.doctor} · CULT Сочи',
+                            style: const TextStyle(
+                              color: Cult.muted,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -499,11 +538,21 @@ class AnalysesPage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           if (!store.signedIn)
-            const Text(
-              'Войдите по телефону — покажем анализы и заборы из ваших записей в филиале.',
+            CultEmpty(
+              title: 'Войдите по телефону',
+              note: 'Покажем анализы и заборы из ваших записей в филиале Сочи.',
+              actionLabel: 'Войти',
+              onAction: () =>
+                  pushPage(context, const AuthPage(allowSkip: false)),
             )
           else if (labs.isEmpty)
-            const Text('В филиале пока нет записей с анализами на этом номере.')
+            CultEmpty(
+              title: 'Анализов пока нет',
+              note:
+                  'Когда в филиале появятся заборы на этом номере — они будут здесь.',
+              actionLabel: 'Записаться',
+              onAction: () => pushPage(context, const BookingPage()),
+            )
           else
             for (final visit in labs)
               ListTile(

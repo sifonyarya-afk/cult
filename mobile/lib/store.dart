@@ -735,13 +735,40 @@ class ClinicStore extends ChangeNotifier {
     final list = threads.putIfAbsent(contactId, () => []);
     final stamp = DateTime.now().microsecondsSinceEpoch;
     list.add(ChatMessage(id: 'me-$stamp', from: 'me', text: trimmed));
-    final reply = contactId == 'bot'
-        ? 'Клиника открыта ежедневно с 9:00 до 21:00. Запись можно создать в разделе «Запись онлайн».'
-        : contactId == 'specialist'
-        ? 'Сообщение у врача. Если это отёк или сыпь после процедуры, не наносите активные средства до ответа.'
-        : 'Администратор получил сообщение и ответит в часы клиники.';
-    list.add(ChatMessage(id: 'them-$stamp', from: 'them', text: reply));
+    list.add(
+      ChatMessage(
+        id: 'them-$stamp',
+        from: 'them',
+        text: _autoReply(contactId, trimmed),
+      ),
+    );
     _save();
+  }
+
+  String _autoReply(String contactId, String text) {
+    final q = text.toLowerCase();
+    if (contactId == 'bot') {
+      if (q.contains('запис')) {
+        return 'Откройте «Запись» в меню или нажмите «+» на главной — подберём услугу, врача и время.';
+      }
+      if (q.contains('час') || q.contains('работ')) {
+        return 'CULT Сочи открыта ежедневно с 9:00 до 21:00, Черноморская, 6.';
+      }
+      if (q.contains('добр') || q.contains('адрес') || q.contains('ехать')) {
+        return 'Адрес: Сочи, Черноморская, 6. Нужен трансфер — закажите в профиле.';
+      }
+      if (q.contains('бонус')) {
+        return 'Новым клиентам — 3 000 ₽ welcome-бонус. Баланс смотрите в профиле.';
+      }
+      return 'Клиника открыта ежедневно с 9:00 до 21:00. Запись — в разделе «Запись» или через «+» на главной.';
+    }
+    if (contactId == 'specialist') {
+      return 'Сообщение у врача. Если это отёк или сыпь после процедуры, не наносите активные средства до ответа.';
+    }
+    if (q.contains('запис')) {
+      return 'Администратор поможет с записью. Укажите услугу и удобный день — ответим в часы клиники.';
+    }
+    return 'Администратор получил сообщение и ответит в часы клиники.';
   }
 
   void setNotice(String key, bool value) {

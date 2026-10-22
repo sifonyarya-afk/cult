@@ -180,9 +180,9 @@ class HardwareCosmeticsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Запишитесь на консультацию.',
+                  'Запишитесь на консультацию к нашим экспертам сегодня.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(color: Colors.white70, height: 1.35),
                 ),
                 const SizedBox(height: 14),
                 FilledButton(
@@ -635,7 +635,7 @@ class DevicePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Аппарат')),
+      appBar: AppBar(title: const Text('CULT')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
@@ -647,6 +647,7 @@ class DevicePage extends StatelessWidget {
               color: Cult.secondary,
               letterSpacing: 1.5,
               fontSize: 11,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 6),
@@ -665,18 +666,76 @@ class DevicePage extends StatelessWidget {
               _Meta(Icons.payments_outlined, device.price),
             ],
           ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3EFEA),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Text('98%', style: cultHeadline(22)),
+                      const Text(
+                        'ДОВОЛЬНЫХ',
+                        style: TextStyle(
+                          color: Cult.muted,
+                          fontSize: 11,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3EFEA),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Text('2–3 года', style: cultHeadline(22)),
+                      const Text(
+                        'СТОЙКИЙ ЭФФЕКТ',
+                        style: TextStyle(
+                          color: Cult.muted,
+                          fontSize: 11,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
           if (device.indications.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            Text('Показания', style: cultHeadline(22)),
+            const SizedBox(height: 20),
+            const CultSectionLabel('Показания'),
             for (final item in device.indications)
               Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text('· $item'),
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.circle, size: 6, color: Cult.primary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(item, style: const TextStyle(height: 1.35)),
+                    ),
+                  ],
+                ),
               ),
           ],
           if (device.benefits.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text('Преимущества', style: cultHeadline(22)),
+            const SizedBox(height: 18),
+            const CultSectionLabel('Преимущества'),
             for (final item in device.benefits)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -688,12 +747,14 @@ class DevicePage extends StatelessWidget {
                       size: 18,
                     ),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(item)),
+                    Expanded(
+                      child: Text(item, style: const TextStyle(height: 1.35)),
+                    ),
                   ],
                 ),
               ),
           ],
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
           CultButton(
             label: 'Записаться',
             onPressed: () =>
