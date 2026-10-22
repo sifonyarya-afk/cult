@@ -12,8 +12,14 @@ void main() {
     expect(normalizePhone('+7 (916) 150-22-39'), '79161502239');
     expect(normalizePhone('89161502239'), '79161502239');
     expect(normalizePhone('9161502239'), '79161502239');
-    expect(bookingDatetime(1443513600, '2026-04-12', '12:00'), '2026-04-12 12:00:00');
-    expect(bookingDatetime('2026-04-12T12:00:00+03:00', '2026-04-12', '12:00'), '2026-04-12T12:00:00+03:00');
+    expect(
+      bookingDatetime(1443513600, '2026-04-12', '12:00'),
+      '2026-04-12 12:00:00',
+    );
+    expect(
+      bookingDatetime('2026-04-12T12:00:00+03:00', '2026-04-12', '12:00'),
+      '2026-04-12T12:00:00+03:00',
+    );
   });
 
   test('Услуги, слоты и запись читаются из ответа API', () async {
@@ -26,17 +32,32 @@ void main() {
             'success': true,
             'data': {
               'services': [
-                {'id': '15', 'title': 'Скульптурный массаж', 'price_min': 8000, 'price_max': 8000, 'seance_length': 3600, 'comment': ''},
+                {
+                  'id': '15',
+                  'title': 'Скульптурный массаж',
+                  'price_min': 8000,
+                  'price_max': 8000,
+                  'seance_length': 3600,
+                  'comment': '',
+                },
               ],
             },
           });
         }
         if (request.url.path.contains('/book_staff/')) {
-          expect(Uri.decodeQueryComponent(request.url.query), contains('service_ids[]=15'));
+          expect(
+            Uri.decodeQueryComponent(request.url.query),
+            contains('service_ids[]=15'),
+          );
           return _json({
             'success': true,
             'data': [
-              {'id': 4, 'name': 'Анна', 'specialization': 'Косметолог', 'bookable': true},
+              {
+                'id': 4,
+                'name': 'Анна',
+                'specialization': 'Косметолог',
+                'bookable': true,
+              },
             ],
           });
         }
@@ -69,7 +90,13 @@ void main() {
     expect(services.single.priceLabel, contains('8'));
     final staff = await api.staff('partner', 77, serviceId: 15);
     expect(staff.single.name, 'Анна');
-    final slots = await api.times('partner', 77, 4, '2026-04-12', serviceId: 15);
+    final slots = await api.times(
+      'partner',
+      77,
+      4,
+      '2026-04-12',
+      serviceId: 15,
+    );
     expect(slots.single.datetime, '2026-04-12 12:00:00');
     final booked = await api.book(
       partnerToken: 'partner',
@@ -102,10 +129,12 @@ void main() {
     var created = false;
     final api = YClientsApi(
       client: _Scripted((request) async {
-        if (request.method == 'GET' && request.url.path.endsWith('/clients/988587')) {
+        if (request.method == 'GET' &&
+            request.url.path.endsWith('/clients/988587')) {
           return _json({'success': true, 'data': []});
         }
-        if (request.method == 'POST' && request.url.path.endsWith('/clients/988587')) {
+        if (request.method == 'POST' &&
+            request.url.path.endsWith('/clients/988587')) {
           created = true;
           final body = jsonDecode(request.body) as Map<String, dynamic>;
           expect(body['phone'], 79001112233);
@@ -114,11 +143,20 @@ void main() {
           expect(request.headers['Authorization'], contains('User'));
           return _json({
             'success': true,
-            'data': {'id': 42, 'name': 'Мария', 'phone': '+79001112233', 'email': 'm@cult.clinic'},
+            'data': {
+              'id': 42,
+              'name': 'Мария',
+              'phone': '+79001112233',
+              'email': 'm@cult.clinic',
+            },
           });
         }
-        if (request.method == 'PUT' && request.url.path.contains('/client/988587/42')) {
-          return _json({'success': true, 'data': {'id': 42}});
+        if (request.method == 'PUT' &&
+            request.url.path.contains('/client/988587/42')) {
+          return _json({
+            'success': true,
+            'data': {'id': 42},
+          });
         }
         return http.Response('{"meta":{"message":"нет"}}', 404);
       }),
@@ -127,14 +165,24 @@ void main() {
     await store.load();
     store.yclients = api;
     await store.setGender(ClientGender.woman);
-    expect(await store.registerWithPhone(name: 'Мария', phone: '+7 900 111-22-33', email: 'm@cult.clinic'), isNull);
+    expect(
+      await store.registerWithPhone(
+        name: 'Мария',
+        phone: '+7 900 111-22-33',
+        email: 'm@cult.clinic',
+      ),
+      isNull,
+    );
     expect(created, isTrue);
     expect(store.signedIn, isTrue);
     expect(store.ycClientId, 42);
     expect(store.profilePhone, '79001112233');
     expect(store.profileName, 'Мария');
     expect(store.catalogServices.any((item) => item.slug == 'sculpt'), isTrue);
-    expect(store.catalogServices.any((item) => item.slug == 'men-face'), isFalse);
+    expect(
+      store.catalogServices.any((item) => item.slug == 'men-face'),
+      isFalse,
+    );
 
     final next = ClinicStore();
     await next.load();
@@ -152,7 +200,10 @@ void main() {
     final store = ClinicStore();
     await store.load();
     await store.setGender(ClientGender.man);
-    expect(store.catalogServices.any((item) => item.slug == 'men-face'), isTrue);
+    expect(
+      store.catalogServices.any((item) => item.slug == 'men-face'),
+      isTrue,
+    );
     expect(store.catalogServices.any((item) => item.slug == 'sculpt'), isFalse);
     expect(store.catalogServices.any((item) => item.slug == 'iv'), isTrue);
   });
@@ -165,7 +216,12 @@ void main() {
         return _json({
           'success': true,
           'data': [
-            {'id': 459368479, 'name': 'CULT App Test', 'phone': '+79991112233', 'email': 'cult.app.test@cult.clinic'},
+            {
+              'id': 459368479,
+              'name': 'CULT App Test',
+              'phone': '+79991112233',
+              'email': 'cult.app.test@cult.clinic',
+            },
           ],
         });
       }),
@@ -199,7 +255,15 @@ void main() {
         return _json({
           'success': true,
           'data': [
-            {'id': 9, 'title': 'Общий массаж тела, 60 минут', 'price_min': 5500, 'price_max': 5500, 'duration': 3600, 'category_id': 5, 'active': 1},
+            {
+              'id': 9,
+              'title': 'Общий массаж тела, 60 минут',
+              'price_min': 5500,
+              'price_max': 5500,
+              'duration': 3600,
+              'category_id': 5,
+              'active': 1,
+            },
           ],
         });
       }),
@@ -218,12 +282,22 @@ void main() {
   test('Незнакомый токен объясняется по-русски', () async {
     final api = YClientsApi(
       client: _Scripted(
-        (request) async => http.Response('{"message":"Unknown token"}', 401, headers: {'content-type': 'application/json'}),
+        (request) async => http.Response(
+          '{"message":"Unknown token"}',
+          401,
+          headers: {'content-type': 'application/json'},
+        ),
       ),
     );
     expect(
       api.services('x', 988587),
-      throwsA(isA<YcException>().having((error) => error.message, 'message', contains('не знает этот токен'))),
+      throwsA(
+        isA<YcException>().having(
+          (error) => error.message,
+          'message',
+          contains('не знает этот токен'),
+        ),
+      ),
     );
   });
 
@@ -237,24 +311,45 @@ void main() {
         ),
       ),
     );
-    expect(api.services('bad', 1), throwsA(isA<YcException>().having((error) => error.message, 'message', 'Неверный токен')));
+    expect(
+      api.services('bad', 1),
+      throwsA(
+        isA<YcException>().having(
+          (error) => error.message,
+          'message',
+          'Неверный токен',
+        ),
+      ),
+    );
   });
 
   test('Отмена записи уходит в YClients с ключами филиала', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
     await store.load();
-    store.bookVisit(service: 'Массаж', doctor: 'Анна', date: '2026-05-01', time: '12:00', recordId: 99, recordHash: 'abc');
+    store.bookVisit(
+      service: 'Массаж',
+      doctor: 'Анна',
+      date: '2026-05-01',
+      time: '12:00',
+      recordId: 99,
+      recordHash: 'abc',
+    );
     var cancelled = false;
     store.yclients = YClientsApi(
       client: _Scripted((request) async {
-        if (request.method == 'DELETE' && request.url.path.endsWith('/user/records/99/abc')) {
+        if (request.method == 'DELETE' &&
+            request.url.path.endsWith('/user/records/99/abc')) {
           cancelled = true;
-          expect(request.headers['Authorization'], startsWith('Bearer ${ClinicStore.partnerKey}, User'));
+          expect(
+            request.headers['Authorization'],
+            startsWith('Bearer ${ClinicStore.partnerKey}, User'),
+          );
           return http.Response('{"success":true,"data":null}', 200);
         }
         // refreshVisits after cancel
-        if (request.url.path.contains('/records/') || request.url.path.contains('/visits/search')) {
+        if (request.url.path.contains('/records/') ||
+            request.url.path.contains('/visits/search')) {
           return _json({'success': true, 'data': []});
         }
         return http.Response('{"meta":{"message":"нет"}}', 404);
@@ -279,7 +374,10 @@ void main() {
               'datetime': '2027-06-22T19:00:00+03:00',
               'visit_attendance': 0,
               'services': [
-                {'title': 'Консультация главного врача-косметолога', 'cost_to_pay': 5000},
+                {
+                  'title': 'Консультация главного врача-косметолога',
+                  'cost_to_pay': 5000,
+                },
               ],
               'staff': {'name': 'Иванов Иван Иванович'},
             },
@@ -311,7 +409,11 @@ void main() {
   });
 }
 
-http.Response _json(Object body) => http.Response(jsonEncode(body), 200, headers: {'content-type': 'application/json'});
+http.Response _json(Object body) => http.Response(
+  jsonEncode(body),
+  200,
+  headers: {'content-type': 'application/json'},
+);
 
 class _Scripted extends http.BaseClient {
   _Scripted(this.handler);
@@ -325,6 +427,10 @@ class _Scripted extends http.BaseClient {
       ..headers.addAll(request.headers)
       ..bodyBytes = bytes;
     final response = await handler(materialized);
-    return http.StreamedResponse(Stream<List<int>>.value(response.bodyBytes), response.statusCode, headers: response.headers);
+    return http.StreamedResponse(
+      Stream<List<int>>.value(response.bodyBytes),
+      response.statusCode,
+      headers: response.headers,
+    );
   }
 }

@@ -16,7 +16,9 @@ class CabinetPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
     final next = store.upcoming.isEmpty ? null : store.upcoming.first;
-    final name = store.displayName.trim().isEmpty ? 'Гость CULT' : store.displayName;
+    final name = store.displayName.trim().isEmpty
+        ? 'Гость CULT'
+        : store.displayName;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
       children: [
@@ -26,7 +28,11 @@ class CabinetPage extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(18),
-                child: SizedBox(width: 108, height: 108, child: CultImage('avatar', aspect: 1, radius: 0)),
+                child: SizedBox(
+                  width: 108,
+                  height: 108,
+                  child: CultImage('avatar', aspect: 1, radius: 0),
+                ),
               ),
               Positioned(
                 right: -4,
@@ -36,8 +42,21 @@ class CabinetPage extends StatelessWidget {
                   shape: const CircleBorder(),
                   child: InkWell(
                     customBorder: const CircleBorder(),
-                    onTap: () => pushPage(context, store.signedIn ? const SettingsPage() : const AuthPage(allowSkip: false)),
-                    child: const SizedBox(width: 34, height: 34, child: Icon(Icons.edit_outlined, size: 16, color: Colors.white)),
+                    onTap: () => pushPage(
+                      context,
+                      store.signedIn
+                          ? const SettingsPage()
+                          : const AuthPage(allowSkip: false),
+                    ),
+                    child: const SizedBox(
+                      width: 34,
+                      height: 34,
+                      child: Icon(
+                        Icons.edit_outlined,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -49,8 +68,15 @@ class CabinetPage extends StatelessWidget {
         const SizedBox(height: 4),
         Center(
           child: Text(
-            store.signedIn ? 'ПЛАТИНОВЫЙ СТАТУС' : (store.gender?.label.toUpperCase() ?? 'ГОСТЕВОЙ ПРОФИЛЬ'),
-            style: const TextStyle(letterSpacing: 1.6, color: Cult.muted, fontSize: 12, fontWeight: FontWeight.w600),
+            store.signedIn
+                ? 'ПЛАТИНОВЫЙ СТАТУС'
+                : (store.gender?.label.toUpperCase() ?? 'ГОСТЕВОЙ ПРОФИЛЬ'),
+            style: const TextStyle(
+              letterSpacing: 1.6,
+              color: Cult.muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
             textAlign: TextAlign.center,
           ),
         ),
@@ -62,9 +88,16 @@ class CabinetPage extends StatelessWidget {
               children: [
                 Text('Войдите по телефону', style: cultHeadline(22)),
                 const SizedBox(height: 6),
-                const Text('Сохраним профиль в филиале CULT Сочи.', style: TextStyle(color: Cult.muted)),
+                const Text(
+                  'Сохраним профиль в филиале CULT Сочи.',
+                  style: TextStyle(color: Cult.muted),
+                ),
                 const SizedBox(height: 12),
-                CultButton(label: 'Войти', onPressed: () => pushPage(context, const AuthPage(allowSkip: false))),
+                CultButton(
+                  label: 'Войти',
+                  onPressed: () =>
+                      pushPage(context, const AuthPage(allowSkip: false)),
+                ),
               ],
             ),
           ),
@@ -86,20 +119,47 @@ class CabinetPage extends StatelessWidget {
               Row(
                 children: [
                   const Expanded(
-                    child: Text('БОНУСНЫЙ БАЛАНС', style: TextStyle(letterSpacing: 1.1, fontSize: 12, fontWeight: FontWeight.w600)),
+                    child: Text(
+                      'БОНУСНЫЙ БАЛАНС',
+                      style: TextStyle(
+                        letterSpacing: 1.1,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.28),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text('VIP СТАТУС', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                    child: const Text(
+                      'VIP СТАТУС',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(rub(store.balance), style: cultHeadline(36)),
+              if (store.welcomeGranted) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'включая welcome-бонус ${rub(store.welcomeBonus)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Cult.ink.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -107,40 +167,106 @@ class CabinetPage extends StatelessWidget {
                     child: Text.rich(
                       TextSpan(
                         children: [
-                          TextSpan(text: 'В клубе с  ', style: TextStyle(fontSize: 12)),
-                          TextSpan(text: 'ЯНВ 2023', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                          TextSpan(
+                            text: 'В клубе с  ',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          TextSpan(
+                            text: 'ЯНВ 2023',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ),
-                  Icon(Icons.auto_awesome, color: Cult.ink.withValues(alpha: 0.55), size: 20),
+                  Icon(
+                    Icons.auto_awesome,
+                    color: Cult.ink.withValues(alpha: 0.55),
+                    size: 20,
+                  ),
                 ],
               ),
             ],
           ),
         ),
         const SizedBox(height: 22),
-        const Text('ОБЗОР АККАУНТА', style: TextStyle(letterSpacing: 1.4, fontSize: 12, fontWeight: FontWeight.w700)),
+        const Text(
+          'ОБЗОР АККАУНТА',
+          style: TextStyle(
+            letterSpacing: 1.4,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: 10),
         _AccountRow(
           icon: Icons.calendar_today_outlined,
           title: 'Мои записи',
-          note: next == null ? 'Предстоящих нет' : 'След: ${formatVisitDate(next.date)}, ${next.time}',
+          note: next == null
+              ? 'Предстоящих нет'
+              : 'След: ${formatVisitDate(next.date)}, ${next.time}',
           onTap: () => pushPage(context, const VisitsPage()),
         ),
-        _AccountRow(icon: Icons.history, title: 'История визитов', note: '', onTap: () => pushPage(context, const VisitsPage())),
-        _AccountRow(icon: Icons.biotech_outlined, title: 'Мои анализы', note: '', onTap: () => pushPage(context, const AnalysesPage())),
-        _AccountRow(icon: Icons.inventory_2_outlined, title: 'Мои пакеты услуг', note: '', onTap: () => pushPage(context, const FavoritesPage())),
-        _AccountRow(icon: Icons.directions_car_outlined, title: 'Заказ трансфера', note: '', onTap: () => pushPage(context, const TransferPage())),
-        _AccountRow(icon: Icons.card_giftcard_outlined, title: 'Купить сертификат', note: '', onTap: () => pushPage(context, const CertificatesPage())),
-        _AccountRow(icon: Icons.medical_information_outlined, title: 'Рекомендации врача', note: '3 новых рекомендации', onTap: () => pushPage(context, const PharmacyPage())),
-        _AccountRow(icon: Icons.rule_outlined, title: 'Правила лояльности', note: '', onTap: () => pushPage(context, const LoyaltyPage())),
-        _AccountRow(icon: Icons.wc_outlined, title: 'Профиль услуг', note: store.gender?.servicesTitle ?? 'Не выбран', onTap: () => pushPage(context, const GenderPage())),
+        _AccountRow(
+          icon: Icons.history,
+          title: 'История визитов',
+          note: '',
+          onTap: () => pushPage(context, const VisitsPage()),
+        ),
+        _AccountRow(
+          icon: Icons.biotech_outlined,
+          title: 'Мои анализы',
+          note: '',
+          onTap: () => pushPage(context, const AnalysesPage()),
+        ),
+        _AccountRow(
+          icon: Icons.inventory_2_outlined,
+          title: 'Мои пакеты услуг',
+          note: '',
+          onTap: () => pushPage(context, const FavoritesPage()),
+        ),
+        _AccountRow(
+          icon: Icons.directions_car_outlined,
+          title: 'Заказ трансфера',
+          note: '',
+          onTap: () => pushPage(context, const TransferPage()),
+        ),
+        _AccountRow(
+          icon: Icons.card_giftcard_outlined,
+          title: 'Купить сертификат',
+          note: '',
+          onTap: () => pushPage(context, const CertificatesPage()),
+        ),
+        _AccountRow(
+          icon: Icons.medical_information_outlined,
+          title: 'Рекомендации врача',
+          note: '3 новых рекомендации',
+          onTap: () => pushPage(context, const PharmacyPage()),
+        ),
+        _AccountRow(
+          icon: Icons.rule_outlined,
+          title: 'Правила лояльности',
+          note: '',
+          onTap: () => pushPage(context, const LoyaltyPage()),
+        ),
+        _AccountRow(
+          icon: Icons.wc_outlined,
+          title: 'Профиль услуг',
+          note: store.gender?.servicesTitle ?? 'Не выбран',
+          onTap: () => pushPage(context, const GenderPage()),
+        ),
         if (store.signedIn) ...[
           const SizedBox(height: 16),
           Center(
             child: OutlinedButton(
-              style: OutlinedButton.styleFrom(foregroundColor: Cult.error, side: BorderSide(color: Cult.error.withValues(alpha: 0.35))),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Cult.error,
+                side: BorderSide(color: Cult.error.withValues(alpha: 0.35)),
+              ),
               onPressed: () => store.signOut(),
               child: const Text('ВЫЙТИ'),
             ),
@@ -160,7 +286,12 @@ String _phoneLabel(String raw) {
 }
 
 class _AccountRow extends StatelessWidget {
-  const _AccountRow({required this.icon, required this.title, required this.note, required this.onTap});
+  const _AccountRow({
+    required this.icon,
+    required this.title,
+    required this.note,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String title;
@@ -184,7 +315,10 @@ class _AccountRow extends StatelessWidget {
                 Container(
                   width: 42,
                   height: 42,
-                  decoration: BoxDecoration(color: const Color(0xFFF3EFEA), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3EFEA),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Icon(icon, color: Cult.ink, size: 22),
                 ),
                 const SizedBox(width: 12),
@@ -192,10 +326,22 @@ class _AccountRow extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       if (note.isNotEmpty) ...[
                         const SizedBox(height: 2),
-                        Text(note, style: const TextStyle(color: Cult.muted, fontSize: 13)),
+                        Text(
+                          note,
+                          style: const TextStyle(
+                            color: Cult.muted,
+                            fontSize: 13,
+                          ),
+                        ),
                       ],
                     ],
                   ),
@@ -251,18 +397,31 @@ class _VisitsPageState extends State<VisitsPage> {
                 children: [
                   Text('Войдите по телефону', style: cultHeadline(22)),
                   const SizedBox(height: 6),
-                  const Text('Покажем ваши реальные записи из филиала CULT в Сочи.'),
+                  const Text(
+                    'Покажем ваши реальные записи из филиала CULT в Сочи.',
+                  ),
                   const SizedBox(height: 12),
-                  CultButton(label: 'Войти', onPressed: () => pushPage(context, const AuthPage(allowSkip: false))),
+                  CultButton(
+                    label: 'Войти',
+                    onPressed: () =>
+                        pushPage(context, const AuthPage(allowSkip: false)),
+                  ),
                 ],
               ),
             )
           else ...[
             if (store.visitsLoading) const LinearProgressIndicator(),
-            if (store.visitsError.isNotEmpty) Text(store.visitsError, style: const TextStyle(color: Cult.error)),
+            if (store.visitsError.isNotEmpty)
+              Text(
+                store.visitsError,
+                style: const TextStyle(color: Cult.error),
+              ),
             Text('Предстоящие', style: cultHeadline(22)),
             if (store.upcoming.isEmpty)
-              const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Text('Предстоящих визитов нет.'))
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text('Предстоящих визитов нет.'),
+              )
             else
               for (final visit in store.upcoming)
                 Padding(
@@ -271,7 +430,10 @@ class _VisitsPageState extends State<VisitsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('${formatVisitDate(visit.date)} · ${visit.time}', style: const TextStyle(color: Cult.muted)),
+                        Text(
+                          '${formatVisitDate(visit.date)} · ${visit.time}',
+                          style: const TextStyle(color: Cult.muted),
+                        ),
                         Text(visit.service, style: cultHeadline(20)),
                         Text(visit.doctor),
                         Align(
@@ -281,10 +443,15 @@ class _VisitsPageState extends State<VisitsPage> {
                               final message = await store.cancelVisit(visit.id);
                               if (!context.mounted) return;
                               if (message != null) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(message)),
+                                );
                               }
                             },
-                            child: const Text('Отменить', style: TextStyle(color: Cult.error)),
+                            child: const Text(
+                              'Отменить',
+                              style: TextStyle(color: Cult.error),
+                            ),
                           ),
                         ),
                       ],
@@ -292,16 +459,24 @@ class _VisitsPageState extends State<VisitsPage> {
                   ),
                 ),
             const SizedBox(height: 8),
-            TextButton(onPressed: () => pushPage(context, const BookingPage()), child: const Text('Записаться')),
+            TextButton(
+              onPressed: () => pushPage(context, const BookingPage()),
+              child: const Text('Записаться'),
+            ),
             Text('История', style: cultHeadline(22)),
             if (store.past.isEmpty)
-              const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Text('Истории визитов пока нет.'))
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text('Истории визитов пока нет.'),
+              )
             else
               for (final visit in store.past)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text(visit.service),
-                  subtitle: Text('${formatVisitDate(visit.date)} · ${visit.time}\n${visit.doctor} · CULT Сочи'),
+                  subtitle: Text(
+                    '${formatVisitDate(visit.date)} · ${visit.time}\n${visit.doctor} · CULT Сочи',
+                  ),
                   isThreeLine: true,
                 ),
           ],
@@ -324,7 +499,9 @@ class AnalysesPage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           if (!store.signedIn)
-            const Text('Войдите по телефону — покажем анализы и заборы из ваших записей в филиале.')
+            const Text(
+              'Войдите по телефону — покажем анализы и заборы из ваших записей в филиале.',
+            )
           else if (labs.isEmpty)
             const Text('В филиале пока нет записей с анализами на этом номере.')
           else
@@ -332,16 +509,24 @@ class AnalysesPage extends StatelessWidget {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(visit.service),
-                subtitle: Text('${formatVisitDate(visit.date)} · ${visit.time}'),
+                subtitle: Text(
+                  '${formatVisitDate(visit.date)} · ${visit.time}',
+                ),
                 trailing: Text(
                   visit.status == 'upcoming' ? 'Назначен' : 'Сдан',
-                  style: const TextStyle(color: Cult.primary, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    color: Cult.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
           const SizedBox(height: 12),
           CultButton(
             label: 'Записать анализ',
-            onPressed: () => pushPage(context, const BookingPage(initialService: 'Забор Анализов в клинике')),
+            onPressed: () => pushPage(
+              context,
+              const BookingPage(initialService: 'Забор Анализов в клинике'),
+            ),
           ),
         ],
       ),
@@ -360,7 +545,9 @@ class PharmacyPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text('Врач оставил средства и короткую рекомендацию. «Купить сейчас» открывает корзину.'),
+          const Text(
+            'Врач оставил средства и короткую рекомендацию. «Купить сейчас» открывает корзину.',
+          ),
           const SizedBox(height: 12),
           for (final row in pharmacy)
             if (productById(row.productId) case final product?)
@@ -373,12 +560,19 @@ class PharmacyPage extends StatelessWidget {
                       Text(product.name, style: cultHeadline(20)),
                       Text(row.dose),
                       Text(row.note),
-                      Text('${row.doctor} · ${row.until}', style: const TextStyle(color: Cult.muted)),
+                      Text(
+                        '${row.doctor} · ${row.until}',
+                        style: const TextStyle(color: Cult.muted),
+                      ),
                       const SizedBox(height: 8),
                       CultButton(
                         label: 'Купить сейчас',
                         onPressed: () {
-                          store.addToCart(product.id, product.name, product.price);
+                          store.addToCart(
+                            product.id,
+                            product.name,
+                            product.price,
+                          );
                           pushPage(context, const CartPage());
                         },
                       ),
@@ -424,7 +618,9 @@ class FavoritesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
-    final list = products.where((item) => store.favorites.contains(item.id)).toList();
+    final list = products
+        .where((item) => store.favorites.contains(item.id))
+        .toList();
     return Scaffold(
       appBar: AppBar(title: const Text('Избранное')),
       body: list.isEmpty
@@ -437,8 +633,12 @@ class FavoritesPage extends StatelessWidget {
                     contentPadding: EdgeInsets.zero,
                     title: Text(product.name),
                     subtitle: Text(rub(product.price)),
-                    trailing: IconButton(onPressed: () => store.toggleFavorite(product.id), icon: const Icon(Icons.favorite, color: Cult.primary)),
-                    onTap: () => pushPage(context, ProductPage(product: product)),
+                    trailing: IconButton(
+                      onPressed: () => store.toggleFavorite(product.id),
+                      icon: const Icon(Icons.favorite, color: Cult.primary),
+                    ),
+                    onTap: () =>
+                        pushPage(context, ProductPage(product: product)),
                   ),
               ],
             ),
@@ -466,7 +666,13 @@ class _LoyaltyPageState extends State<LoyaltyPage> {
     _started = true;
     store.refreshLoyalty().then((message) {
       if (!mounted) return;
-      setState(() => _note = message ?? (store.loyaltyCards.isEmpty ? 'Карт лояльности по этому телефону нет.' : ''));
+      setState(
+        () => _note =
+            message ??
+            (store.loyaltyCards.isEmpty
+                ? 'Карт лояльности по этому телефону нет.'
+                : ''),
+      );
     });
   }
 
@@ -485,16 +691,29 @@ class _LoyaltyPageState extends State<LoyaltyPage> {
             const SizedBox(height: 16),
             Text('Карты YClients', style: cultHeadline(22)),
             for (final card in store.loyaltyCards)
-              ListTile(contentPadding: EdgeInsets.zero, title: Text(card.title), trailing: Text(rub(card.balance))),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(card.title),
+                trailing: Text(rub(card.balance)),
+              ),
           ] else if (!store.signedIn)
             const Padding(
               padding: EdgeInsets.only(top: 12),
-              child: Text('Войдите по телефону в кабинете — карта филиала подтянется к номеру.'),
+              child: Text(
+                'Войдите по телефону в кабинете — карта филиала подтянется к номеру.',
+              ),
             )
           else if (_note.isNotEmpty)
-            Padding(padding: const EdgeInsets.only(top: 12), child: Text(_note)),
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(_note),
+            ),
           const SizedBox(height: 12),
-          for (final rule in loyaltyRules) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(rule)),
+          for (final rule in loyaltyRules)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(rule),
+            ),
           const SizedBox(height: 8),
           const Text('Янв 2023 · Вступление в клуб · +2 000 ₽'),
           const Text('Фев 2026 · Morpheus8 · +8 800 ₽'),
@@ -535,13 +754,22 @@ class _CertificatesPageState extends State<CertificatesPage> {
         children: [
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('CULT', style: TextStyle(color: foreground, letterSpacing: 3)),
+                Text(
+                  'CULT',
+                  style: TextStyle(color: foreground, letterSpacing: 3),
+                ),
                 const SizedBox(height: 24),
-                Text(rub(_nominal), style: cultHeadline(32).copyWith(color: foreground)),
+                Text(
+                  rub(_nominal),
+                  style: cultHeadline(32).copyWith(color: foreground),
+                ),
                 Text(_design, style: TextStyle(color: foreground)),
               ],
             ),
@@ -551,7 +779,11 @@ class _CertificatesPageState extends State<CertificatesPage> {
             spacing: 8,
             children: [
               for (final value in certificateNominals)
-                ChoiceChip(label: Text(rub(value)), selected: _nominal == value, onSelected: (_) => setState(() => _nominal = value)),
+                ChoiceChip(
+                  label: Text(rub(value)),
+                  selected: _nominal == value,
+                  onSelected: (_) => setState(() => _nominal = value),
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -559,7 +791,11 @@ class _CertificatesPageState extends State<CertificatesPage> {
             spacing: 8,
             children: [
               for (final name in ['Песок', 'Золото', 'Ночь'])
-                ChoiceChip(label: Text(name), selected: _design == name, onSelected: (_) => setState(() => _design = name)),
+                ChoiceChip(
+                  label: Text(name),
+                  selected: _design == name,
+                  onSelected: (_) => setState(() => _design = name),
+                ),
             ],
           ),
           SwitchListTile(
@@ -568,8 +804,10 @@ class _CertificatesPageState extends State<CertificatesPage> {
             value: _bonus,
             onChanged: (value) => setState(() => _bonus = value),
           ),
-          if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Cult.error)),
-          if (_code.isNotEmpty) Text('Код отправлен в WhatsApp и на почту: $_code'),
+          if (_error.isNotEmpty)
+            Text(_error, style: const TextStyle(color: Cult.error)),
+          if (_code.isNotEmpty)
+            Text('Код отправлен в WhatsApp и на почту: $_code'),
           CultButton(
             label: 'Оплатить сертификат',
             onPressed: () {
@@ -586,7 +824,12 @@ class _CertificatesPageState extends State<CertificatesPage> {
           ),
           const SizedBox(height: 16),
           Text('Уже купленные', style: cultHeadline(22)),
-          for (final gift in store.gifts) ListTile(contentPadding: EdgeInsets.zero, title: Text('${rub(gift.nominal)} · ${gift.design}'), subtitle: Text(gift.code)),
+          for (final gift in store.gifts)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text('${rub(gift.nominal)} · ${gift.design}'),
+              subtitle: Text(gift.code),
+            ),
         ],
       ),
     );
@@ -626,9 +869,16 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          TextField(controller: _name, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Имя в кабинете')),
+          TextField(
+            controller: _name,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(labelText: 'Имя в кабинете'),
+          ),
           const SizedBox(height: 12),
-          CultButton(label: 'Сохранить имя', onPressed: () => store.setProfileName(_name.text)),
+          CultButton(
+            label: 'Сохранить имя',
+            onPressed: () => store.setProfileName(_name.text),
+          ),
           const SizedBox(height: 12),
           const Text('Профиль услуг', style: TextStyle(color: Cult.muted)),
           const SizedBox(height: 8),
@@ -649,20 +899,45 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           if (store.signedIn) ...[
             const SizedBox(height: 8),
-            Text('Телефон ${_phoneLabel(store.profilePhone)}', style: const TextStyle(color: Cult.muted)),
+            Text(
+              'Телефон ${_phoneLabel(store.profilePhone)}',
+              style: const TextStyle(color: Cult.muted),
+            ),
             TextButton(
-              onPressed: () => pushPage(context, const AuthPage(allowSkip: false)),
+              onPressed: () =>
+                  pushPage(context, const AuthPage(allowSkip: false)),
               child: const Text('Сменить номер'),
             ),
           ] else
             TextButton(
-              onPressed: () => pushPage(context, const AuthPage(allowSkip: false)),
+              onPressed: () =>
+                  pushPage(context, const AuthPage(allowSkip: false)),
               child: const Text('Войти по телефону'),
             ),
-          SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Визиты'), value: store.notices['visits'] ?? true, onChanged: (value) => store.setNotice('visits', value)),
-          SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Анализы'), value: store.notices['analyses'] ?? true, onChanged: (value) => store.setNotice('analyses', value)),
-          SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Аптечка'), value: store.notices['pharmacy'] ?? true, onChanged: (value) => store.setNotice('pharmacy', value)),
-          SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Предложения'), value: store.notices['offers'] ?? false, onChanged: (value) => store.setNotice('offers', value)),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Визиты'),
+            value: store.notices['visits'] ?? true,
+            onChanged: (value) => store.setNotice('visits', value),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Анализы'),
+            value: store.notices['analyses'] ?? true,
+            onChanged: (value) => store.setNotice('analyses', value),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Аптечка'),
+            value: store.notices['pharmacy'] ?? true,
+            onChanged: (value) => store.setNotice('pharmacy', value),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Предложения'),
+            value: store.notices['offers'] ?? false,
+            onChanged: (value) => store.setNotice('offers', value),
+          ),
         ],
       ),
     );

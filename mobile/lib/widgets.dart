@@ -6,7 +6,11 @@ import 'store.dart';
 import 'theme.dart';
 
 class ClinicScope extends InheritedNotifier<ClinicStore> {
-  const ClinicScope({super.key, required ClinicStore store, required super.child}) : super(notifier: store);
+  const ClinicScope({
+    super.key,
+    required ClinicStore store,
+    required super.child,
+  }) : super(notifier: store);
 
   static ClinicStore of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<ClinicScope>();
@@ -41,7 +45,7 @@ class CultButton extends StatelessWidget {
   const CultButton({super.key, required this.label, required this.onPressed});
 
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +55,16 @@ class CultButton extends StatelessWidget {
         style: FilledButton.styleFrom(
           backgroundColor: Cult.ink,
           foregroundColor: Colors.white,
-          shape: const RoundedRectangleBorder(),
+          disabledBackgroundColor: Cult.ink.withValues(alpha: 0.45),
+          disabledForegroundColor: Colors.white70,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           padding: const EdgeInsets.symmetric(vertical: 16),
-          textStyle: const TextStyle(letterSpacing: 1.4, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(
+            letterSpacing: 1.4,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         onPressed: onPressed,
         child: Text(label.toUpperCase()),
@@ -63,7 +74,13 @@ class CultButton extends StatelessWidget {
 }
 
 class CultSelect extends StatelessWidget {
-  const CultSelect({super.key, required this.label, required this.value, required this.onTap, this.hint = 'Выбрать'});
+  const CultSelect({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onTap,
+    this.hint = 'Выбрать',
+  });
 
   final String label;
   final String value;
@@ -89,9 +106,18 @@ class CultSelect extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label, style: const TextStyle(color: Cult.muted, fontSize: 12)),
+                      Text(
+                        label,
+                        style: const TextStyle(color: Cult.muted, fontSize: 12),
+                      ),
                       const SizedBox(height: 2),
-                      Text(empty ? hint : value, style: TextStyle(color: empty ? Cult.muted : Cult.ink, fontSize: 16)),
+                      Text(
+                        empty ? hint : value,
+                        style: TextStyle(
+                          color: empty ? Cult.muted : Cult.ink,
+                          fontSize: 16,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -106,22 +132,37 @@ class CultSelect extends StatelessWidget {
 }
 
 class CultCard extends StatelessWidget {
-  const CultCard({super.key, required this.child, this.padding = const EdgeInsets.all(16)});
+  const CultCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(16),
+  });
 
   final Widget child;
   final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: padding,
+    return DecoratedBox(
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 16, offset: Offset(0, 6))],
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: padding,
+          child: SizedBox(width: double.infinity, child: child),
+        ),
       ),
-      child: child,
     );
   }
 }
@@ -132,5 +173,84 @@ Future<void> openExternal(String url) async {
 }
 
 void pushPage(BuildContext context, Widget page) {
-  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+  Navigator.of(context).push(
+    PageRouteBuilder<void>(
+      pageBuilder: (_, animation, _) => page,
+      transitionDuration: const Duration(milliseconds: 320),
+      reverseTransitionDuration: const Duration(milliseconds: 260),
+      transitionsBuilder: (_, animation, _, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.04, 0),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    ),
+  );
+}
+
+class CultEmpty extends StatelessWidget {
+  const CultEmpty({
+    super.key,
+    required this.title,
+    this.note = '',
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final String title;
+  final String note;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return CultCard(
+      child: Column(
+        children: [
+          Text(title, style: cultHeadline(22), textAlign: TextAlign.center),
+          if (note.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              note,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Cult.muted, height: 1.4),
+            ),
+          ],
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 14),
+            CultButton(label: actionLabel!, onPressed: onAction!),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class CultSectionLabel extends StatelessWidget {
+  const CultSectionLabel(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text.toUpperCase(),
+      style: const TextStyle(
+        color: Cult.muted,
+        letterSpacing: 1.5,
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
 }

@@ -42,7 +42,12 @@ ThemeData cultTheme() {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: true,
-      titleTextStyle: TextStyle(fontFamily: 'serif', fontSize: 22, letterSpacing: 3, color: Cult.ink),
+      titleTextStyle: TextStyle(
+        fontFamily: 'serif',
+        fontSize: 22,
+        letterSpacing: 3,
+        color: Cult.ink,
+      ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
@@ -52,12 +57,16 @@ ThemeData cultTheme() {
       hintStyle: const TextStyle(color: Cult.muted),
       border: border,
       enabledBorder: border,
-      focusedBorder: border.copyWith(borderSide: const BorderSide(color: Cult.primary, width: 1.4)),
+      focusedBorder: border.copyWith(
+        borderSide: const BorderSide(color: Cult.primary, width: 1.4),
+      ),
     ),
     bottomSheetTheme: const BottomSheetThemeData(
       backgroundColor: Cult.bg,
       showDragHandle: true,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
     ),
     chipTheme: ChipThemeData(
       backgroundColor: Colors.white,
@@ -73,8 +82,12 @@ ThemeData cultTheme() {
       labelTextStyle: WidgetStateProperty.resolveWith(
         (states) => TextStyle(
           fontSize: 11,
-          fontWeight: states.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w400,
-          color: states.contains(WidgetState.selected) ? Cult.primary : Cult.muted,
+          fontWeight: states.contains(WidgetState.selected)
+              ? FontWeight.w600
+              : FontWeight.w400,
+          color: states.contains(WidgetState.selected)
+              ? Cult.primary
+              : Cult.muted,
         ),
       ),
     ),
@@ -82,12 +95,12 @@ ThemeData cultTheme() {
 }
 
 TextStyle cultHeadline(double size) => TextStyle(
-      fontFamily: 'serif',
-      fontSize: size,
-      height: 1.15,
-      fontWeight: FontWeight.w500,
-      color: Cult.ink,
-    );
+  fontFamily: 'serif',
+  fontSize: size,
+  height: 1.15,
+  fontWeight: FontWeight.w500,
+  color: Cult.ink,
+);
 
 String rub(int value) {
   final raw = value.abs().toString();

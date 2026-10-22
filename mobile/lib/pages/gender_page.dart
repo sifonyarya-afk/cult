@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../data.dart';
 import '../theme.dart';
@@ -19,6 +20,7 @@ class _GenderPageState extends State<GenderPage> {
   Future<void> _start() async {
     final gender = _selected;
     if (gender == null) return;
+    HapticFeedback.selectionClick();
     await ClinicScope.of(context).setGender(gender);
     widget.onDone?.call();
     if (widget.onDone == null && mounted && Navigator.of(context).canPop()) {
@@ -39,7 +41,8 @@ class _GenderPageState extends State<GenderPage> {
             errorBuilder: (_, _, _) => Image.asset(
               photo['interior'] ?? photo['logo']!,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF2C2A28)),
+              errorBuilder: (_, _, _) =>
+                  const ColoredBox(color: Color(0xFF2C2A28)),
             ),
           ),
           const DecoratedBox(
@@ -66,7 +69,9 @@ class _GenderPageState extends State<GenderPage> {
                       color: Colors.white,
                       letterSpacing: 10,
                       fontWeight: FontWeight.w500,
-                      shadows: const [Shadow(color: Color(0x66000000), blurRadius: 12)],
+                      shadows: const [
+                        Shadow(color: Color(0x66000000), blurRadius: 12),
+                      ],
                     ),
                   ),
                   Expanded(
@@ -78,7 +83,9 @@ class _GenderPageState extends State<GenderPage> {
                           color: Colors.white,
                           fontStyle: FontStyle.italic,
                           height: 1.35,
-                          shadows: const [Shadow(color: Color(0x66000000), blurRadius: 10)],
+                          shadows: const [
+                            Shadow(color: Color(0x66000000), blurRadius: 10),
+                          ],
                         ),
                       ),
                     ),
@@ -90,14 +97,20 @@ class _GenderPageState extends State<GenderPage> {
                         label: 'Мужчина',
                         icon: Icons.male,
                         selected: _selected == ClientGender.man,
-                        onTap: () => setState(() => _selected = ClientGender.man),
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setState(() => _selected = ClientGender.man);
+                        },
                       ),
                       const SizedBox(width: 36),
                       _GenderCircle(
                         label: 'Женщина',
                         icon: Icons.female,
                         selected: _selected == ClientGender.woman,
-                        onTap: () => setState(() => _selected = ClientGender.woman),
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setState(() => _selected = ClientGender.woman);
+                        },
                       ),
                     ],
                   ),
@@ -108,11 +121,19 @@ class _GenderPageState extends State<GenderPage> {
                       style: FilledButton.styleFrom(
                         backgroundColor: Cult.ink,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor: Cult.ink.withValues(alpha: 0.55),
+                        disabledBackgroundColor: Cult.ink.withValues(
+                          alpha: 0.55,
+                        ),
                         disabledForegroundColor: Colors.white54,
                         padding: const EdgeInsets.symmetric(vertical: 18),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        textStyle: const TextStyle(letterSpacing: 3.2, fontWeight: FontWeight.w600, fontSize: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: const TextStyle(
+                          letterSpacing: 3.2,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                       ),
                       onPressed: _selected == null ? null : _start,
                       child: const Text('НАЧАТЬ'),
@@ -127,7 +148,9 @@ class _GenderPageState extends State<GenderPage> {
                       fontStyle: FontStyle.italic,
                       fontFamily: 'serif',
                       fontSize: 15,
-                      shadows: const [Shadow(color: Color(0x55000000), blurRadius: 8)],
+                      shadows: const [
+                        Shadow(color: Color(0x55000000), blurRadius: 8),
+                      ],
                     ),
                   ),
                 ],
@@ -172,7 +195,13 @@ class _GenderCircle extends StatelessWidget {
                 width: selected ? 1.6 : 1,
               ),
               boxShadow: selected
-                  ? const [BoxShadow(color: Color(0x44000000), blurRadius: 16, offset: Offset(0, 6))]
+                  ? const [
+                      BoxShadow(
+                        color: Color(0x44000000),
+                        blurRadius: 16,
+                        offset: Offset(0, 6),
+                      ),
+                    ]
                   : null,
             ),
             child: Icon(icon, color: Colors.white, size: 34),

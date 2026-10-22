@@ -8,21 +8,31 @@ import 'data.dart';
 import 'yclients.dart';
 
 class CartItem {
-  CartItem({required this.id, required this.name, required this.price, this.qty = 1});
+  CartItem({
+    required this.id,
+    required this.name,
+    required this.price,
+    this.qty = 1,
+  });
 
   final String id;
   final String name;
   final int price;
   int qty;
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'price': price, 'qty': qty};
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'price': price,
+    'qty': qty,
+  };
 
   factory CartItem.fromJson(Map<String, dynamic> json) => CartItem(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        price: json['price'] as int,
-        qty: json['qty'] as int,
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    price: json['price'] as int,
+    qty: json['qty'] as int,
+  );
 }
 
 class Appointment {
@@ -47,30 +57,36 @@ class Appointment {
   final String? recordHash;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'service': service,
-        'doctor': doctor,
-        'date': date,
-        'time': time,
-        'status': status,
-        'recordId': recordId,
-        'recordHash': recordHash,
-      };
+    'id': id,
+    'service': service,
+    'doctor': doctor,
+    'date': date,
+    'time': time,
+    'status': status,
+    'recordId': recordId,
+    'recordHash': recordHash,
+  };
 
   factory Appointment.fromJson(Map<String, dynamic> json) => Appointment(
-        id: json['id'] as String,
-        service: json['service'] as String,
-        doctor: json['doctor'] as String,
-        date: json['date'] as String,
-        time: json['time'] as String,
-        status: json['status'] as String? ?? 'upcoming',
-        recordId: json['recordId'] as int?,
-        recordHash: json['recordHash'] as String?,
-      );
+    id: json['id'] as String,
+    service: json['service'] as String,
+    doctor: json['doctor'] as String,
+    date: json['date'] as String,
+    time: json['time'] as String,
+    status: json['status'] as String? ?? 'upcoming',
+    recordId: json['recordId'] as int?,
+    recordHash: json['recordHash'] as String?,
+  );
 }
 
 class ShopOrder {
-  ShopOrder({required this.id, required this.title, required this.total, required this.pay, required this.at});
+  ShopOrder({
+    required this.id,
+    required this.title,
+    required this.total,
+    required this.pay,
+    required this.at,
+  });
 
   final String id;
   final String title;
@@ -78,33 +94,49 @@ class ShopOrder {
   final String pay;
   final String at;
 
-  Map<String, dynamic> toJson() => {'id': id, 'title': title, 'total': total, 'pay': pay, 'at': at};
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'total': total,
+    'pay': pay,
+    'at': at,
+  };
 
   factory ShopOrder.fromJson(Map<String, dynamic> json) => ShopOrder(
-        id: json['id'] as String,
-        title: json['title'] as String,
-        total: json['total'] as int,
-        pay: json['pay'] as String,
-        at: json['at'] as String,
-      );
+    id: json['id'] as String,
+    title: json['title'] as String,
+    total: json['total'] as int,
+    pay: json['pay'] as String,
+    at: json['at'] as String,
+  );
 }
 
 class GiftCard {
-  GiftCard({required this.id, required this.nominal, required this.design, required this.code});
+  GiftCard({
+    required this.id,
+    required this.nominal,
+    required this.design,
+    required this.code,
+  });
 
   final String id;
   final int nominal;
   final String design;
   final String code;
 
-  Map<String, dynamic> toJson() => {'id': id, 'nominal': nominal, 'design': design, 'code': code};
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'nominal': nominal,
+    'design': design,
+    'code': code,
+  };
 
   factory GiftCard.fromJson(Map<String, dynamic> json) => GiftCard(
-        id: json['id'] as String,
-        nominal: json['nominal'] as int,
-        design: json['design'] as String,
-        code: json['code'] as String,
-      );
+    id: json['id'] as String,
+    nominal: json['nominal'] as int,
+    design: json['design'] as String,
+    code: json['code'] as String,
+  );
 }
 
 class ChatMessage {
@@ -117,10 +149,10 @@ class ChatMessage {
   Map<String, dynamic> toJson() => {'id': id, 'from': from, 'text': text};
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
-        id: json['id'] as String,
-        from: json['from'] as String,
-        text: json['text'] as String,
-      );
+    id: json['id'] as String,
+    from: json['from'] as String,
+    text: json['text'] as String,
+  );
 }
 
 class ClinicStore extends ChangeNotifier {
@@ -137,8 +169,15 @@ class ClinicStore extends ChangeNotifier {
   List<GiftCard> gifts = [];
   List<String> favorites = [];
   Map<String, List<ChatMessage>> threads = {};
-  Map<String, bool> notices = {'visits': true, 'analyses': true, 'pharmacy': true, 'offers': false};
+  Map<String, bool> notices = {
+    'visits': true,
+    'analyses': true,
+    'pharmacy': true,
+    'offers': false,
+  };
   int spent = 0;
+  int welcomeBonus = 0;
+  var welcomeGranted = false;
   String profileName = '';
   String profilePhone = '';
   String profileEmail = '';
@@ -160,36 +199,51 @@ class ClinicStore extends ChangeNotifier {
 
   int get balance {
     if (loyaltyCards.isNotEmpty) {
-      return loyaltyCards.fold(0, (sum, card) => sum + card.balance);
+      return loyaltyCards.fold(0, (sum, card) => sum + card.balance) +
+          welcomeBonus;
     }
-    return max(0, 12450 - spent);
+    return max(0, 12450 + welcomeBonus - spent);
   }
 
   int? get companyIdInt => int.tryParse(companyId.trim());
-  bool get yclientsReady => companyIdInt != null && partnerToken.trim().isNotEmpty && userToken.trim().isNotEmpty;
-  bool get signedIn => ycClientId > 0 && normalizePhone(profilePhone).length >= 11;
+  bool get yclientsReady =>
+      companyIdInt != null &&
+      partnerToken.trim().isNotEmpty &&
+      userToken.trim().isNotEmpty;
+  bool get signedIn =>
+      ycClientId > 0 && normalizePhone(profilePhone).length >= 11;
   bool get hasGender => gender != null;
   String get displayName {
     final name = profileName.trim();
     if (name.isNotEmpty) return name;
     return signedIn ? 'Клиент CULT' : 'Гость';
   }
+
   int get cartCount => cart.fold(0, (sum, item) => sum + item.qty);
   int get cartTotal => cart.fold(0, (sum, item) => sum + item.price * item.qty);
 
-  List<Appointment> get upcoming => appointments.where((item) => item.status == 'upcoming').toList();
-  List<Appointment> get past => appointments.where((item) => item.status == 'past').toList();
+  List<Appointment> get upcoming =>
+      appointments.where((item) => item.status == 'upcoming').toList();
+  List<Appointment> get past =>
+      appointments.where((item) => item.status == 'past').toList();
   List<Appointment> get labHistory {
     return [
       for (final visit in [...upcoming, ...past])
-        if (RegExp(r'анализ|днк|забор', caseSensitive: false).hasMatch(visit.service)) visit,
+        if (RegExp(
+          r'анализ|днк|забор',
+          caseSensitive: false,
+        ).hasMatch(visit.service))
+          visit,
     ];
   }
 
   List<Service> get catalogServices {
     final current = gender;
     if (current == null) return services;
-    return [for (final item in services) if (item.audience.matches(current)) item];
+    return [
+      for (final item in services)
+        if (item.audience.matches(current)) item,
+    ];
   }
 
   List<YcService> get catalogLive {
@@ -211,15 +265,23 @@ class ClinicStore extends ChangeNotifier {
       return;
     }
     final json = jsonDecode(raw) as Map<String, dynamic>;
-    cart = (json['cart'] as List<dynamic>? ?? []).map((item) => CartItem.fromJson(item as Map<String, dynamic>)).toList();
+    cart = (json['cart'] as List<dynamic>? ?? [])
+        .map((item) => CartItem.fromJson(item as Map<String, dynamic>))
+        .toList();
     appointments = (json['appointments'] as List<dynamic>? ?? [])
         .map((item) => Appointment.fromJson(item as Map<String, dynamic>))
         .where((item) => item.id != 'seed-visit')
         .toList();
-    orders = (json['orders'] as List<dynamic>? ?? []).map((item) => ShopOrder.fromJson(item as Map<String, dynamic>)).toList();
-    gifts = (json['gifts'] as List<dynamic>? ?? []).map((item) => GiftCard.fromJson(item as Map<String, dynamic>)).toList();
+    orders = (json['orders'] as List<dynamic>? ?? [])
+        .map((item) => ShopOrder.fromJson(item as Map<String, dynamic>))
+        .toList();
+    gifts = (json['gifts'] as List<dynamic>? ?? [])
+        .map((item) => GiftCard.fromJson(item as Map<String, dynamic>))
+        .toList();
     favorites = (json['favorites'] as List<dynamic>? ?? []).cast<String>();
     spent = json['spent'] as int? ?? 0;
+    welcomeBonus = json['welcomeBonus'] as int? ?? 0;
+    welcomeGranted = json['welcomeGranted'] as bool? ?? welcomeBonus > 0;
     profileName = json['profileName'] as String? ?? '';
     profilePhone = json['profilePhone'] as String? ?? '';
     profileEmail = json['profileEmail'] as String? ?? '';
@@ -238,7 +300,9 @@ class ClinicStore extends ChangeNotifier {
     threads = {};
     if (savedThreads != null) {
       for (final entry in savedThreads.entries) {
-        threads[entry.key] = (entry.value as List<dynamic>).map((item) => ChatMessage.fromJson(item as Map<String, dynamic>)).toList();
+        threads[entry.key] = (entry.value as List<dynamic>)
+            .map((item) => ChatMessage.fromJson(item as Map<String, dynamic>))
+            .toList();
       }
     }
     _seedThreads();
@@ -252,7 +316,12 @@ class ClinicStore extends ChangeNotifier {
       'specialist': 'Здравствуйте. Я на связи по уходу после процедур.',
     };
     for (final entry in seeds.entries) {
-      threads.putIfAbsent(entry.key, () => [ChatMessage(id: '${entry.key}-seed', from: 'them', text: entry.value)]);
+      threads.putIfAbsent(
+        entry.key,
+        () => [
+          ChatMessage(id: '${entry.key}-seed', from: 'them', text: entry.value),
+        ],
+      );
     }
   }
 
@@ -265,6 +334,8 @@ class ClinicStore extends ChangeNotifier {
       'gifts': gifts.map((item) => item.toJson()).toList(),
       'favorites': favorites,
       'spent': spent,
+      'welcomeBonus': welcomeBonus,
+      'welcomeGranted': welcomeGranted,
       'profileName': profileName,
       'profilePhone': profilePhone,
       'profileEmail': profileEmail,
@@ -275,7 +346,10 @@ class ClinicStore extends ChangeNotifier {
       'partnerToken': partnerToken,
       'userToken': userToken,
       'notices': notices,
-      'threads': threads.map((key, value) => MapEntry(key, value.map((item) => item.toJson()).toList())),
+      'threads': threads.map(
+        (key, value) =>
+            MapEntry(key, value.map((item) => item.toJson()).toList()),
+      ),
     };
     await prefs.setString(_key, jsonEncode(payload));
     notifyListeners();
@@ -320,7 +394,9 @@ class ClinicStore extends ChangeNotifier {
     appointments.insert(
       0,
       Appointment(
-        id: recordId == null ? 'visit-${DateTime.now().microsecondsSinceEpoch}' : 'yc-$recordId',
+        id: recordId == null
+            ? 'visit-${DateTime.now().microsecondsSinceEpoch}'
+            : 'yc-$recordId',
         service: service,
         doctor: doctor,
         date: date,
@@ -363,7 +439,11 @@ class ClinicStore extends ChangeNotifier {
     return null;
   }
 
-  void rememberContact({required String name, required String phone, required String email}) {
+  void rememberContact({
+    required String name,
+    required String phone,
+    required String email,
+  }) {
     if (name.trim().isNotEmpty) profileName = name.trim();
     profilePhone = phone.trim();
     profileEmail = email.trim();
@@ -378,7 +458,11 @@ class ClinicStore extends ChangeNotifier {
     }
   }
 
-  Future<String?> registerWithPhone({required String name, required String phone, String email = ''}) async {
+  Future<String?> registerWithPhone({
+    required String name,
+    required String phone,
+    String email = '',
+  }) async {
     _applyClinicDefaults();
     final id = companyIdInt;
     if (id == null || partnerToken.isEmpty || userToken.isEmpty) {
@@ -406,6 +490,10 @@ class ClinicStore extends ChangeNotifier {
       } else if (client.email.isNotEmpty) {
         profileEmail = client.email;
       }
+      if (!welcomeGranted) {
+        welcomeBonus = 3000;
+        welcomeGranted = true;
+      }
       await _save();
       if (gender != null) await _syncGenderToYclients();
       await syncClinic();
@@ -418,7 +506,12 @@ class ClinicStore extends ChangeNotifier {
   Future<void> _syncGenderToYclients() async {
     final id = companyIdInt;
     final current = gender;
-    if (id == null || current == null || ycClientId <= 0 || partnerToken.isEmpty || userToken.isEmpty) return;
+    if (id == null ||
+        current == null ||
+        ycClientId <= 0 ||
+        partnerToken.isEmpty ||
+        userToken.isEmpty)
+      return;
     try {
       await yclients.updateClient(
         partnerToken: partnerToken,
@@ -462,7 +555,11 @@ class ClinicStore extends ChangeNotifier {
     final id = companyIdInt;
     if (id == null || partnerToken.isEmpty) return 'YClients не подключён.';
     try {
-      liveServices = await _fetchLive(partner: partnerToken, user: userToken, companyId: id);
+      liveServices = await _fetchLive(
+        partner: partnerToken,
+        user: userToken,
+        companyId: id,
+      );
       liveError = '';
       notifyListeners();
       return null;
@@ -539,7 +636,11 @@ class ClinicStore extends ChangeNotifier {
     if (chainId.trim().isEmpty) chainId = '0';
   }
 
-  Future<List<YcService>> _fetchLive({required String partner, required String user, required int companyId}) async {
+  Future<List<YcService>> _fetchLive({
+    required String partner,
+    required String user,
+    required int companyId,
+  }) async {
     Map<int, String> names = {};
     try {
       names = await yclients.categoryNames(partner, companyId);
@@ -550,14 +651,21 @@ class ClinicStore extends ChangeNotifier {
     if (list.isEmpty && user.trim().isNotEmpty) {
       list = await yclients.companyServices(partner, user.trim(), companyId);
     }
-    return [for (final item in list) item.withCategory(names[item.categoryId] ?? item.category)];
+    return [
+      for (final item in list)
+        item.withCategory(names[item.categoryId] ?? item.category),
+    ];
   }
 
   Future<String?> refreshLoyalty() async {
     final id = companyIdInt;
     final phone = normalizePhone(profilePhone);
     final chain = int.tryParse(chainId) ?? 0;
-    if (id == null || partnerToken.isEmpty || userToken.isEmpty || phone.length < 11) return null;
+    if (id == null ||
+        partnerToken.isEmpty ||
+        userToken.isEmpty ||
+        phone.length < 11)
+      return null;
     try {
       loyaltyCards = await yclients.loyaltyCards(
         partnerToken: partnerToken,
@@ -580,7 +688,11 @@ class ClinicStore extends ChangeNotifier {
     return true;
   }
 
-  void placeOrder({required String title, required int total, required String pay}) {
+  void placeOrder({
+    required String title,
+    required int total,
+    required String pay,
+  }) {
     final now = DateTime.now();
     orders.insert(
       0,
@@ -599,9 +711,20 @@ class ClinicStore extends ChangeNotifier {
   String buyGift(int nominal, String design) {
     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final random = Random();
-    final tail = List.generate(4, (_) => alphabet[random.nextInt(alphabet.length)]).join();
+    final tail = List.generate(
+      4,
+      (_) => alphabet[random.nextInt(alphabet.length)],
+    ).join();
     final code = 'CULT-${nominal ~/ 1000}-$tail';
-    gifts.insert(0, GiftCard(id: 'gift-${DateTime.now().microsecondsSinceEpoch}', nominal: nominal, design: design, code: code));
+    gifts.insert(
+      0,
+      GiftCard(
+        id: 'gift-${DateTime.now().microsecondsSinceEpoch}',
+        nominal: nominal,
+        design: design,
+        code: code,
+      ),
+    );
     _save();
     return code;
   }
@@ -615,8 +738,8 @@ class ClinicStore extends ChangeNotifier {
     final reply = contactId == 'bot'
         ? 'Клиника открыта ежедневно с 9:00 до 21:00. Запись можно создать в разделе «Запись онлайн».'
         : contactId == 'specialist'
-            ? 'Сообщение у врача. Если это отёк или сыпь после процедуры, не наносите активные средства до ответа.'
-            : 'Администратор получил сообщение и ответит в часы клиники.';
+        ? 'Сообщение у врача. Если это отёк или сыпь после процедуры, не наносите активные средства до ответа.'
+        : 'Администратор получил сообщение и ответит в часы клиники.';
     list.add(ChatMessage(id: 'them-$stamp', from: 'them', text: reply));
     _save();
   }

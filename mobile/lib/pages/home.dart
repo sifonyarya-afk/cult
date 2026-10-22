@@ -18,170 +18,299 @@ class HomePage extends StatelessWidget {
     final store = ClinicScope.of(context);
     final next = store.upcoming.isEmpty ? null : store.upcoming.first;
     final first = store.displayName.trim().split(RegExp(r'\s+')).first;
-    final hello = first.isEmpty || first == 'Гость' ? 'Доброго дня!' : '$first, доброго дня!';
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-      children: [
-        CultCard(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(width: 8, height: 8, decoration: const BoxDecoration(color: Cult.gold, shape: BoxShape.circle)),
-                  const SizedBox(width: 8),
-                  Text(
-                    store.signedIn ? 'ВАШ СТАТУС: PLATINUM' : 'CULT CLINIC',
-                    style: const TextStyle(color: Cult.secondary, letterSpacing: 1.4, fontSize: 11, fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(hello, style: cultHeadline(28)),
-              const SizedBox(height: 8),
-              Text(
-                next == null
-                    ? 'Рады видеть вас снова в CULT Clinic. Выберите услугу и врача.'
-                    : 'Следующая процедура: ${formatVisitDate(next.date)} в ${next.time}.',
-                style: const TextStyle(color: Cult.muted, height: 1.4),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.12,
-          children: [
-            _Quick(icon: Icons.calendar_month, label: 'Онлайн запись', filled: true, onTap: () => pushPage(context, const BookingPage())),
-            _Quick(icon: Icons.biotech, label: 'Мои анализы', onTap: () => pushPage(context, const AnalysesPage())),
-            _Quick(icon: Icons.shopping_basket_outlined, label: 'Магазин биохакинга', onTap: onShop),
-            _Quick(icon: Icons.forum_outlined, label: 'Чат с врачом', onTap: () => pushPage(context, const ChatThreadPage(contactId: 'specialist'))),
-          ],
-        ),
-        const SizedBox(height: 18),
-        SizedBox(
-          height: 38,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              _LinkChip('Специалисты', () => pushPage(context, const DoctorsPage())),
-              _LinkChip('Аппаратная', () => pushPage(context, const CategoryHubPage(slug: 'hardware'))),
-              _LinkChip('Инъекции', () => pushPage(context, const CategoryHubPage(slug: 'injections'))),
-              _LinkChip('Инфузии', () => pushPage(context, const CategoryHubPage(slug: 'infusions'))),
-              _LinkChip('Наука', () => pushPage(context, const CategoryHubPage(slug: 'science'))),
-            ],
-          ),
-        ),
-        const SizedBox(height: 18),
-        CultCard(
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(color: Cult.secondary, borderRadius: BorderRadius.circular(20)),
-                child: const Text('ОГРАНИЧЕННОЕ ПРЕДЛОЖЕНИЕ', style: TextStyle(color: Colors.white, fontSize: 10, letterSpacing: 1.1, fontWeight: FontWeight.w600)),
-              ),
-              const SizedBox(height: 12),
-              Text('Прецизионный анализ кожи', style: cultHeadline(24), textAlign: TextAlign.center),
-              const SizedBox(height: 8),
-              const Text(
-                'Мультиспектральная диагностика и прогноз на 10 лет.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Cult.muted, height: 1.35),
-              ),
-              const SizedBox(height: 12),
-              const CultImage('offer', aspect: 1, radius: 90),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('295 ₽', style: cultHeadline(26).copyWith(color: Cult.secondary)),
-                  const SizedBox(width: 10),
-                  const Text('450 ₽', style: TextStyle(color: Cult.muted, decoration: TextDecoration.lineThrough)),
-                ],
-              ),
-              const SizedBox(height: 14),
-              CultButton(
-                label: 'Получить предложение',
-                onPressed: () => pushPage(context, const BookingPage(initialService: 'Прецизионный анализ кожи')),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 22),
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('CULT TV', style: TextStyle(color: Cult.secondary, letterSpacing: 1.5, fontSize: 11, fontWeight: FontWeight.w600)),
-                  Text('Свежие новости', style: cultHeadline(22)),
-                ],
-              ),
-            ),
-            TextButton(
-              onPressed: () => openExternal('https://www.youtube.com/results?search_query=CULT+Clinic'),
-              child: const Text('Смотреть канал'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 200,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: articles.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final article = articles[index];
-              return SizedBox(
-                width: 260,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: () => pushPage(context, ArticlePage(article: article)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          CultImage(article.image, aspect: 16 / 9, radius: 12),
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.22),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white54),
-                            ),
-                            child: const Icon(Icons.play_arrow, color: Colors.white),
-                          ),
-                        ],
+    final hello = first.isEmpty || first == 'Гость'
+        ? 'Доброго дня!'
+        : '$first, доброго дня!';
+    return RefreshIndicator(
+      color: Cult.primary,
+      onRefresh: () => store.syncClinic(),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+        children: [
+          CultCard(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Cult.gold,
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(height: 8),
-                      Text(article.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      Text(article.author, style: const TextStyle(color: Cult.muted, fontSize: 12)),
-                    ],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      store.signedIn ? 'ВАШ СТАТУС: PLATINUM' : 'CULT CLINIC',
+                      style: const TextStyle(
+                        color: Cult.secondary,
+                        letterSpacing: 1.4,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(hello, style: cultHeadline(28)),
+                const SizedBox(height: 8),
+                Text(
+                  next == null
+                      ? 'Рады видеть вас снова в CULT Clinic. Выберите услугу и врача.'
+                      : 'Следующая процедура: ${formatVisitDate(next.date)} в ${next.time}.',
+                  style: const TextStyle(color: Cult.muted, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.12,
+            children: [
+              _Quick(
+                icon: Icons.calendar_month,
+                label: 'Онлайн запись',
+                filled: true,
+                onTap: () => pushPage(context, const BookingPage()),
+              ),
+              _Quick(
+                icon: Icons.biotech,
+                label: 'Мои анализы',
+                onTap: () => pushPage(context, const AnalysesPage()),
+              ),
+              _Quick(
+                icon: Icons.shopping_basket_outlined,
+                label: 'Магазин биохакинга',
+                onTap: onShop,
+              ),
+              _Quick(
+                icon: Icons.forum_outlined,
+                label: 'Чат с врачом',
+                onTap: () => pushPage(
+                  context,
+                  const ChatThreadPage(contactId: 'specialist'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 38,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _LinkChip(
+                  'Специалисты',
+                  () => pushPage(context, const DoctorsPage()),
+                ),
+                _LinkChip(
+                  'Аппаратная',
+                  () => pushPage(
+                    context,
+                    const CategoryHubPage(slug: 'hardware'),
                   ),
                 ),
-              );
-            },
+                _LinkChip(
+                  'Инъекции',
+                  () => pushPage(
+                    context,
+                    const CategoryHubPage(slug: 'injections'),
+                  ),
+                ),
+                _LinkChip(
+                  'Инфузии',
+                  () => pushPage(
+                    context,
+                    const CategoryHubPage(slug: 'infusions'),
+                  ),
+                ),
+                _LinkChip(
+                  'Наука',
+                  () =>
+                      pushPage(context, const CategoryHubPage(slug: 'science')),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 18),
+          CultCard(
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Cult.secondary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'ОГРАНИЧЕННОЕ ПРЕДЛОЖЕНИЕ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      letterSpacing: 1.1,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Прецизионный анализ кожи',
+                  style: cultHeadline(24),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Мультиспектральная диагностика и прогноз на 10 лет.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Cult.muted, height: 1.35),
+                ),
+                const SizedBox(height: 12),
+                const CultImage('offer', aspect: 1, radius: 90),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '295 ₽',
+                      style: cultHeadline(26).copyWith(color: Cult.secondary),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      '450 ₽',
+                      style: TextStyle(
+                        color: Cult.muted,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                CultButton(
+                  label: 'Получить предложение',
+                  onPressed: () => pushPage(
+                    context,
+                    const BookingPage(
+                      initialService: 'Прецизионный анализ кожи',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 22),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'CULT TV',
+                      style: TextStyle(
+                        color: Cult.secondary,
+                        letterSpacing: 1.5,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text('Свежие новости', style: cultHeadline(22)),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () => openExternal(
+                  'https://www.youtube.com/results?search_query=CULT+Clinic',
+                ),
+                child: const Text('Смотреть канал'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 200,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: articles.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final article = articles[index];
+                return SizedBox(
+                  width: 260,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () =>
+                        pushPage(context, ArticlePage(article: article)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            CultImage(
+                              article.image,
+                              aspect: 16 / 9,
+                              radius: 12,
+                            ),
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.22),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white54),
+                              ),
+                              child: const Icon(
+                                Icons.play_arrow,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          article.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          article.author,
+                          style: const TextStyle(
+                            color: Cult.muted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _Quick extends StatelessWidget {
-  const _Quick({required this.icon, required this.label, required this.onTap, this.filled = false});
+  const _Quick({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.filled = false,
+  });
 
   final IconData icon;
   final String label;
@@ -203,7 +332,14 @@ class _Quick extends StatelessWidget {
             children: [
               Icon(icon, color: Cult.ink, size: 28),
               const SizedBox(height: 10),
-              Text(label, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w500, height: 1.2)),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  height: 1.2,
+                ),
+              ),
             ],
           ),
         ),

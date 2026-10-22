@@ -49,13 +49,37 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
     await store.load();
-    store.bookVisit(service: 'Анализ крови', doctor: 'AlethiaPro', date: '2026-04-12', time: '10:30');
+    store.bookVisit(
+      service: 'Анализ крови',
+      doctor: 'AlethiaPro',
+      date: '2026-04-12',
+      time: '10:30',
+    );
     expect(store.upcoming.length, 1);
     await store.cancelVisit(store.upcoming.first.id);
-    expect(store.upcoming.where((visit) => visit.service == 'Анализ крови'), isEmpty);
+    expect(
+      store.upcoming.where((visit) => visit.service == 'Анализ крови'),
+      isEmpty,
+    );
     expect(store.spendBonus(30000), isFalse);
     final code = store.buyGift(5000, 'Песок');
     expect(code, startsWith('CULT-5-'));
     expect(store.gifts, isNotEmpty);
+  });
+
+  test('Welcome-бонус учитывается в балансе и сохраняется', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    final before = store.balance;
+    store.welcomeBonus = 3000;
+    store.welcomeGranted = true;
+    expect(store.balance, before + 3000);
+    await store.setGender(ClientGender.woman);
+    final restored = ClinicStore();
+    await restored.load();
+    expect(restored.welcomeGranted, isTrue);
+    expect(restored.welcomeBonus, 3000);
+    expect(restored.balance, before + 3000);
   });
 }

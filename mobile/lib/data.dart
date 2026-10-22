@@ -35,8 +35,10 @@ enum ClientGender {
   man;
 
   String get label => this == ClientGender.woman ? 'Женщина' : 'Мужчина';
-  String get forLabel => this == ClientGender.woman ? 'для женщин' : 'для мужчин';
-  String get servicesTitle => this == ClientGender.woman ? 'Женские услуги' : 'Мужские услуги';
+  String get forLabel =>
+      this == ClientGender.woman ? 'для женщин' : 'для мужчин';
+  String get servicesTitle =>
+      this == ClientGender.woman ? 'Женские услуги' : 'Мужские услуги';
   int get ycSexId => this == ClientGender.man ? 1 : 2;
   String get storage => this == ClientGender.woman ? 'woman' : 'man';
 
@@ -113,11 +115,16 @@ const services = <Service>[
     priceLabel: '18 000 ₽',
     duration: '60 мин',
     blurb: 'Мануальный лифтинг контура и снятие мышечного напряжения.',
-    long: 'Трансформирующая мануальная техника для лифтинга контуров лица и снятия мышечного напряжения. Улучшает лимфодренаж и возвращает коже сияние.',
+    long:
+        'Трансформирующая мануальная техника для лифтинга контуров лица и снятия мышечного напряжения. Улучшает лимфодренаж и возвращает коже сияние.',
     image: 'sculpt',
     results: ['Лифтинг и контуринг', 'Естественное сияние', 'Снятие отечности'],
     steps: ['Глубокое очищение', 'Проработка мышц', 'Лимфодренаж и уход'],
-    contraindications: ['Острое воспаление кожи', 'Температура', 'Пилинг короче 7 дней назад'],
+    contraindications: [
+      'Острое воспаление кожи',
+      'Температура',
+      'Пилинг короче 7 дней назад',
+    ],
     audience: ServiceAudience.women,
   ),
   Service(
@@ -128,11 +135,20 @@ const services = <Service>[
     priceLabel: '45 000 ₽',
     duration: '90 мин',
     blurb: 'Радиочастота и иглы для уплотнения дермы.',
-    long: 'Импульс доходит до глубоких слоёв дермы и запускает уплотнение кожи без долгого восстановления.',
+    long:
+        'Импульс доходит до глубоких слоёв дермы и запускает уплотнение кожи без долгого восстановления.',
     image: 'rf',
     results: ['Плотность кожи', 'Сужение пор', 'Ровный рельеф'],
-    steps: ['Анестезия и разметка', 'Проходы RF-насадкой', 'Успокаивающий уход'],
-    contraindications: ['Металлические импланты в зоне', 'Беременность', 'Кардиостимулятор'],
+    steps: [
+      'Анестезия и разметка',
+      'Проходы RF-насадкой',
+      'Успокаивающий уход',
+    ],
+    contraindications: [
+      'Металлические импланты в зоне',
+      'Беременность',
+      'Кардиостимулятор',
+    ],
   ),
   Service(
     slug: 'hydra',
@@ -142,7 +158,8 @@ const services = <Service>[
     priceLabel: '21 000 ₽',
     duration: '45 мин',
     blurb: 'Очищение и сыворотки за один визит.',
-    long: 'Многоэтапный уход очищает кожу и насыщает её сыворотками. Подходит как подготовка к инъекциям и как самостоятельный ритуал.',
+    long:
+        'Многоэтапный уход очищает кожу и насыщает её сыворотками. Подходит как подготовка к инъекциям и как самостоятельный ритуал.',
     image: 'hydra',
     results: ['Чистота пор', 'Гладкость', 'Мгновенное увлажнение'],
     steps: ['Очищение', 'Вакуумная экстракция', 'Инфузия сыворотки'],
@@ -157,11 +174,15 @@ const services = <Service>[
     priceLabel: '32 000 ₽',
     duration: '60 мин',
     blurb: 'Персональный коктейль для энергии и кожи.',
-    long: 'Состав собирается после короткой консультации. Нутриенты попадают сразу в кровоток.',
+    long:
+        'Состав собирается после короткой консультации. Нутриенты попадают сразу в кровоток.',
     image: 'iv',
     results: ['Энергия', 'Иммунная поддержка', 'Сияние кожи'],
     steps: ['Подбор коктейля', 'Постановка катетера', 'Наблюдение 60 минут'],
-    contraindications: ['Почечная недостаточность', 'Аллергия на компоненты коктейля'],
+    contraindications: [
+      'Почечная недостаточность',
+      'Аллергия на компоненты коктейля',
+    ],
   ),
   Service(
     slug: 'peel',
@@ -171,7 +192,8 @@ const services = <Service>[
     priceLabel: '29 000 ₽',
     duration: '40 мин',
     blurb: 'Обновление тона и мелких морщин.',
-    long: 'Глубина L3 подбирается по фототипу и сезону. Цель — ровный тон без агрессивного шелушения.',
+    long:
+        'Глубина L3 подбирается по фототипу и сезону. Цель — ровный тон без агрессивного шелушения.',
     image: 'peel',
     results: ['Ровный тон', 'Мягкое обновление', 'Меньше пигмента'],
     steps: ['Подготовка кожи', 'Нанесение состава', 'Нейтрализация и защита'],
@@ -186,11 +208,16 @@ const services = <Service>[
     priceLabel: 'от 12 000 ₽',
     duration: '30 мин',
     blurb: 'Спокойная мимика без застывшего лица.',
-    long: 'Коррекция мимических морщин с сохранением живой мимики. Эффект обычно держится 4–6 месяцев.',
+    long:
+        'Коррекция мимических морщин с сохранением живой мимики. Эффект обычно держится 4–6 месяцев.',
     image: 'botox',
     results: ['Спокойный лоб', 'Живая мимика', 'Эффект 4–6 месяцев'],
     steps: ['Осмотр мимики', 'Разметка точек', 'Введение препарата'],
-    contraindications: ['Миастения', 'Беременность', 'Воспаление в точке вкола'],
+    contraindications: [
+      'Миастения',
+      'Беременность',
+      'Воспаление в точке вкола',
+    ],
   ),
   Service(
     slug: 'filler',
@@ -200,11 +227,16 @@ const services = <Service>[
     priceLabel: 'от 24 500 ₽',
     duration: '60 мин',
     blurb: 'Объём и контур гиалуроновой кислотой.',
-    long: 'Восполнение утраченных объёмов и гармонизация черт. План коррекции согласуют до первого вкола.',
+    long:
+        'Восполнение утраченных объёмов и гармонизация черт. План коррекции согласуют до первого вкола.',
     image: 'filler',
     results: ['Объём', 'Чёткий контур', 'Мгновенный эффект'],
     steps: ['План коррекции', 'Введение', 'Моделирование'],
-    contraindications: ['Аутоиммунная вспышка', 'Инфекция кожи', 'Беременность'],
+    contraindications: [
+      'Аутоиммунная вспышка',
+      'Инфекция кожи',
+      'Беременность',
+    ],
     audience: ServiceAudience.women,
   ),
   Service(
@@ -215,7 +247,8 @@ const services = <Service>[
     priceLabel: 'от 8 000 ₽',
     duration: '45 мин',
     blurb: 'Витаминный коктейль курсом из четырёх визитов.',
-    long: 'Коктейль из витаминов и аминокислот для питания кожи и работы с первыми признаками старения.',
+    long:
+        'Коктейль из витаминов и аминокислот для питания кожи и работы с первыми признаками старения.',
     image: 'meso',
     results: ['Сияние', 'Увлажнение', 'Курс из 4 визитов'],
     steps: ['Очищение', 'Микроинъекции', 'Успокаивающая маска'],
@@ -230,7 +263,8 @@ const services = <Service>[
     priceLabel: '16 000 ₽',
     duration: '50 мин',
     blurb: 'Очищение, тонус и уход без тяжёлого блеска.',
-    long: 'Протокол для мужской кожи: очищение, тонизация, лёгкий лифтинг и финиш без эффекта макияжа.',
+    long:
+        'Протокол для мужской кожи: очищение, тонизация, лёгкий лифтинг и финиш без эффекта макияжа.',
     image: 'sculpt',
     results: ['Чистая кожа', 'Ровный тон', 'Матовый финиш'],
     steps: ['Диагностика', 'Очищение и пилинг', 'Уход и защита'],
@@ -245,7 +279,8 @@ const services = <Service>[
     priceLabel: '42 000 ₽',
     duration: '75 мин',
     blurb: 'Плотность кожи и овал с мужским протоколом.',
-    long: 'RF-протокол для более плотной кожи: овал, поры и восстановление после нагрузок.',
+    long:
+        'RF-протокол для более плотной кожи: овал, поры и восстановление после нагрузок.',
     image: 'rf',
     results: ['Плотность', 'Чёткий овал', 'Меньше пор'],
     steps: ['Разметка', 'Проходы RF', 'Успокаивающий уход'],
@@ -296,16 +331,113 @@ class Product {
 }
 
 const products = <Product>[
-  Product(id: 'neuro', name: 'Neuro-Regen IV Serum', blurb: 'Сыворотка для когнитивного усиления', price: 18400, image: 'neuro', tab: 'supplements', composition: 'Фосфатидилсерин, цитиколин, витамин B12', about: 'Формула к курсам, где важны ясность и восстановление после нагрузок.'),
-  Product(id: 'catalyst', name: 'Cellular Catalyst 01', blurb: 'Формула-предшественник NAD+', price: 24500, image: 'catalyst', tab: 'supplements', badge: 'Фаворит CULT', composition: 'Никотинамидрибозид, птеростильбен', about: 'Назначают вместе с инфузией или отдельным курсом.'),
-  Product(id: 'gluta', name: 'Liposomal Gluta-Pure', blurb: 'Мастер-антиоксидантный комплекс', price: 12000, image: 'gluta', tab: 'supplements', composition: 'Липосомальный глутатион, витамин C', about: 'Антиоксидантная поддержка после аппаратных процедур.'),
-  Product(id: 'mito', name: 'Mitochondrial Fuel', blurb: 'Ускоритель производства АТФ', price: 15500, image: 'mito', tab: 'supplements', stock: 'low', composition: 'Коэнзим Q10, PQQ, магний', about: 'Поддержка выработки энергии. Не принимать вечером.'),
-  Product(id: 'lumen', name: 'Lumen Barrier Cream', blurb: 'Барьерный крем с церамидами', price: 8900, image: 'lumen', tab: 'cosmetics', composition: 'Церамиды NP, холестерол, сквалан', about: 'Восстанавливает липидный слой после пилингов и RF.'),
-  Product(id: 'veil', name: 'Veil Peptide Serum', blurb: 'Ночная сыворотка плотности', price: 14200, image: 'veil', tab: 'cosmetics', badge: 'Фаворит CULT', composition: 'Матриксил, медь, пантенол', about: 'Домашний шаг между визитами к AlethiaPro.'),
-  Product(id: 'aura', name: 'Aura Mineral Mist', blurb: 'Минеральный спрей сияния', price: 6400, image: 'aura', tab: 'cosmetics', stock: 'low', composition: 'Цинк, термальная вода, ниацинамид', about: 'Лёгкий шаг в течение дня, когда крем уже есть.'),
-  Product(id: 'scan', name: 'Home Bio-Scan Kit', blurb: 'Домашний набор биомаркеров', price: 32000, image: 'scan', tab: 'biohack', badge: 'Новинка', composition: 'Ланцеты, полоски, инструкция по 12 маркерам', about: 'Результат приходит в кабинет, врач комментирует в чате.'),
-  Product(id: 'light', name: 'Circadian Light Panel', blurb: 'Панель утреннего света', price: 27500, image: 'light', tab: 'biohack', composition: 'Светодиоды 480 нм и 650 нм', about: '10 минут в первый час после подъёма.'),
-  Product(id: 'patch', name: 'NAD+ Micro-Patch', blurb: 'Пластырь-предшественник на 12 часов', price: 9800, image: 'patch', tab: 'biohack', stock: 'low', composition: 'Предшественник NAD+, клеевая основа', about: 'Носится в дни без инфузии.'),
+  Product(
+    id: 'neuro',
+    name: 'Neuro-Regen IV Serum',
+    blurb: 'Сыворотка для когнитивного усиления',
+    price: 18400,
+    image: 'neuro',
+    tab: 'supplements',
+    composition: 'Фосфатидилсерин, цитиколин, витамин B12',
+    about:
+        'Формула к курсам, где важны ясность и восстановление после нагрузок.',
+  ),
+  Product(
+    id: 'catalyst',
+    name: 'Cellular Catalyst 01',
+    blurb: 'Формула-предшественник NAD+',
+    price: 24500,
+    image: 'catalyst',
+    tab: 'supplements',
+    badge: 'Фаворит CULT',
+    composition: 'Никотинамидрибозид, птеростильбен',
+    about: 'Назначают вместе с инфузией или отдельным курсом.',
+  ),
+  Product(
+    id: 'gluta',
+    name: 'Liposomal Gluta-Pure',
+    blurb: 'Мастер-антиоксидантный комплекс',
+    price: 12000,
+    image: 'gluta',
+    tab: 'supplements',
+    composition: 'Липосомальный глутатион, витамин C',
+    about: 'Антиоксидантная поддержка после аппаратных процедур.',
+  ),
+  Product(
+    id: 'mito',
+    name: 'Mitochondrial Fuel',
+    blurb: 'Ускоритель производства АТФ',
+    price: 15500,
+    image: 'mito',
+    tab: 'supplements',
+    stock: 'low',
+    composition: 'Коэнзим Q10, PQQ, магний',
+    about: 'Поддержка выработки энергии. Не принимать вечером.',
+  ),
+  Product(
+    id: 'lumen',
+    name: 'Lumen Barrier Cream',
+    blurb: 'Барьерный крем с церамидами',
+    price: 8900,
+    image: 'lumen',
+    tab: 'cosmetics',
+    composition: 'Церамиды NP, холестерол, сквалан',
+    about: 'Восстанавливает липидный слой после пилингов и RF.',
+  ),
+  Product(
+    id: 'veil',
+    name: 'Veil Peptide Serum',
+    blurb: 'Ночная сыворотка плотности',
+    price: 14200,
+    image: 'veil',
+    tab: 'cosmetics',
+    badge: 'Фаворит CULT',
+    composition: 'Матриксил, медь, пантенол',
+    about: 'Домашний шаг между визитами к AlethiaPro.',
+  ),
+  Product(
+    id: 'aura',
+    name: 'Aura Mineral Mist',
+    blurb: 'Минеральный спрей сияния',
+    price: 6400,
+    image: 'aura',
+    tab: 'cosmetics',
+    stock: 'low',
+    composition: 'Цинк, термальная вода, ниацинамид',
+    about: 'Лёгкий шаг в течение дня, когда крем уже есть.',
+  ),
+  Product(
+    id: 'scan',
+    name: 'Home Bio-Scan Kit',
+    blurb: 'Домашний набор биомаркеров',
+    price: 32000,
+    image: 'scan',
+    tab: 'biohack',
+    badge: 'Новинка',
+    composition: 'Ланцеты, полоски, инструкция по 12 маркерам',
+    about: 'Результат приходит в кабинет, врач комментирует в чате.',
+  ),
+  Product(
+    id: 'light',
+    name: 'Circadian Light Panel',
+    blurb: 'Панель утреннего света',
+    price: 27500,
+    image: 'light',
+    tab: 'biohack',
+    composition: 'Светодиоды 480 нм и 650 нм',
+    about: '10 минут в первый час после подъёма.',
+  ),
+  Product(
+    id: 'patch',
+    name: 'NAD+ Micro-Patch',
+    blurb: 'Пластырь-предшественник на 12 часов',
+    price: 9800,
+    image: 'patch',
+    tab: 'biohack',
+    stock: 'low',
+    composition: 'Предшественник NAD+, клеевая основа',
+    about: 'Носится в дни без инфузии.',
+  ),
 ];
 
 class Doctor {
@@ -364,7 +496,14 @@ const doctors = <Doctor>[
 ];
 
 class Article {
-  const Article({required this.slug, required this.title, required this.kicker, required this.author, required this.image, required this.body});
+  const Article({
+    required this.slug,
+    required this.title,
+    required this.kicker,
+    required this.author,
+    required this.image,
+    required this.body,
+  });
   final String slug;
   final String title;
   final String kicker;
@@ -399,7 +538,14 @@ const articles = <Article>[
 ];
 
 class ClinicCase {
-  const ClinicCase({required this.slug, required this.title, required this.procedure, required this.doctor, required this.image, required this.text});
+  const ClinicCase({
+    required this.slug,
+    required this.title,
+    required this.procedure,
+    required this.doctor,
+    required this.image,
+    required this.text,
+  });
   final String slug;
   final String title;
   final String procedure;
@@ -409,9 +555,32 @@ class ClinicCase {
 }
 
 const cases = <ClinicCase>[
-  ClinicCase(slug: 'oval', title: 'Чёткий овал без операции', procedure: 'Morpheus8', doctor: 'AlethiaPro', image: 'after', text: 'Три сеанса с паузой четыре недели. Без филлеров. Покраснение на два дня.'),
-  ClinicCase(slug: 'tone', title: 'Ровный тон за два визита', procedure: 'Lumecca IPL', doctor: 'AlethiaPro', image: 'tone', text: 'Два сеанса. Между ними только барьер и SPF. Тон выровнялся к третьей неделе.'),
-  ClinicCase(slug: 'glow', title: 'Сияние изнутри', procedure: 'Beauty & Glow', doctor: 'Д-р Элара Торн', image: 'glow', text: 'Три инфузии и домашний барьерный крем. Без инъекций.'),
+  ClinicCase(
+    slug: 'oval',
+    title: 'Чёткий овал без операции',
+    procedure: 'Morpheus8',
+    doctor: 'AlethiaPro',
+    image: 'after',
+    text:
+        'Три сеанса с паузой четыре недели. Без филлеров. Покраснение на два дня.',
+  ),
+  ClinicCase(
+    slug: 'tone',
+    title: 'Ровный тон за два визита',
+    procedure: 'Lumecca IPL',
+    doctor: 'AlethiaPro',
+    image: 'tone',
+    text:
+        'Два сеанса. Между ними только барьер и SPF. Тон выровнялся к третьей неделе.',
+  ),
+  ClinicCase(
+    slug: 'glow',
+    title: 'Сияние изнутри',
+    procedure: 'Beauty & Glow',
+    doctor: 'Д-р Элара Торн',
+    image: 'glow',
+    text: 'Три инфузии и домашний барьерный крем. Без инъекций.',
+  ),
 ];
 
 class Device {
@@ -449,7 +618,11 @@ const devices = <Device>[
     image: 'after',
     text: 'SMAS-лифтинг с визуализацией. Без операции.',
     indications: ['Снижение овала', 'Дряблость', 'Морщины шеи'],
-    benefits: ['Лифтинг на уровне SMAS', 'Короткий период восстановления', 'Эффект до 2–3 лет'],
+    benefits: [
+      'Лифтинг на уровне SMAS',
+      'Короткий период восстановления',
+      'Эффект до 2–3 лет',
+    ],
   ),
   Device(
     title: 'Morpheus8',
@@ -493,13 +666,40 @@ class Infusion {
 }
 
 const infusions = <Infusion>[
-  Infusion(title: 'NAD+ Energy', price: '15 000 ₽', duration: '60 мин', blurb: 'Клеточная энергия и ясность.', image: 'nad', chip: 'Energy'),
-  Infusion(title: 'Immunity Boost', price: '12 000 ₽', duration: '45 мин', blurb: 'Защита в период стресса.', image: 'iv', chip: 'Detox'),
-  Infusion(title: 'Beauty & Glow', price: '18 000 ₽', duration: '75 мин', blurb: 'Сияние кожи изнутри.', image: 'glow', chip: 'Beauty'),
+  Infusion(
+    title: 'NAD+ Energy',
+    price: '15 000 ₽',
+    duration: '60 мин',
+    blurb: 'Клеточная энергия и ясность.',
+    image: 'nad',
+    chip: 'Energy',
+  ),
+  Infusion(
+    title: 'Immunity Boost',
+    price: '12 000 ₽',
+    duration: '45 мин',
+    blurb: 'Защита в период стресса.',
+    image: 'iv',
+    chip: 'Detox',
+  ),
+  Infusion(
+    title: 'Beauty & Glow',
+    price: '18 000 ₽',
+    duration: '75 мин',
+    blurb: 'Сияние кожи изнутри.',
+    image: 'glow',
+    chip: 'Beauty',
+  ),
 ];
 
 class PastVisit {
-  const PastVisit({required this.date, required this.title, required this.doctor, required this.place, required this.receipt});
+  const PastVisit({
+    required this.date,
+    required this.title,
+    required this.doctor,
+    required this.place,
+    required this.receipt,
+  });
   final String date;
   final String title;
   final String doctor;
@@ -508,26 +708,58 @@ class PastVisit {
 }
 
 const pastVisits = <PastVisit>[
-  PastVisit(date: '2 февраля 2026', title: 'Morpheus8', doctor: 'AlethiaPro', place: 'Кабинет 4', receipt: '42 000 ₽'),
-  PastVisit(date: '18 января 2026', title: 'NAD+ Energy', doctor: 'Д-р Элара Торн', place: 'Инфузионная', receipt: '15 000 ₽'),
-  PastVisit(date: '9 декабря 2025', title: 'Консультация', doctor: 'AlethiaPro', place: 'Кабинет 2', receipt: '0 ₽'),
+  PastVisit(
+    date: '2 февраля 2026',
+    title: 'Morpheus8',
+    doctor: 'AlethiaPro',
+    place: 'Кабинет 4',
+    receipt: '42 000 ₽',
+  ),
+  PastVisit(
+    date: '18 января 2026',
+    title: 'NAD+ Energy',
+    doctor: 'Д-р Элара Торн',
+    place: 'Инфузионная',
+    receipt: '15 000 ₽',
+  ),
+  PastVisit(
+    date: '9 декабря 2025',
+    title: 'Консультация',
+    doctor: 'AlethiaPro',
+    place: 'Кабинет 2',
+    receipt: '0 ₽',
+  ),
 ];
 
 class LabVisit {
-  const LabVisit({required this.title, required this.date, required this.status});
+  const LabVisit({
+    required this.title,
+    required this.date,
+    required this.status,
+  });
   final String title;
   final String date;
   final String status;
 }
 
 const labVisits = <LabVisit>[
-  LabVisit(title: 'ДНК-тест старения', date: '20 марта 2026', status: 'Назначен'),
+  LabVisit(
+    title: 'ДНК-тест старения',
+    date: '20 марта 2026',
+    status: 'Назначен',
+  ),
   LabVisit(title: 'Анализ крови', date: '2 февраля 2026', status: 'Готов'),
   LabVisit(title: 'Гормональный тест', date: '18 января 2026', status: 'Сдан'),
 ];
 
 class PharmacyItem {
-  const PharmacyItem({required this.productId, required this.dose, required this.doctor, required this.until, required this.note});
+  const PharmacyItem({
+    required this.productId,
+    required this.dose,
+    required this.doctor,
+    required this.until,
+    required this.note,
+  });
   final String productId;
   final String dose;
   final String doctor;
@@ -536,14 +768,31 @@ class PharmacyItem {
 }
 
 const pharmacy = <PharmacyItem>[
-  PharmacyItem(productId: 'gluta', dose: '1 капсула утром, после еды', doctor: 'AlethiaPro', until: 'до апреля 2026', note: 'После Morpheus8, вечером, без кислот.'),
-  PharmacyItem(productId: 'catalyst', dose: 'по схеме NAD+, 4 недели', doctor: 'Д-р Элара Торн', until: 'до марта 2026', note: 'Курс энергии, если сон короче 6 часов.'),
+  PharmacyItem(
+    productId: 'gluta',
+    dose: '1 капсула утром, после еды',
+    doctor: 'AlethiaPro',
+    until: 'до апреля 2026',
+    note: 'После Morpheus8, вечером, без кислот.',
+  ),
+  PharmacyItem(
+    productId: 'catalyst',
+    dose: 'по схеме NAD+, 4 недели',
+    doctor: 'Д-р Элара Торн',
+    until: 'до марта 2026',
+    note: 'Курс энергии, если сон короче 6 часов.',
+  ),
 ];
 
 const certificateNominals = [5000, 15000, 30000];
 
 class Contact {
-  const Contact({required this.id, required this.name, required this.role, required this.seed});
+  const Contact({
+    required this.id,
+    required this.name,
+    required this.role,
+    required this.seed,
+  });
   final String id;
   final String name;
   final String role;
@@ -551,9 +800,24 @@ class Contact {
 }
 
 const contacts = <Contact>[
-  Contact(id: 'admin', name: 'Администратор', role: 'Расписание и логистика', seed: 'Здравствуйте. Помогу с записью, трансфером и сертификатом.'),
-  Contact(id: 'bot', name: 'Бот клиники', role: 'ИИ-ассистент, 24/7', seed: 'Я ассистент CULT. Спросите про услуги, часы или запись.'),
-  Contact(id: 'specialist', name: 'Специалист', role: 'Клиническая консультация', seed: 'Здравствуйте. Я на связи по уходу после процедур.'),
+  Contact(
+    id: 'admin',
+    name: 'Администратор',
+    role: 'Расписание и логистика',
+    seed: 'Здравствуйте. Помогу с записью, трансфером и сертификатом.',
+  ),
+  Contact(
+    id: 'bot',
+    name: 'Бот клиники',
+    role: 'ИИ-ассистент, 24/7',
+    seed: 'Я ассистент CULT. Спросите про услуги, часы или запись.',
+  ),
+  Contact(
+    id: 'specialist',
+    name: 'Специалист',
+    role: 'Клиническая консультация',
+    seed: 'Здравствуйте. Я на связи по уходу после процедур.',
+  ),
 ];
 
 const loyaltyRules = [
