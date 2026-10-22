@@ -248,8 +248,21 @@ class _HardwareCosmeticsPageState extends State<HardwareCosmeticsPage> {
   }
 }
 
-class InjectionCosmeticsPage extends StatelessWidget {
+class InjectionCosmeticsPage extends StatefulWidget {
   const InjectionCosmeticsPage({super.key});
+
+  @override
+  State<InjectionCosmeticsPage> createState() => _InjectionCosmeticsPageState();
+}
+
+class _InjectionCosmeticsPageState extends State<InjectionCosmeticsPage> {
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +275,18 @@ class InjectionCosmeticsPage extends StatelessWidget {
           t.contains('контур');
     }).toList();
     final fallback = services.where((s) => s.group == 'Инъекции').toList();
-    final list = items.isEmpty ? fallback : items;
+    final base = items.isEmpty ? fallback : items;
+    final needle = _query.text.trim().toLowerCase();
+    final list = needle.isEmpty
+        ? base
+        : base
+              .where(
+                (s) =>
+                    s.title.toLowerCase().contains(needle) ||
+                    s.category.toLowerCase().contains(needle) ||
+                    s.blurb.toLowerCase().contains(needle),
+              )
+              .toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('CULT')),
@@ -278,7 +302,7 @@ class InjectionCosmeticsPage extends StatelessWidget {
         children: [
           Stack(
             children: [
-              CultImage('botox', aspect: 4 / 5, radius: 18),
+              const CultImage('botox', aspect: 4 / 5, radius: 18),
               Positioned(
                 left: 16,
                 right: 16,
@@ -328,62 +352,81 @@ class InjectionCosmeticsPage extends StatelessWidget {
           const SizedBox(height: 18),
           Text('Услуги', style: cultHeadline(22)),
           const SizedBox(height: 10),
-          for (final service in list) ...[
-            InkWell(
-              onTap: () =>
-                  pushPage(context, BookingPage(initialService: service.title)),
-              child: CultCard(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CultImage(service.image, aspect: 4 / 3, radius: 16),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  service.title,
-                                  style: cultHeadline(20),
+          CultSearchField(
+            controller: _query,
+            hint: 'Найти инъекцию',
+            onChanged: () => setState(() {}),
+          ),
+          const SizedBox(height: 12),
+          if (list.isEmpty)
+            CultEmpty(
+              title: 'Ничего не найдено',
+              note: 'Смягчите запрос или сбросьте поиск.',
+              actionLabel: 'Сбросить',
+              onAction: () {
+                _query.clear();
+                setState(() {});
+              },
+            )
+          else
+            for (final service in list) ...[
+              InkWell(
+                onTap: () {
+                  cultTapFeedback();
+                  pushPage(context, BookingPage(initialService: service.title));
+                },
+                child: CultCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CultImage(service.image, aspect: 4 / 3, radius: 16),
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    service.title,
+                                    style: cultHeadline(20),
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                service.priceLabel,
-                                style: const TextStyle(
-                                  color: Cult.primary,
-                                  fontWeight: FontWeight.w600,
+                                Text(
+                                  service.priceLabel,
+                                  style: const TextStyle(
+                                    color: Cult.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${service.duration} · ${service.category}',
-                            style: const TextStyle(
-                              color: Cult.muted,
-                              fontSize: 12,
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            service.blurb,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Cult.muted),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              '${service.duration} · ${service.category}',
+                              style: const TextStyle(
+                                color: Cult.muted,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              service.blurb,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Cult.muted),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-          ],
+              const SizedBox(height: 12),
+            ],
         ],
       ),
     );
@@ -453,78 +496,95 @@ class _InfusionTherapyPageState extends State<InfusionTherapyPage> {
                 return ChoiceChip(
                   label: Text(chip.toUpperCase()),
                   selected: selected,
-                  onSelected: (_) => setState(() => _chip = chip),
+                  onSelected: (_) {
+                    cultTapFeedback();
+                    setState(() => _chip = chip);
+                  },
                 );
               },
             ),
           ),
           const SizedBox(height: 16),
-          for (final item in shown) ...[
-            CultCard(
-              padding: EdgeInsets.zero,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  CultImage(item.image, aspect: 16 / 10, radius: 16),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(item.title, style: cultHeadline(22)),
-                            ),
-                            Text(
-                              item.price,
-                              style: const TextStyle(
-                                color: Cult.primary,
-                                fontWeight: FontWeight.w600,
+          if (shown.isEmpty)
+            CultEmpty(
+              title: 'В этой группе пусто',
+              note: 'Выберите другую категорию коктейлей.',
+              actionLabel: 'Все',
+              onAction: () => setState(() => _chip = 'Longevity'),
+            )
+          else
+            for (final item in shown) ...[
+              CultCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CultImage(item.image, aspect: 16 / 10, radius: 16),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item.title,
+                                  style: cultHeadline(22),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          item.blurb,
-                          style: const TextStyle(color: Cult.muted),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.schedule,
-                              size: 16,
-                              color: Cult.muted,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              item.duration,
-                              style: const TextStyle(color: Cult.muted),
-                            ),
-                            const Spacer(),
-                            FilledButton(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: Cult.ink,
-                                shape: const StadiumBorder(),
+                              Text(
+                                item.price,
+                                style: const TextStyle(
+                                  color: Cult.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                              onPressed: () => pushPage(
-                                context,
-                                BookingPage(initialService: item.title),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            item.blurb,
+                            style: const TextStyle(color: Cult.muted),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.schedule,
+                                size: 16,
+                                color: Cult.muted,
                               ),
-                              child: const Text('ЗАБРОНИРОВАТЬ'),
-                            ),
-                          ],
-                        ),
-                      ],
+                              const SizedBox(width: 4),
+                              Text(
+                                item.duration,
+                                style: const TextStyle(color: Cult.muted),
+                              ),
+                              const Spacer(),
+                              FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Cult.ink,
+                                  shape: const StadiumBorder(),
+                                ),
+                                onPressed: () {
+                                  cultTapFeedback();
+                                  pushPage(
+                                    context,
+                                    BookingPage(initialService: item.title),
+                                  );
+                                },
+                                child: const Text('ЗАБРОНИРОВАТЬ'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-          ],
+              const SizedBox(height: 12),
+            ],
           CultCard(
             child: Column(
               children: [

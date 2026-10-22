@@ -383,8 +383,9 @@ class _CartPageState extends State<CartPage> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          if (_done) ...[
+          if (_done)
             CultCard(
+              key: const ValueKey('cart-done'),
               child: Column(
                 children: [
                   Container(
@@ -411,12 +412,18 @@ class _CartPageState extends State<CartPage> {
                   const SizedBox(height: 16),
                   CultButton(
                     label: 'Готово',
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      showCultSnack(
+                        context,
+                        'Заказ сохранён в профиле → Мои заказы',
+                      );
+                      Navigator.pop(context);
+                    },
                   ),
                 ],
               ),
-            ),
-          ] else if (store.cart.isEmpty) ...[
+            )
+          else if (store.cart.isEmpty) ...[
             CultEmpty(
               title: 'Корзина пуста',
               note: 'Добавьте формулу из биохакинг-шопа.',

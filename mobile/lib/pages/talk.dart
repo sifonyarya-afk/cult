@@ -356,9 +356,10 @@ class _Bubble extends StatelessWidget {
 }
 
 class BookingPage extends StatefulWidget {
-  const BookingPage({super.key, this.initialService});
+  const BookingPage({super.key, this.initialService, this.initialDoctor});
 
   final String? initialService;
+  final String? initialDoctor;
 
   @override
   State<BookingPage> createState() => _BookingPageState();
@@ -366,7 +367,9 @@ class BookingPage extends StatefulWidget {
 
 class _BookingPageState extends State<BookingPage> {
   late String _service = widget.initialService ?? '';
-  String _doctor = doctors.first.name;
+  late String _doctor = (widget.initialDoctor?.trim().isNotEmpty ?? false)
+      ? widget.initialDoctor!.trim()
+      : doctors.first.name;
   DateTime? _date;
   var _time = '10:30';
   final _name = TextEditingController();
@@ -461,10 +464,16 @@ class _BookingPageState extends State<BookingPage> {
       if (!mounted) return;
       final bookable = staff.where((item) => item.bookable).toList();
       final next = bookable.isEmpty ? staff : bookable;
+      final wantedDoctor = widget.initialDoctor?.trim().toLowerCase() ?? '';
+      final preferred = wantedDoctor.isEmpty
+          ? null
+          : next
+                .where((item) => item.name.toLowerCase().contains(wantedDoctor))
+                .firstOrNull;
       setState(() {
         _staff = next;
-        _staffId = next.isEmpty ? null : next.first.id;
-        _doctor = next.isEmpty ? '' : next.first.name;
+        _staffId = preferred?.id ?? (next.isEmpty ? null : next.first.id);
+        _doctor = preferred?.name ?? (next.isEmpty ? '' : next.first.name);
         _slots = [];
         _loading = false;
       });

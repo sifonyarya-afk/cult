@@ -686,7 +686,8 @@ class LiveDoctorPage extends StatelessWidget {
           const SizedBox(height: 20),
           CultButton(
             label: 'Записаться',
-            onPressed: () => pushPage(context, const BookingPage()),
+            onPressed: () =>
+                pushPage(context, BookingPage(initialDoctor: doctor.name)),
           ),
         ],
       ),
@@ -768,6 +769,7 @@ class DoctorPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             onTap: () => openExternal(
               'https://www.youtube.com/results?search_query=${Uri.encodeComponent('${doctor.name} CULT Clinic')}',
+              context: context,
             ),
             child: Stack(
               alignment: Alignment.center,
@@ -832,7 +834,8 @@ class DoctorPage extends StatelessWidget {
           const SizedBox(height: 20),
           CultButton(
             label: 'Записаться',
-            onPressed: () => pushPage(context, const BookingPage()),
+            onPressed: () =>
+                pushPage(context, BookingPage(initialDoctor: doctor.name)),
           ),
         ],
       ),

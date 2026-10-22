@@ -1,6 +1,8 @@
 import 'package:cult_clinic/data.dart';
 import 'package:cult_clinic/main.dart';
+import 'package:cult_clinic/pages/talk.dart';
 import 'package:cult_clinic/store.dart';
+import 'package:cult_clinic/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -157,5 +159,24 @@ void main() {
     final thread = store.threads['admin']!;
     expect(thread.length, greaterThan(before));
     expect(thread.any((m) => m.text.contains('Адлер')), isTrue);
+  });
+
+  testWidgets('Запись принимает выбранного врача', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.partnerToken = '';
+    store.userToken = '';
+    store.companyId = '';
+    await tester.pumpWidget(
+      ClinicScope(
+        store: store,
+        child: const MaterialApp(
+          home: BookingPage(initialDoctor: 'Д-р Элара Торн'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Элара'), findsWidgets);
   });
 }
