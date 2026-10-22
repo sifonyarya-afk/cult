@@ -27,7 +27,10 @@ class HomePage extends StatelessWidget {
         ? 'Рады видеть вас снова в CULT Clinic. Выберите услугу и врача.'
         : () {
             final wait = formatVisitCountdown(next.date, next.time);
-            return 'Следующая: ${formatVisitDate(next.date)} в ${next.time}'
+            final weekday = formatVisitWeekday(next.date);
+            return 'Следующая: ${formatVisitDate(next.date)}'
+                '${weekday.isEmpty ? '' : ', $weekday'}'
+                ' в ${next.time}'
                 '${next.doctor.trim().isEmpty ? '' : ' · ${next.doctor}'}'
                 '${wait.isEmpty ? '' : ' · $wait'}.';
           }();

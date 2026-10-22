@@ -202,6 +202,7 @@ class _FormCard extends StatelessWidget {
             controller: name,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.name],
             decoration: const InputDecoration(labelText: 'Имя'),
           ),
           const SizedBox(height: 12),
@@ -209,6 +210,7 @@ class _FormCard extends StatelessWidget {
             controller: phone,
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.telephoneNumber],
             inputFormatters: const [CultPhoneInputFormatter()],
             decoration: const InputDecoration(
               labelText: 'Номер телефона',
@@ -221,6 +223,7 @@ class _FormCard extends StatelessWidget {
             controller: email,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
+            autofillHints: const [AutofillHints.email],
             decoration: const InputDecoration(labelText: 'Почта, по желанию'),
             onSubmitted: (_) {
               if (!busy) onSubmit();

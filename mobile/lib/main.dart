@@ -506,6 +506,21 @@ class _ShellState extends State<Shell> {
             ),
             const _MenuLabel('Ещё'),
             ListTile(
+              leading: const Icon(Icons.storefront_outlined),
+              title: const Text('Магазин'),
+              subtitle: const Text('Биохакинг и уход'),
+              onTap: () {
+                cultTapFeedback();
+                Navigator.pop(sheetContext);
+                setState(() => _index = 2);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.favorite_border),
+              title: const Text('Избранное'),
+              onTap: () => _go(sheetContext, const FavoritesPage()),
+            ),
+            ListTile(
               leading: const Icon(Icons.directions_car_outlined),
               title: const Text('Трансфер'),
               onTap: () => _go(sheetContext, const TransferPage()),

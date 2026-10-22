@@ -208,6 +208,7 @@ class _ProductList extends StatefulWidget {
 
 class _ProductListState extends State<_ProductList> {
   final _query = TextEditingController();
+  var _cheapFirst = false;
 
   @override
   void dispose() {
@@ -225,6 +226,9 @@ class _ProductListState extends State<_ProductList> {
       return item.name.toLowerCase().contains(needle) ||
           item.blurb.toLowerCase().contains(needle);
     }).toList();
+    if (_cheapFirst) {
+      list.sort((a, b) => a.price.compareTo(b.price));
+    }
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         if (notification is ScrollStartNotification) {
@@ -240,7 +244,19 @@ class _ProductListState extends State<_ProductList> {
             hint: 'Найти формулу',
             onChanged: () => setState(() {}),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilterChip(
+              label: const Text('Сначала дешевле'),
+              selected: _cheapFirst,
+              onSelected: (value) {
+                cultTapFeedback();
+                setState(() => _cheapFirst = value);
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
           if (list.isEmpty)
             CultEmpty(
               title: 'Ничего не найдено',
@@ -253,45 +269,58 @@ class _ProductListState extends State<_ProductList> {
             )
           else
             for (final product in list) ...[
-              InkWell(
-                onTap: () {
-                  cultTapFeedback();
-                  pushPage(context, ProductPage(product: product));
-                },
-                child: Column(
-                  children: [
-                    CultImage(product.image, radius: 12),
-                    const SizedBox(height: 10),
-                    Text(
-                      product.name,
-                      style: cultHeadline(22),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      product.blurb,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Cult.muted),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      rub(product.price),
-                      style: cultHeadline(22).copyWith(color: Cult.primary),
-                    ),
-                    if (product.stock == 'low') ...[
+              Semantics(
+                button: true,
+                label: '${product.name}, ${rub(product.price)}',
+                child: InkWell(
+                  onTap: () {
+                    cultTapFeedback();
+                    pushPage(context, ProductPage(product: product));
+                  },
+                  onLongPress: () {
+                    Clipboard.setData(
+                      ClipboardData(
+                        text: '${product.name} · ${rub(product.price)}',
+                      ),
+                    );
+                    cultTapFeedback();
+                    showCultSnack(context, 'Формула скопирована');
+                  },
+                  child: Column(
+                    children: [
+                      CultImage(product.image, radius: 12),
+                      const SizedBox(height: 10),
+                      Text(
+                        product.name,
+                        style: cultHeadline(22),
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(height: 4),
                       Text(
-                        'Осталось мало',
-                        style: TextStyle(
-                          color: Cult.error.withValues(alpha: 0.9),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        product.blurb,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Cult.muted),
+                        textAlign: TextAlign.center,
                       ),
+                      const SizedBox(height: 6),
+                      Text(
+                        rub(product.price),
+                        style: cultHeadline(22).copyWith(color: Cult.primary),
+                      ),
+                      if (product.stock == 'low') ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Осталось мало',
+                          style: TextStyle(
+                            color: Cult.error.withValues(alpha: 0.9),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -369,7 +398,19 @@ class ProductPage extends StatelessWidget {
               ),
             ],
           ),
-          Text(product.name, style: cultHeadline(28)),
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(
+                ClipboardData(
+                  text:
+                      '${product.name} · ${rub(product.price)} · CULT Clinic',
+                ),
+              );
+              cultTapFeedback();
+              showCultSnack(context, 'Формула скопирована');
+            },
+            child: Text(product.name, style: cultHeadline(28)),
+          ),
           const SizedBox(height: 6),
           Text(
             product.blurb,
@@ -380,7 +421,22 @@ class ProductPage extends StatelessWidget {
             rub(product.price),
             style: cultHeadline(28).copyWith(color: Cult.primary),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 10),
+          TextButton(
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              store.sendMessage(
+                'specialist',
+                'Вопрос по формуле «${product.name}» (${rub(product.price)}).',
+              );
+              showCultSnack(
+                context,
+                'Сообщение врачу отправлено — откройте Чат',
+              );
+            },
+            child: const Text('Спросить врача о формуле'),
+          ),
+          const SizedBox(height: 8),
           const CultSectionLabel('Состав'),
           const SizedBox(height: 8),
           Text(product.composition, style: const TextStyle(height: 1.4)),
@@ -625,6 +681,28 @@ class _CartPageState extends State<CartPage> {
                   Text(
                     'Бонусы ${rub(store.balance)}',
                     style: const TextStyle(color: Cult.muted),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: () {
+                        final lines = store.cart
+                            .map(
+                              (item) =>
+                                  '· ${item.name} ×${item.qty} — ${rub(item.price * item.qty)}',
+                            )
+                            .join('\n');
+                        Clipboard.setData(
+                          ClipboardData(
+                            text:
+                                'Корзина CULT\n$lines\nИтого ${rub(store.cartTotal)}',
+                          ),
+                        );
+                        cultTapFeedback();
+                        showCultSnack(context, 'Состав корзины скопирован');
+                      },
+                      child: const Text('Скопировать состав'),
+                    ),
                   ),
                 ],
               ),

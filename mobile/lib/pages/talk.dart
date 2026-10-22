@@ -29,6 +29,20 @@ class ChatPage extends StatelessWidget {
           'Администратор, бот или специалист — ответим по делу.',
           style: TextStyle(color: Cult.muted),
         ),
+        if (store.hasUnreadChat) ...[
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () {
+                cultTapFeedback();
+                store.markAllChatsRead();
+                showCultSnack(context, 'Все чаты прочитаны');
+              },
+              child: const Text('Отметить все прочитанными'),
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         for (final contact in contacts)
           Padding(
@@ -199,6 +213,9 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Скидки',
     'Аппаратная',
     'Инфузии',
+    'Массаж',
+    'Доставка',
+    'Лазер',
   ];
 
   @override
@@ -990,8 +1007,13 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   Widget _doneCard() {
+    final iso = _iso(_date!);
+    final weekday = formatVisitWeekday(iso);
+    final wait = formatVisitCountdown(iso, _time);
     final summary =
-        '$_service · $_doctor, ${formatVisitDate(_iso(_date!))} в $_time';
+        '$_service · $_doctor, ${formatVisitDate(iso)}'
+        '${weekday.isEmpty ? '' : ' ($weekday)'}'
+        ' в $_time · CULT Сочи, Черноморская, 6';
     return CultCard(
       child: Column(
         children: [
@@ -1012,7 +1034,10 @@ class _BookingPageState extends State<BookingPage> {
           Text('Запись создана', style: cultHeadline(24)),
           const SizedBox(height: 8),
           Text(
-            '$_service · $_doctor\n${formatVisitDate(_iso(_date!))} в $_time',
+            '$_service · $_doctor\n${formatVisitDate(iso)}'
+            '${weekday.isEmpty ? '' : ', $weekday'}'
+            ' в $_time'
+            '${wait.isEmpty ? '' : '\n$wait'}',
             textAlign: TextAlign.center,
             style: const TextStyle(color: Cult.muted, height: 1.4),
           ),
@@ -1028,6 +1053,16 @@ class _BookingPageState extends State<BookingPage> {
               showCultSnack(context, 'Детали записи скопированы');
             },
             child: const Text('Скопировать детали'),
+          ),
+          TextButton(
+            onPressed: () {
+              cultTapFeedback();
+              openExternal(
+                'https://maps.google.com/?q=${Uri.encodeComponent('Сочи, Черноморская, 6')}',
+                context: context,
+              );
+            },
+            child: const Text('Маршрут до клиники'),
           ),
           TextButton(
             onPressed: () {

@@ -399,6 +399,65 @@ void main() {
     expect(find.textContaining('В КОРЗИНУ'), findsOneWidget);
   });
 
+  test('Бот отвечает про массаж, доставку и лазер', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Нужен массаж');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('массаж'));
+    store.sendMessage('bot', 'Как работает доставка?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('шоп'));
+    store.sendMessage('bot', 'Интересует лазер');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('лазер'));
+    store.sendMessage('specialist', 'Синяк после процедуры');
+    expect(
+      store.threads['specialist']!.last.text.toLowerCase(),
+      contains('активн'),
+    );
+    store.sendMessage('admin', 'Где мой заказ?');
+    expect(store.threads['admin']!.last.text.toLowerCase(), contains('заказ'));
+  });
+
+  test('Избранное очищается, заказ повторяется в корзину', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    final product = products.first;
+    store.toggleFavorite(product.id);
+    expect(store.favorites, contains(product.id));
+    expect(store.addFavoritesToCart(), 1);
+    expect(store.cart.any((item) => item.id == product.id), isTrue);
+    store.clearCart();
+    store.clearFavorites();
+    expect(store.favorites, isEmpty);
+    store.placeOrder(
+      title: product.name,
+      total: product.price,
+      pay: 'Карта',
+    );
+    final added = store.reorderFromTitle(store.orders.first.title);
+    expect(added, greaterThan(0));
+    expect(store.cart.any((item) => item.id == product.id), isTrue);
+  });
+
+  test('formatVisitWeekday знает день недели', () {
+    expect(formatVisitWeekday('2026-04-12'), 'воскресенье');
+    expect(formatVisitWeekday('не дата'), isEmpty);
+  });
+
+  test('Все чаты можно отметить прочитанными', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Нужен массаж');
+    store.sendMessage('admin', 'Где парковка?');
+    expect(store.hasUnreadChat, isTrue);
+    store.markAllChatsRead();
+    expect(store.hasUnreadChat, isFalse);
+    expect(store.isChatUnread('bot'), isFalse);
+    expect(store.isChatUnread('admin'), isFalse);
+  });
+
   testWidgets('Мужской профиль меняет оффер на главной', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();

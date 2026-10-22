@@ -774,6 +774,28 @@ class _TransferPageState extends State<TransferPage> {
                           hintText: 'Отель, аэропорт или адрес',
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final place in const [
+                            'Аэропорт Сочи',
+                            'ЖД вокзал',
+                            'Отель Rixos',
+                          ])
+                            ActionChip(
+                              label: Text(place),
+                              onPressed: () {
+                                cultTapFeedback();
+                                setState(() {
+                                  _from.text = place;
+                                  _error = '';
+                                });
+                              },
+                            ),
+                        ],
+                      ),
                       if (_error.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         CultErrorBanner(message: _error),

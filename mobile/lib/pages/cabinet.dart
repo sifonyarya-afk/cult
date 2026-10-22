@@ -258,7 +258,7 @@ class CabinetPage extends StatelessWidget {
           icon: Icons.favorite_border,
           title: 'Избранное',
           note: store.favorites.isEmpty
-              ? ''
+              ? 'Пока пусто'
               : '${store.favorites.length} формул',
           onTap: () => pushPage(context, const FavoritesPage()),
         ),
@@ -509,7 +509,10 @@ class _VisitsPageState extends State<VisitsPage> {
                                   visit.date,
                                   visit.time,
                                 );
-                                return '${formatVisitDate(visit.date)} · ${visit.time}'
+                                final weekday = formatVisitWeekday(visit.date);
+                                return '${formatVisitDate(visit.date)}'
+                                    '${weekday.isEmpty ? '' : ', $weekday'}'
+                                    ' · ${visit.time}'
                                     '${wait.isEmpty ? '' : ' · $wait'}';
                               }(),
                               style: const TextStyle(
@@ -527,15 +530,25 @@ class _VisitsPageState extends State<VisitsPage> {
                             ),
                             const SizedBox(height: 4),
                             const Text(
-                              'CULT · Сочи',
+                              'CULT · Сочи, Черноморская, 6',
                               style: TextStyle(
                                 color: Cult.muted,
                                 fontSize: 12,
                               ),
                             ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                            Wrap(
+                              alignment: WrapAlignment.end,
                               children: [
+                                TextButton(
+                                  onPressed: () {
+                                    cultTapFeedback();
+                                    openExternal(
+                                      'https://maps.google.com/?q=${Uri.encodeComponent('Сочи, Черноморская, 6')}',
+                                      context: context,
+                                    );
+                                  },
+                                  child: const Text('Маршрут'),
+                                ),
                                 TextButton(
                                   onPressed: () {
                                     cultTapFeedback();
@@ -632,8 +645,11 @@ class _VisitsPageState extends State<VisitsPage> {
   }
 
   void _copyVisit(Appointment visit) {
+    final weekday = formatVisitWeekday(visit.date);
     final summary =
-        '${visit.service} · ${visit.doctor}, ${formatVisitDate(visit.date)} в ${visit.time}';
+        '${visit.service} · ${visit.doctor}, ${formatVisitDate(visit.date)}'
+        '${weekday.isEmpty ? '' : ' ($weekday)'}'
+        ' в ${visit.time} · CULT Сочи, Черноморская, 6';
     Clipboard.setData(ClipboardData(text: summary));
     cultTapFeedback();
     showCultSnack(context, 'Детали визита скопированы');
@@ -790,45 +806,61 @@ class PharmacyPage extends StatelessWidget {
             if (productById(row.productId) case final product?)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: CultCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(product.name, style: cultHeadline(20)),
-                      const SizedBox(height: 4),
-                      Text(
-                        row.dose,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        row.note,
-                        style: const TextStyle(color: Cult.muted, height: 1.35),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${row.doctor} · до ${row.until}',
-                        style: const TextStyle(color: Cult.muted, fontSize: 12),
-                      ),
-                      const SizedBox(height: 12),
-                      CultButton(
-                        label: 'Купить сейчас · ${rub(product.price)}',
-                        onPressed: () {
-                          HapticFeedback.mediumImpact();
-                          store.addToCart(
-                            product.id,
-                            product.name,
-                            product.price,
-                          );
-                          showCultSnack(
-                            context,
-                            '${product.name} в корзине',
-                            actionLabel: 'Корзина',
-                            onAction: () => pushPage(context, const CartPage()),
-                          );
-                        },
-                      ),
-                    ],
+                child: Semantics(
+                  label: '${product.name}, ${row.dose}',
+                  child: CultCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            cultTapFeedback();
+                            pushPage(context, ProductPage(product: product));
+                          },
+                          child: Text(product.name, style: cultHeadline(20)),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          row.dose,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          row.note,
+                          style: const TextStyle(
+                            color: Cult.muted,
+                            height: 1.35,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${row.doctor} · до ${row.until}',
+                          style: const TextStyle(
+                            color: Cult.muted,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        CultButton(
+                          label: 'Купить сейчас · ${rub(product.price)}',
+                          onPressed: () {
+                            HapticFeedback.mediumImpact();
+                            store.addToCart(
+                              product.id,
+                              product.name,
+                              product.price,
+                            );
+                            showCultSnack(
+                              context,
+                              '${product.name} в корзине',
+                              actionLabel: 'Корзина',
+                              onAction: () =>
+                                  pushPage(context, const CartPage()),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -866,50 +898,84 @@ class OrdersPage extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: CultCard(
-                      child: InkWell(
-                        onTap: () {
-                          cultTapFeedback();
-                          showCultSnack(
-                            context,
-                            'Заказ от ${order.at} · ${order.pay}',
-                          );
-                        },
-                        onLongPress: () {
-                          Clipboard.setData(
-                            ClipboardData(
-                              text:
-                                  '${order.title} · ${rub(order.total)} · ${order.pay} · ${order.at}',
-                            ),
-                          );
-                          cultTapFeedback();
-                          showCultSnack(context, 'Заказ скопирован');
-                        },
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(order.title, style: cultHeadline(18)),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${order.at} · ${order.pay}',
-                                    style: const TextStyle(
-                                      color: Cult.muted,
-                                      fontSize: 13,
-                                    ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              cultTapFeedback();
+                              showCultSnack(
+                                context,
+                                'Заказ от ${order.at} · ${order.pay}',
+                              );
+                            },
+                            onLongPress: () {
+                              Clipboard.setData(
+                                ClipboardData(
+                                  text:
+                                      '${order.title} · ${rub(order.total)} · ${order.pay} · ${order.at}',
+                                ),
+                              );
+                              cultTapFeedback();
+                              showCultSnack(context, 'Заказ скопирован');
+                            },
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        order.title,
+                                        style: cultHeadline(18),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${order.at} · ${order.pay}',
+                                        style: const TextStyle(
+                                          color: Cult.muted,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
+                                ),
+                                Text(
+                                  rub(order.total),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              rub(order.total),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
+                          ),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {
+                                final added =
+                                    store.reorderFromTitle(order.title);
+                                HapticFeedback.mediumImpact();
+                                if (added == 0) {
+                                  showCultSnack(
+                                    context,
+                                    'Не нашли формулы из заказа в каталоге',
+                                  );
+                                  return;
+                                }
+                                showCultSnack(
+                                  context,
+                                  'В корзину: $added',
+                                  actionLabel: 'Оформить',
+                                  onAction: () =>
+                                      pushPage(context, const CartPage()),
+                                );
+                              },
+                              child: const Text('Повторить'),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -922,6 +988,30 @@ class OrdersPage extends StatelessWidget {
 class FavoritesPage extends StatelessWidget {
   const FavoritesPage({super.key});
 
+  Future<void> _confirmClear(BuildContext context, ClinicStore store) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Очистить избранное?'),
+        content: const Text('Все отмеченные формулы будут сняты с сердца.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Оставить'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Очистить', style: TextStyle(color: Cult.error)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    store.clearFavorites();
+    HapticFeedback.mediumImpact();
+    showCultSnack(context, 'Избранное очищено');
+  }
+
   @override
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
@@ -929,7 +1019,16 @@ class FavoritesPage extends StatelessWidget {
         .where((item) => store.favorites.contains(item.id))
         .toList();
     return Scaffold(
-      appBar: AppBar(title: const Text('Избранное')),
+      appBar: AppBar(
+        title: const Text('Избранное'),
+        actions: [
+          if (list.isNotEmpty)
+            TextButton(
+              onPressed: () => _confirmClear(context, store),
+              child: const Text('Очистить'),
+            ),
+        ],
+      ),
       body: list.isEmpty
           ? ListView(
               padding: const EdgeInsets.all(20),
@@ -945,6 +1044,20 @@ class FavoritesPage extends StatelessWidget {
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
+                CultButton(
+                  label: 'Всё в корзину · ${list.length}',
+                  onPressed: () {
+                    final added = store.addFavoritesToCart();
+                    HapticFeedback.mediumImpact();
+                    showCultSnack(
+                      context,
+                      'В корзину: $added',
+                      actionLabel: 'Оформить',
+                      onAction: () => pushPage(context, const CartPage()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 14),
                 for (final product in list)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
@@ -956,6 +1069,15 @@ class FavoritesPage extends StatelessWidget {
                         onTap: () {
                           cultTapFeedback();
                           pushPage(context, ProductPage(product: product));
+                        },
+                        onLongPress: () {
+                          Clipboard.setData(
+                            ClipboardData(
+                              text: '${product.name} · ${rub(product.price)}',
+                            ),
+                          );
+                          cultTapFeedback();
+                          showCultSnack(context, 'Формула скопирована');
                         },
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
@@ -1370,7 +1492,12 @@ class _CertificatesPageState extends State<CertificatesPage> {
                         ),
                         TextButton(
                           onPressed: () {
-                            Clipboard.setData(ClipboardData(text: _code));
+                            Clipboard.setData(
+                              ClipboardData(
+                                text:
+                                    'Сертификат CULT $_code на ${rub(_nominal)}, дизайн $_design.',
+                              ),
+                            );
                             cultTapFeedback();
                             showCultSnack(context, 'Код скопирован');
                           },
@@ -1429,34 +1556,44 @@ class _CertificatesPageState extends State<CertificatesPage> {
             for (final gift in store.gifts)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: CultCard(
-                  child: InkWell(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: gift.code));
-                      cultTapFeedback();
-                      showCultSnack(context, 'Код ${gift.code} скопирован');
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${rub(gift.nominal)} · ${gift.design}',
-                          style: cultHeadline(18),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          gift.code,
-                          style: const TextStyle(
-                            color: Cult.muted,
-                            letterSpacing: 0.6,
+                child: Semantics(
+                  button: true,
+                  label:
+                      'Сертификат ${rub(gift.nominal)}, ${gift.design}, код ${gift.code}',
+                  child: CultCard(
+                    child: InkWell(
+                      onTap: () {
+                        Clipboard.setData(
+                          ClipboardData(
+                            text:
+                                'Сертификат CULT ${gift.code} на ${rub(gift.nominal)}, дизайн ${gift.design}.',
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Нажмите, чтобы скопировать',
-                          style: TextStyle(color: Cult.muted, fontSize: 12),
-                        ),
-                      ],
+                        );
+                        cultTapFeedback();
+                        showCultSnack(context, 'Код ${gift.code} скопирован');
+                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${rub(gift.nominal)} · ${gift.design}',
+                            style: cultHeadline(18),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            gift.code,
+                            style: const TextStyle(
+                              color: Cult.muted,
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Нажмите, чтобы скопировать',
+                            style: TextStyle(color: Cult.muted, fontSize: 12),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -1624,6 +1761,29 @@ class _SettingsPageState extends State<SettingsPage> {
               store.setNotice('offers', value);
             },
           ),
+          if (store.signedIn) ...[
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () {
+                final bits = <String>[
+                  if (store.profileName.trim().isNotEmpty)
+                    store.profileName.trim(),
+                  if (store.profilePhone.trim().isNotEmpty)
+                    formatRuPhone(normalizePhone(store.profilePhone)),
+                  if (store.profileEmail.trim().isNotEmpty)
+                    store.profileEmail.trim(),
+                  if (store.gender != null) store.gender!.label,
+                  'баланс ${rub(store.balance)}',
+                ];
+                Clipboard.setData(
+                  ClipboardData(text: 'CULT · ${bits.join(' · ')}'),
+                );
+                cultTapFeedback();
+                showCultSnack(context, 'Профиль скопирован');
+              },
+              child: const Text('Скопировать профиль'),
+            ),
+          ],
         ],
       ),
     );

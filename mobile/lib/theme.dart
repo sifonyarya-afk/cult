@@ -151,6 +151,33 @@ String formatVisitDate(String iso) {
   return '$day ${months[month - 1]}';
 }
 
+/// Weekday name for a visit ISO date, or empty if invalid.
+String formatVisitWeekday(String iso) {
+  final clean = iso.trim().split('T').first.split(' ').first;
+  final parts = clean.split('-');
+  if (parts.length != 3) return '';
+  final year = int.tryParse(parts[0]);
+  final month = int.tryParse(parts[1]);
+  final day = int.tryParse(parts[2].split('.').first);
+  if (year == null ||
+      month == null ||
+      day == null ||
+      month < 1 ||
+      month > 12) {
+    return '';
+  }
+  const days = [
+    'понедельник',
+    'вторник',
+    'среда',
+    'четверг',
+    'пятница',
+    'суббота',
+    'воскресенье',
+  ];
+  return days[DateTime(year, month, day).weekday - 1];
+}
+
 /// Relative countdown to a visit datetime, e.g. `через 3 ч`. Empty if past/invalid.
 String formatVisitCountdown(String iso, String time) {
   final clean = iso.trim().split('T').first.split(' ').first;

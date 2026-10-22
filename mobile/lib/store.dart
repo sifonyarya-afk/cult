@@ -403,6 +403,35 @@ class ClinicStore extends ChangeNotifier {
     _save();
   }
 
+  void clearFavorites() {
+    if (favorites.isEmpty) return;
+    favorites = [];
+    _save();
+  }
+
+  /// Adds every favorited catalog product to the cart. Returns count.
+  int addFavoritesToCart() {
+    var added = 0;
+    for (final product in products) {
+      if (!favorites.contains(product.id)) continue;
+      addToCart(product.id, product.name, product.price);
+      added++;
+    }
+    return added;
+  }
+
+  /// Adds catalog products whose names appear in an order title. Returns count.
+  int reorderFromTitle(String title) {
+    var added = 0;
+    for (final product in products) {
+      if (title.contains(product.name)) {
+        addToCart(product.id, product.name, product.price);
+        added++;
+      }
+    }
+    return added;
+  }
+
   bool isChatUnread(String contactId) {
     final thread = threads[contactId];
     if (thread == null || thread.isEmpty) return false;
@@ -424,6 +453,18 @@ class ClinicStore extends ChangeNotifier {
     if (chatRead[contactId] == lastId) return;
     chatRead[contactId] = lastId;
     _save();
+  }
+
+  void markAllChatsRead() {
+    var changed = false;
+    for (final entry in threads.entries) {
+      if (entry.value.isEmpty) continue;
+      final lastId = entry.value.last.id;
+      if (chatRead[entry.key] == lastId) continue;
+      chatRead[entry.key] = lastId;
+      changed = true;
+    }
+    if (changed) _save();
   }
 
   void toggleFavorite(String id) {
@@ -803,11 +844,31 @@ class ClinicStore extends ChangeNotifier {
       if (q.contains('запис')) {
         return 'Откройте «Запись» в меню или нажмите «+» на главной — подберём услугу, врача и время.';
       }
+      if (q.contains('доставк') ||
+          q.contains('курьер') ||
+          q.contains('магазин') ||
+          q.contains('шоп')) {
+        return 'Биохакинг-шоп — во вкладке «Магазин». Самовывоз на ресепшен или курьер при оформлении корзины.';
+      }
+      if (q.contains('массаж') || q.contains('лимфодрен')) {
+        return 'Массаж и лимфодренаж — в меню «Услуги» и на записи. Подскажем протокол под вашу задачу на консультации.';
+      }
+      if (q.contains('лазер') || q.contains('ipl') || q.contains('пигмент')) {
+        return 'Лазер и IPL — в разделе «Аппаратная». Перед курсом врач оценит фототип и зону.';
+      }
+      if (q.contains('пилинг') || q.contains('чистка')) {
+        return 'Пилинги и уходы — в меню «Услуги». Подберём интенсивность под сезон и тип кожи.';
+      }
+      if (q.contains('абонемент') || q.contains('пакет') || q.contains('курс')) {
+        return 'Курсы и пакеты обсуждаем на консультации. Часть протоколов выгоднее пакетом — спросите администратора.';
+      }
       if (q.contains('час') ||
-          q.contains('работ') ||
+          q.contains('режим') ||
           q.contains('выходн') ||
           q.contains('воскрес') ||
-          q.contains('суббот')) {
+          q.contains('суббот') ||
+          q.contains('график работ') ||
+          q.contains('часы работ')) {
         return 'CULT Сочи открыта ежедневно, включая выходные, с 9:00 до 21:00. Черноморская, 6.';
       }
       if (q.contains('добр') || q.contains('адрес') || q.contains('ехать')) {
@@ -871,11 +932,20 @@ class ClinicStore extends ChangeNotifier {
       return 'Клиника открыта ежедневно с 9:00 до 21:00. Запись — в разделе «Запись» или через «+» на главной.';
     }
     if (contactId == 'specialist') {
-      if (q.contains('отёк') || q.contains('сып') || q.contains('боль')) {
+      if (q.contains('отёк') ||
+          q.contains('сып') ||
+          q.contains('боль') ||
+          q.contains('синяк') ||
+          q.contains('гематом') ||
+          q.contains('зуд') ||
+          q.contains('покрасн')) {
         return 'Не наносите активные средства. Опишите зону и когда была процедура — врач ответит в приоритете.';
       }
       if (q.contains('анализ') || q.contains('результат')) {
         return 'Результаты появятся в кабинете → «Мои анализы». Если срочно — пришлите номер протокола.';
+      }
+      if (q.contains('формул') || q.contains('сыворот') || q.contains('крем')) {
+        return 'По уходу дома уточните название формулы и как реагирует кожа — скорректируем схему.';
       }
       return 'Сообщение у врача. Если это отёк или сыпь после процедуры, не наносите активные средства до ответа.';
     }
@@ -890,6 +960,12 @@ class ClinicStore extends ChangeNotifier {
     }
     if (q.contains('парков')) {
       return 'Парковка у клиники свободная для гостей. Если места заняты — напишите, подскажем ближайший двор.';
+    }
+    if (q.contains('заказ') || q.contains('доставк') || q.contains('курьер')) {
+      return 'Заказ из шопа видим. Уточните адрес или время самовывоза — подтвердим сборку.';
+    }
+    if (q.contains('бонус') || q.contains('лояльн')) {
+      return 'Баланс бонусов — в профиле. Списать можно в корзине и на сертификат, правила — в «Лояльности».';
     }
     return 'Администратор получил сообщение и ответит в часы клиники.';
   }
