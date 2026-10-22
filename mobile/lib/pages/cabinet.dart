@@ -644,16 +644,50 @@ class OrdersPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Мои заказы')),
       body: store.orders.isEmpty
-          ? const Center(child: Text('Покупок пока нет.'))
+          ? ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                CultEmpty(
+                  title: 'Покупок пока нет',
+                  note:
+                      'Формулы из биохакинг-шопа появятся здесь после оформления.',
+                  actionLabel: 'В магазин',
+                  onAction: () => Navigator.pop(context),
+                ),
+              ],
+            )
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
                 for (final order in store.orders)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(order.title),
-                    subtitle: Text('${order.at} · ${order.pay}'),
-                    trailing: Text(rub(order.total)),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: CultCard(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(order.title, style: cultHeadline(18)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${order.at} · ${order.pay}',
+                                  style: const TextStyle(
+                                    color: Cult.muted,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            rub(order.total),
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -673,21 +707,74 @@ class FavoritesPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Избранное')),
       body: list.isEmpty
-          ? const Center(child: Text('Отметьте товар сердцем на его странице.'))
+          ? ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                CultEmpty(
+                  title: 'Список пуст',
+                  note: 'Отметьте формулу сердцем на странице товара.',
+                  actionLabel: 'В магазин',
+                  onAction: () => Navigator.pop(context),
+                ),
+              ],
+            )
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
                 for (final product in list)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(product.name),
-                    subtitle: Text(rub(product.price)),
-                    trailing: IconButton(
-                      onPressed: () => store.toggleFavorite(product.id),
-                      icon: const Icon(Icons.favorite, color: Cult.primary),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Material(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () =>
+                            pushPage(context, ProductPage(product: product)),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+                          child: Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: SizedBox(
+                                  width: 56,
+                                  height: 56,
+                                  child: CultImage(
+                                    product.image,
+                                    aspect: 1,
+                                    radius: 0,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(product.name, style: cultHeadline(18)),
+                                    Text(
+                                      rub(product.price),
+                                      style: const TextStyle(
+                                        color: Cult.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () =>
+                                    store.toggleFavorite(product.id),
+                                icon: const Icon(
+                                  Icons.favorite,
+                                  color: Cult.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                    onTap: () =>
-                        pushPage(context, ProductPage(product: product)),
                   ),
               ],
             ),
@@ -914,10 +1001,12 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Уведомления')),
+      appBar: AppBar(title: const Text('Настройки')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          const CultSectionLabel('Профиль'),
+          const SizedBox(height: 10),
           TextField(
             controller: _name,
             textCapitalization: TextCapitalization.words,
@@ -926,11 +1015,16 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 12),
           CultButton(
             label: 'Сохранить имя',
-            onPressed: () => store.setProfileName(_name.text),
+            onPressed: () {
+              store.setProfileName(_name.text);
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Имя сохранено')));
+            },
           ),
-          const SizedBox(height: 12),
-          const Text('Профиль услуг', style: TextStyle(color: Cult.muted)),
-          const SizedBox(height: 8),
+          const SizedBox(height: 18),
+          const CultSectionLabel('Профиль услуг'),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             children: [
@@ -963,6 +1057,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   pushPage(context, const AuthPage(allowSkip: false)),
               child: const Text('Войти по телефону'),
             ),
+          const SizedBox(height: 12),
+          const CultSectionLabel('Уведомления'),
+          const SizedBox(height: 4),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Визиты'),

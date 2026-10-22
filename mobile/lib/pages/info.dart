@@ -188,6 +188,10 @@ class _PricesPageState extends State<PricesPage> {
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
+                    onTap: () => pushPage(
+                      context,
+                      BookingPage(initialService: row.name),
+                    ),
                   ),
                 ),
               ),
@@ -203,37 +207,61 @@ class AboutPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('О клинике')),
+      appBar: AppBar(title: const Text('CULT')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
-          const CultImage('interior', aspect: 16 / 9, radius: 16),
-          const SizedBox(height: 12),
+          const CultImage('interior', aspect: 16 / 9, radius: 18),
+          const SizedBox(height: 16),
           Text('О клинике', style: cultHeadline(32)),
           const SizedBox(height: 8),
           const Text(
             'CULT — клиническое святилище: диагностика, аппараты, инъекции и инфузии в одном протоколе.',
+            style: TextStyle(color: Cult.muted, height: 1.4),
           ),
-          const SizedBox(height: 12),
-          const Text('Адрес: Сочи, Черноморская, 6'),
-          const Text('Часы: ежедневно 9:00–21:00'),
-          const Text('Телефон: +7 495 000-00-07'),
-          const SizedBox(height: 12),
-          Text('Как добраться', style: cultHeadline(22)),
+          const SizedBox(height: 18),
+          CultCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _AboutRow(Icons.place_outlined, 'Сочи, Черноморская, 6'),
+                const Divider(height: 20),
+                _AboutRow(Icons.schedule, 'Ежедневно 9:00–21:00'),
+                const Divider(height: 20),
+                _AboutRow(Icons.phone_outlined, '+7 495 000-00-07'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          const CultSectionLabel('Как добраться'),
+          const SizedBox(height: 8),
           const Text(
             'Клиника на Черноморской, 6. Парковка для гостей у входа.',
+            style: TextStyle(height: 1.4),
           ),
-          const SizedBox(height: 12),
-          Text('Документы', style: cultHeadline(22)),
+          const SizedBox(height: 16),
+          const CultSectionLabel('Документы'),
+          const SizedBox(height: 8),
           const Text(
-            'Публичная оферта, согласие на процедуры и политика данных. В приложении имя, визиты и заказы хранятся только на телефоне.',
+            'Публичная оферта, согласие на процедуры и политика данных. Имя, визиты и заказы хранятся на телефоне.',
+            style: TextStyle(color: Cult.muted, height: 1.4),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           CultButton(
-            label: 'YouTube',
+            label: 'Записаться',
+            onPressed: () => pushPage(context, const BookingPage()),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Cult.ink,
+              side: const BorderSide(color: Cult.ink),
+              minimumSize: const Size(double.infinity, 48),
+            ),
             onPressed: () => openExternal(
               'https://www.youtube.com/results?search_query=CULT+Clinic',
             ),
+            child: const Text('CULT TV · YouTube'),
           ),
           TextButton(
             onPressed: () => openExternal('https://t.me/cultclinic'),
@@ -245,6 +273,24 @@ class AboutPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AboutRow extends StatelessWidget {
+  const _AboutRow(this.icon, this.text);
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: Cult.primary, size: 22),
+        const SizedBox(width: 12),
+        Expanded(child: Text(text, style: const TextStyle(fontSize: 15))),
+      ],
     );
   }
 }
@@ -361,21 +407,29 @@ class CasePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Кейс')),
+      appBar: AppBar(title: const Text('CULT')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
-          Text('До', style: cultHeadline(20)),
-          const CultImage('before', aspect: 4 / 3, radius: 12),
-          const SizedBox(height: 12),
-          Text('После', style: cultHeadline(20)),
-          CultImage(item.image, aspect: 4 / 3, radius: 12),
-          const SizedBox(height: 12),
           Text(item.title, style: cultHeadline(28)),
-          Text('${item.procedure} · ${item.doctor}'),
-          const SizedBox(height: 8),
-          Text(item.text),
+          Text(
+            '${item.procedure} · ${item.doctor}',
+            style: const TextStyle(color: Cult.muted),
+          ),
           const SizedBox(height: 16),
+          const CultSectionLabel('До'),
+          const SizedBox(height: 8),
+          const CultImage('before', aspect: 4 / 3, radius: 16),
+          const SizedBox(height: 14),
+          const CultSectionLabel('После'),
+          const SizedBox(height: 8),
+          CultImage(item.image, aspect: 4 / 3, radius: 16),
+          const SizedBox(height: 16),
+          Text(
+            item.text,
+            style: const TextStyle(height: 1.4, color: Cult.muted),
+          ),
+          const SizedBox(height: 20),
           CultButton(
             label: 'Записаться',
             onPressed: () =>
@@ -407,21 +461,53 @@ class _TransferPageState extends State<TransferPage> {
 
   @override
   Widget build(BuildContext context) {
+    final store = ClinicScope.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Трансфер')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
           Text('VIP-такси до клиники', style: cultHeadline(28)),
           const SizedBox(height: 8),
           const Text(
             'Адрес клиники: Сочи, Черноморская, 6. Машина подаётся к указанному адресу.',
+            style: TextStyle(color: Cult.muted, height: 1.4),
           ),
+          const SizedBox(height: 16),
           if (_done)
-            const Padding(
-              padding: EdgeInsets.only(top: 16),
-              child: Text(
-                'Заявка у консьержа. Водитель напишет в чат администратора.',
+            CultCard(
+              child: Column(
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF3EFEA),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.directions_car,
+                      color: Cult.primary,
+                      size: 34,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text('Заявка принята', style: cultHeadline(22)),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Консьерж получил адрес. Водитель напишет в чат администратора.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Cult.muted, height: 1.4),
+                  ),
+                  const SizedBox(height: 14),
+                  CultButton(
+                    label: 'Открыть чат',
+                    onPressed: () => pushPage(
+                      context,
+                      const ChatThreadPage(contactId: 'admin'),
+                    ),
+                  ),
+                ],
               ),
             )
           else ...[
@@ -443,7 +529,14 @@ class _TransferPageState extends State<TransferPage> {
                   setState(() => _error = 'Укажите адрес, откуда забрать.');
                   return;
                 }
-                setState(() => _done = true);
+                store.sendMessage(
+                  'admin',
+                  'Трансфер: забрать с «${_from.text.trim()}» → Черноморская, 6.',
+                );
+                setState(() {
+                  _error = '';
+                  _done = true;
+                });
               },
             ),
           ],
