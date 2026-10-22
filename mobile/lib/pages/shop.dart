@@ -376,40 +376,66 @@ class _CartPageState extends State<CartPage> {
             ),
           ] else ...[
             for (final item in store.cart)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                minVerticalPadding: 12,
-                title: Text(item.name),
-                subtitle: Text(rub(item.price)),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      onPressed: () => store.setQty(item.id, item.qty - 1),
-                      icon: const Icon(Icons.remove),
-                      constraints: const BoxConstraints(
-                        minWidth: 44,
-                        minHeight: 44,
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: CultCard(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(item.name, style: cultHeadline(18)),
+                            const SizedBox(height: 4),
+                            Text(
+                              rub(item.price),
+                              style: const TextStyle(
+                                color: Cult.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Text('${item.qty}'),
-                    IconButton(
-                      onPressed: () => store.setQty(item.id, item.qty + 1),
-                      icon: const Icon(Icons.add),
-                      constraints: const BoxConstraints(
-                        minWidth: 44,
-                        minHeight: 44,
+                      IconButton(
+                        onPressed: () => store.setQty(item.id, item.qty - 1),
+                        icon: const Icon(Icons.remove_circle_outline),
+                        constraints: const BoxConstraints(
+                          minWidth: 44,
+                          minHeight: 44,
+                        ),
                       ),
-                    ),
-                  ],
+                      Text(
+                        '${item.qty}',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      IconButton(
+                        onPressed: () => store.setQty(item.id, item.qty + 1),
+                        icon: const Icon(Icons.add_circle_outline),
+                        constraints: const BoxConstraints(
+                          minWidth: 44,
+                          minHeight: 44,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            const SizedBox(height: 8),
-            Text('Итого ${rub(store.cartTotal)}', style: cultHeadline(22)),
-            const SizedBox(height: 4),
-            Text(
-              'Бонусы ${rub(store.balance)}',
-              style: const TextStyle(color: Cult.muted),
+            CultCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Итого ${rub(store.cartTotal)}',
+                    style: cultHeadline(22),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Бонусы ${rub(store.balance)}',
+                    style: const TextStyle(color: Cult.muted),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             TextField(

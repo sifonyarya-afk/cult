@@ -341,22 +341,33 @@ class ArticlePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(article.kicker)),
+      appBar: AppBar(title: const Text('CULT TV')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
-          CultImage(article.image, aspect: 16 / 9, radius: 12),
-          const SizedBox(height: 12),
-          Text(article.title, style: cultHeadline(30)),
+          CultImage(article.image, aspect: 16 / 9, radius: 16),
+          const SizedBox(height: 14),
+          Text(
+            article.kicker.toUpperCase(),
+            style: const TextStyle(
+              color: Cult.primary,
+              letterSpacing: 1.2,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(article.title, style: cultHeadline(28)),
+          const SizedBox(height: 4),
           Text(article.author, style: const TextStyle(color: Cult.muted)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           for (final paragraph in article.body)
             Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Text(paragraph),
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(paragraph, style: const TextStyle(height: 1.45)),
             ),
           CultButton(
-            label: 'Смотреть',
+            label: 'Смотреть на YouTube',
             onPressed: () => openExternal(
               'https://www.youtube.com/results?search_query=${Uri.encodeComponent('${article.title} CULT Clinic')}',
             ),

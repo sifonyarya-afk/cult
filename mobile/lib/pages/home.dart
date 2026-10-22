@@ -63,6 +63,18 @@ class HomePage extends StatelessWidget {
                       : 'Следующая процедура: ${formatVisitDate(next.date)} в ${next.time}.',
                   style: const TextStyle(color: Cult.muted, height: 1.4),
                 ),
+                if (next != null) ...[
+                  const SizedBox(height: 12),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: Cult.primary,
+                      padding: EdgeInsets.zero,
+                      alignment: Alignment.centerLeft,
+                    ),
+                    onPressed: () => pushPage(context, const VisitsPage()),
+                    child: const Text('Мои записи →'),
+                  ),
+                ],
               ],
             ),
           ),

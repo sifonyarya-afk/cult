@@ -592,12 +592,15 @@ class PharmacyPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Аптечка')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
+          Text('Рекомендации врача', style: cultHeadline(26)),
+          const SizedBox(height: 6),
           const Text(
-            'Врач оставил средства и короткую рекомендацию. «Купить сейчас» открывает корзину.',
+            'Средства и короткая схема. «Купить сейчас» откроет корзину.',
+            style: TextStyle(color: Cult.muted, height: 1.4),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           for (final row in pharmacy)
             if (productById(row.productId) case final product?)
               Padding(
@@ -607,15 +610,24 @@ class PharmacyPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(product.name, style: cultHeadline(20)),
-                      Text(row.dose),
-                      Text(row.note),
+                      const SizedBox(height: 4),
                       Text(
-                        '${row.doctor} · ${row.until}',
-                        style: const TextStyle(color: Cult.muted),
+                        row.dose,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
+                      Text(
+                        row.note,
+                        style: const TextStyle(color: Cult.muted, height: 1.35),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${row.doctor} · до ${row.until}',
+                        style: const TextStyle(color: Cult.muted, fontSize: 12),
+                      ),
+                      const SizedBox(height: 12),
                       CultButton(
-                        label: 'Купить сейчас',
+                        label: 'Купить сейчас · ${rub(product.price)}',
                         onPressed: () {
                           store.addToCart(
                             product.id,
@@ -818,42 +830,124 @@ class _LoyaltyPageState extends State<LoyaltyPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Лояльность')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
-          Text(rub(store.balance), style: cultHeadline(36)),
-          const SizedBox(height: 8),
-          const Text('Баланс клуба CULT на этом телефоне.'),
-          if (store.loyaltyCards.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text('Карты YClients', style: cultHeadline(22)),
-            for (final card in store.loyaltyCards)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(card.title),
-                trailing: Text(rub(card.balance)),
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFE8CB8E), Color(0xFFC49A4E)],
               ),
-          ] else if (!store.signedIn)
-            const Padding(
-              padding: EdgeInsets.only(top: 12),
-              child: Text(
-                'Войдите по телефону в кабинете — карта филиала подтянется к номеру.',
-              ),
-            )
-          else if (_note.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(_note),
             ),
-          const SizedBox(height: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'БАЛАНС КЛУБА',
+                  style: TextStyle(
+                    letterSpacing: 1.2,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(rub(store.balance), style: cultHeadline(36)),
+                if (store.welcomeGranted)
+                  Text(
+                    'включая welcome ${rub(store.welcomeBonus)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Cult.ink.withValues(alpha: 0.7),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (!store.signedIn) ...[
+            const SizedBox(height: 14),
+            CultEmpty(
+              title: 'Войдите по телефону',
+              note: 'Карта филиала и бонусы YClients подтянутся к номеру.',
+              actionLabel: 'Войти',
+              onAction: () =>
+                  pushPage(context, const AuthPage(allowSkip: false)),
+            ),
+          ] else if (store.loyaltyCards.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            const CultSectionLabel('Карты YClients'),
+            for (final card in store.loyaltyCards)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: CultCard(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(card.title, style: cultHeadline(18)),
+                      ),
+                      Text(
+                        rub(card.balance),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ] else if (_note.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text(_note, style: const TextStyle(color: Cult.muted)),
+          ],
+          const SizedBox(height: 18),
+          const CultSectionLabel('Правила'),
+          const SizedBox(height: 8),
           for (final rule in loyaltyRules)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: Text(rule),
+              child: CultCard(
+                child: Text(rule, style: const TextStyle(height: 1.35)),
+              ),
             ),
+          const SizedBox(height: 10),
+          const CultSectionLabel('История'),
           const SizedBox(height: 8),
-          const Text('Янв 2023 · Вступление в клуб · +2 000 ₽'),
-          const Text('Фев 2026 · Morpheus8 · +8 800 ₽'),
-          const Text('Фев 2026 · Списание на уход · −1 200 ₽'),
+          for (final row in const [
+            ('Янв 2023', 'Вступление в клуб', '+2 000 ₽'),
+            ('Фев 2026', 'Morpheus8', '+8 800 ₽'),
+            ('Фев 2026', 'Списание на уход', '−1 200 ₽'),
+          ])
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: CultCard(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            row.$2,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            row.$1,
+                            style: const TextStyle(
+                              color: Cult.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      row.$3,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -941,11 +1035,34 @@ class _CertificatesPageState extends State<CertificatesPage> {
             onChanged: (value) => setState(() => _bonus = value),
           ),
           if (_error.isNotEmpty)
-            Text(_error, style: const TextStyle(color: Cult.error)),
-          if (_code.isNotEmpty)
-            Text('Код отправлен в WhatsApp и на почту: $_code'),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(_error, style: const TextStyle(color: Cult.error)),
+            ),
+          if (_code.isNotEmpty) ...[
+            CultCard(
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.card_giftcard,
+                    color: Cult.primary,
+                    size: 36,
+                  ),
+                  const SizedBox(height: 10),
+                  Text('Сертификат готов', style: cultHeadline(22)),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Код $_code отправлен в WhatsApp и на почту.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Cult.muted, height: 1.35),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           CultButton(
-            label: 'Оплатить сертификат',
+            label: _code.isEmpty ? 'Оплатить сертификат' : 'Купить ещё',
             onPressed: () {
               if (_bonus && !store.spendBonus(_nominal)) {
                 setState(() => _error = 'Бонусов не хватает на этот номинал.');
@@ -958,14 +1075,38 @@ class _CertificatesPageState extends State<CertificatesPage> {
               });
             },
           ),
-          const SizedBox(height: 16),
-          Text('Уже купленные', style: cultHeadline(22)),
-          for (final gift in store.gifts)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text('${rub(gift.nominal)} · ${gift.design}'),
-              subtitle: Text(gift.code),
-            ),
+          const SizedBox(height: 18),
+          const CultSectionLabel('Уже купленные'),
+          const SizedBox(height: 8),
+          if (store.gifts.isEmpty)
+            const Text(
+              'Пока нет сертификатов на этом телефоне.',
+              style: TextStyle(color: Cult.muted),
+            )
+          else
+            for (final gift in store.gifts)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: CultCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${rub(gift.nominal)} · ${gift.design}',
+                        style: cultHeadline(18),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        gift.code,
+                        style: const TextStyle(
+                          color: Cult.muted,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
         ],
       ),
     );
