@@ -205,6 +205,14 @@ class HomePage extends StatelessWidget {
                   'Кейсы',
                   () => pushPage(context, const CasesPage()),
                 ),
+                _LinkChip(
+                  'О клинике',
+                  () => pushPage(context, const AboutPage()),
+                ),
+                _LinkChip(
+                  'Трансфер',
+                  () => pushPage(context, const TransferPage()),
+                ),
               ],
             ),
           ),

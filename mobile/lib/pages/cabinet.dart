@@ -1317,17 +1317,33 @@ class _LoyaltyPageState extends State<LoyaltyPage> {
             for (final card in store.loyaltyCards)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
-                child: CultCard(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(card.title, style: cultHeadline(18)),
+                child: Semantics(
+                  button: true,
+                  label: '${card.title}, баланс ${rub(card.balance)}',
+                  child: CultCard(
+                    child: InkWell(
+                      onLongPress: () {
+                        Clipboard.setData(
+                          ClipboardData(
+                            text:
+                                '${card.title} · ${rub(card.balance)} · CULT лояльность',
+                          ),
+                        );
+                        cultTapFeedback();
+                        showCultSnack(context, 'Карта скопирована');
+                      },
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(card.title, style: cultHeadline(18)),
+                          ),
+                          Text(
+                            rub(card.balance),
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ],
                       ),
-                      Text(
-                        rub(card.balance),
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),

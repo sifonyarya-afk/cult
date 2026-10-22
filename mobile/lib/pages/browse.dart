@@ -252,50 +252,86 @@ class _ServicesPageState extends State<ServicesPage> {
                 ),
               if (liveFiltered.isNotEmpty)
                 for (final service in liveFiltered) ...[
-                  InkWell(
-                    onTap: () {
-                      cultTapFeedback();
-                      pushPage(context, LiveServicePage(service: service));
-                    },
-                    child: CultCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            (service.category.isEmpty
-                                    ? 'Филиал'
-                                    : service.category)
-                                .toUpperCase(),
-                            style: const TextStyle(
-                              color: Cult.primary,
-                              letterSpacing: 1.1,
-                              fontSize: 12,
-                            ),
+                  Semantics(
+                    button: true,
+                    label: '${service.title}, ${service.priceLabel}',
+                    child: InkWell(
+                      onTap: () {
+                        cultTapFeedback();
+                        pushPage(context, LiveServicePage(service: service));
+                      },
+                      onLongPress: () {
+                        Clipboard.setData(
+                          ClipboardData(
+                            text:
+                                '${service.title} · ${service.priceLabel}'
+                                '${service.durationLabel.isEmpty ? '' : ' · ${service.durationLabel}'}',
                           ),
-                          const SizedBox(height: 4),
-                          Text(service.title, style: cultHeadline(22)),
-                          if (service.comment.isNotEmpty) ...[
-                            const SizedBox(height: 6),
+                        );
+                        cultTapFeedback();
+                        showCultSnack(context, 'Услуга скопирована');
+                      },
+                      child: CultCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              service.comment,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Cult.muted),
+                              (service.category.isEmpty
+                                      ? 'Филиал'
+                                      : service.category)
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                color: Cult.primary,
+                                letterSpacing: 1.1,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(service.title, style: cultHeadline(22)),
+                            if (service.comment.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                service.comment,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: Cult.muted),
+                              ),
+                            ],
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    [
+                                      service.priceLabel,
+                                      if (service.durationLabel.isNotEmpty)
+                                        service.durationLabel,
+                                    ].join(' · '),
+                                    style: const TextStyle(
+                                      color: Cult.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Записаться',
+                                  onPressed: () {
+                                    cultTapFeedback();
+                                    pushPage(
+                                      context,
+                                      BookingPage(
+                                        initialService: service.title,
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.event_available_outlined,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
-                          const SizedBox(height: 8),
-                          Text(
-                            [
-                              service.priceLabel,
-                              if (service.durationLabel.isNotEmpty)
-                                service.durationLabel,
-                            ].join(' · '),
-                            style: const TextStyle(
-                              color: Cult.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),

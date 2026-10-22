@@ -573,6 +573,21 @@ class ArticlePage extends StatelessWidget {
               context: context,
             ),
           ),
+          TextButton(
+            onPressed: () {
+              final store = ClinicScope.of(context);
+              store.sendMessage(
+                'specialist',
+                'Вопрос после материала «${article.title}».',
+              );
+              cultTapFeedback();
+              showCultSnack(
+                context,
+                'Сообщение врачу отправлено — откройте Чат',
+              );
+            },
+            child: const Text('Спросить врача по теме'),
+          ),
         ],
       ),
       bottomNavigationBar: CultBookBar(

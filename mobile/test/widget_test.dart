@@ -477,6 +477,11 @@ void main() {
     expect(store.threads['bot']!.last.text.toLowerCase(), contains('постакне'));
     store.sendMessage('bot', 'Беспокоит купероз');
     expect(store.threads['bot']!.last.text.toLowerCase(), contains('купероз'));
+    store.sendMessage('bot', 'Что умеет приложение?');
+    expect(
+      store.threads['bot']!.last.text.toLowerCase(),
+      contains('приложен'),
+    );
   });
 
   test('Переписку можно скопировать текстом', () async {

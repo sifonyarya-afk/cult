@@ -408,6 +408,14 @@ class _InjectionCosmeticsPageState extends State<InjectionCosmeticsPage> {
             onChanged: () => setState(() {}),
           ),
           const SizedBox(height: 12),
+          if (list.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                '${list.length} услуг',
+                style: const TextStyle(color: Cult.muted, fontSize: 12),
+              ),
+            ),
           if (list.isEmpty)
             CultEmpty(
               title: 'Ничего не найдено',
@@ -420,58 +428,75 @@ class _InjectionCosmeticsPageState extends State<InjectionCosmeticsPage> {
             )
           else
             for (final service in list) ...[
-              InkWell(
-                onTap: () {
-                  cultTapFeedback();
-                  pushPage(context, BookingPage(initialService: service.title));
-                },
-                child: CultCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CultImage(service.image, aspect: 4 / 3, radius: 16),
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    service.title,
-                                    style: cultHeadline(20),
-                                  ),
-                                ),
-                                Text(
-                                  service.priceLabel,
-                                  style: const TextStyle(
-                                    color: Cult.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${service.duration} · ${service.category}',
-                              style: const TextStyle(
-                                color: Cult.muted,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              service.blurb,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Cult.muted),
-                            ),
-                          ],
-                        ),
+              Semantics(
+                button: true,
+                label: '${service.title}, ${service.priceLabel}',
+                child: InkWell(
+                  onTap: () {
+                    cultTapFeedback();
+                    pushPage(
+                      context,
+                      BookingPage(initialService: service.title),
+                    );
+                  },
+                  onLongPress: () {
+                    Clipboard.setData(
+                      ClipboardData(
+                        text:
+                            '${service.title} · ${service.priceLabel} · CULT',
                       ),
-                    ],
+                    );
+                    cultTapFeedback();
+                    showCultSnack(context, 'Услуга скопирована');
+                  },
+                  child: CultCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CultImage(service.image, aspect: 4 / 3, radius: 16),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      service.title,
+                                      style: cultHeadline(20),
+                                    ),
+                                  ),
+                                  Text(
+                                    service.priceLabel,
+                                    style: const TextStyle(
+                                      color: Cult.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${service.duration} · ${service.category}',
+                                style: const TextStyle(
+                                  color: Cult.muted,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                service.blurb,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: Cult.muted),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
