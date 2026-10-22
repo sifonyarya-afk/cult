@@ -82,252 +82,254 @@ class _ServicesPageState extends State<ServicesPage> {
 
     return Stack(
       children: [
-        ListView(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
-          children: [
-            const Text(
-              'ИНДИВИДУАЛЬНЫЙ ПОДХОД',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Cult.muted,
-                letterSpacing: 2,
-                fontSize: 11,
+        RefreshIndicator(
+          color: Cult.primary,
+          onRefresh: () => store.refreshCatalog(),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
+            children: [
+              const Text(
+                'ИНДИВИДУАЛЬНЫЙ ПОДХОД',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Cult.muted,
+                  letterSpacing: 2,
+                  fontSize: 11,
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Консультация, диагностика и персональные программы',
-              style: cultHeadline(28),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              gender == null
-                  ? 'Протоколы по диагностике кожи и задачам организма.'
-                  : 'Каталог ${gender.forLabel}: эстетика, инъекции и инфузии.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Cult.muted, height: 1.4),
-            ),
-            const SizedBox(height: 16),
-            CultButton(
-              label: 'Записаться',
-              onPressed: () => pushPage(context, const BookingPage()),
-            ),
-            if (gender != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                'Консультация, диагностика и персональные программы',
+                style: cultHeadline(28),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                gender == null
+                    ? 'Протоколы по диагностике кожи и задачам организма.'
+                    : 'Каталог ${gender.forLabel}: эстетика, инъекции и инфузии.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Cult.muted, height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              CultButton(
+                label: 'Записаться',
+                onPressed: () => pushPage(context, const BookingPage()),
+              ),
+              if (gender != null) ...[
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Center(child: Text('Женские')),
+                        selected: gender == ClientGender.woman,
+                        onSelected: (_) => store.setGender(ClientGender.woman),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Center(child: Text('Мужские')),
+                        selected: gender == ClientGender.man,
+                        onSelected: (_) => store.setGender(ClientGender.man),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              TextField(
+                controller: _query,
+                decoration: const InputDecoration(
+                  hintText: 'Поиск процедур...',
+                  prefixIcon: Icon(Icons.search),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 40,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: chips.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final chip = chips[index];
+                    final selected = _chip == chip;
+                    return FilterChip(
+                      label: Text(chip),
+                      selected: selected,
+                      showCheckmark: false,
+                      selectedColor: Cult.ink,
+                      labelStyle: TextStyle(
+                        color: selected ? Colors.white : Cult.ink,
+                      ),
+                      backgroundColor: const Color(0xFFF3EFEA),
+                      side: BorderSide.none,
+                      onSelected: (_) => setState(() => _chip = chip),
+                    );
+                  },
+                ),
+              ),
               const SizedBox(height: 14),
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  Expanded(
-                    child: ChoiceChip(
-                      label: const Center(child: Text('Женские')),
-                      selected: gender == ClientGender.woman,
-                      onSelected: (_) => store.setGender(ClientGender.woman),
+                  ActionChip(
+                    label: const Text('Аппаратная'),
+                    onPressed: () => pushPage(
+                      context,
+                      const CategoryHubPage(slug: 'hardware'),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ChoiceChip(
-                      label: const Center(child: Text('Мужские')),
-                      selected: gender == ClientGender.man,
-                      onSelected: (_) => store.setGender(ClientGender.man),
+                  ActionChip(
+                    label: const Text('Инъекции'),
+                    onPressed: () => pushPage(
+                      context,
+                      const CategoryHubPage(slug: 'injections'),
+                    ),
+                  ),
+                  ActionChip(
+                    label: const Text('Инфузии'),
+                    onPressed: () => pushPage(
+                      context,
+                      const CategoryHubPage(slug: 'infusions'),
+                    ),
+                  ),
+                  ActionChip(
+                    label: const Text('Наука'),
+                    onPressed: () => pushPage(
+                      context,
+                      const CategoryHubPage(slug: 'science'),
                     ),
                   ),
                 ],
               ),
-            ],
-            const SizedBox(height: 16),
-            TextField(
-              controller: _query,
-              decoration: const InputDecoration(
-                hintText: 'Поиск процедур...',
-                prefixIcon: Icon(Icons.search),
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 40,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: chips.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final chip = chips[index];
-                  final selected = _chip == chip;
-                  return FilterChip(
-                    label: Text(chip),
-                    selected: selected,
-                    showCheckmark: false,
-                    selectedColor: Cult.ink,
-                    labelStyle: TextStyle(
-                      color: selected ? Colors.white : Cult.ink,
-                    ),
-                    backgroundColor: const Color(0xFFF3EFEA),
-                    side: BorderSide.none,
-                    onSelected: (_) => setState(() => _chip = chip),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                ActionChip(
-                  label: const Text('Аппаратная'),
-                  onPressed: () => pushPage(
-                    context,
-                    const CategoryHubPage(slug: 'hardware'),
-                  ),
+              if (store.syncing ||
+                  (store.yclientsReady &&
+                      store.liveServices.isEmpty &&
+                      store.liveError.isEmpty))
+                const CultLoading(label: 'Загружаем прайс филиала…'),
+              if (store.liveError.isNotEmpty)
+                CultErrorBanner(
+                  message: store.liveError,
+                  onRetry: store.refreshCatalog,
+                  retryLabel: 'Обновить прайс',
                 ),
-                ActionChip(
-                  label: const Text('Инъекции'),
-                  onPressed: () => pushPage(
-                    context,
-                    const CategoryHubPage(slug: 'injections'),
-                  ),
-                ),
-                ActionChip(
-                  label: const Text('Инфузии'),
-                  onPressed: () => pushPage(
-                    context,
-                    const CategoryHubPage(slug: 'infusions'),
-                  ),
-                ),
-                ActionChip(
-                  label: const Text('Наука'),
-                  onPressed: () =>
-                      pushPage(context, const CategoryHubPage(slug: 'science')),
-                ),
-              ],
-            ),
-            if (store.syncing ||
-                (store.yclientsReady &&
-                    store.liveServices.isEmpty &&
-                    store.liveError.isEmpty))
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: LinearProgressIndicator(),
-              ),
-            if (store.liveError.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(store.liveError, style: const TextStyle(color: Cult.error)),
-              TextButton(
-                onPressed: store.refreshCatalog,
-                child: const Text('Обновить прайс'),
-              ),
-            ],
-            const SizedBox(height: 16),
-            if (liveFiltered.isNotEmpty)
-              for (final service in liveFiltered) ...[
-                InkWell(
-                  onTap: () =>
-                      pushPage(context, LiveServicePage(service: service)),
-                  child: CultCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          (service.category.isEmpty
-                                  ? 'Филиал'
-                                  : service.category)
-                              .toUpperCase(),
-                          style: const TextStyle(
-                            color: Cult.primary,
-                            letterSpacing: 1.1,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(service.title, style: cultHeadline(22)),
-                        if (service.comment.isNotEmpty) ...[
-                          const SizedBox(height: 6),
+              const SizedBox(height: 16),
+              if (liveFiltered.isNotEmpty)
+                for (final service in liveFiltered) ...[
+                  InkWell(
+                    onTap: () =>
+                        pushPage(context, LiveServicePage(service: service)),
+                    child: CultCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            service.comment,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Cult.muted),
+                            (service.category.isEmpty
+                                    ? 'Филиал'
+                                    : service.category)
+                                .toUpperCase(),
+                            style: const TextStyle(
+                              color: Cult.primary,
+                              letterSpacing: 1.1,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(service.title, style: cultHeadline(22)),
+                          if (service.comment.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              service.comment,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Cult.muted),
+                            ),
+                          ],
+                          const SizedBox(height: 8),
+                          Text(
+                            [
+                              service.priceLabel,
+                              if (service.durationLabel.isNotEmpty)
+                                service.durationLabel,
+                            ].join(' · '),
+                            style: const TextStyle(
+                              color: Cult.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
-                        const SizedBox(height: 8),
-                        Text(
-                          [
-                            service.priceLabel,
-                            if (service.durationLabel.isNotEmpty)
-                              service.durationLabel,
-                          ].join(' · '),
-                          style: const TextStyle(
-                            color: Cult.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-              ]
-            else if (localFiltered.isEmpty)
-              CultEmpty(
-                title: 'Ничего не найдено',
-                note: 'Смените фильтр или запрос — каталог обновится.',
-                actionLabel: 'Сбросить фильтр',
-                onAction: () => setState(() {
-                  _chip = 'Все услуги';
-                  _query.clear();
-                }),
-              )
-            else
-              for (final service in localFiltered) ...[
-                InkWell(
-                  onTap: () => pushPage(context, ServicePage(service: service)),
-                  child: CultCard(
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CultImage(service.image, aspect: 16 / 10, radius: 16),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                service.category.toUpperCase(),
-                                style: const TextStyle(
-                                  color: Cult.primary,
-                                  letterSpacing: 1.1,
-                                  fontSize: 12,
+                  const SizedBox(height: 12),
+                ]
+              else if (localFiltered.isEmpty)
+                CultEmpty(
+                  title: 'Ничего не найдено',
+                  note: 'Смените фильтр или запрос — каталог обновится.',
+                  actionLabel: 'Сбросить фильтр',
+                  onAction: () => setState(() {
+                    _chip = 'Все услуги';
+                    _query.clear();
+                  }),
+                )
+              else
+                for (final service in localFiltered) ...[
+                  InkWell(
+                    onTap: () =>
+                        pushPage(context, ServicePage(service: service)),
+                    child: CultCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CultImage(service.image, aspect: 16 / 10, radius: 16),
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  service.category.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Cult.primary,
+                                    letterSpacing: 1.1,
+                                    fontSize: 12,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(service.title, style: cultHeadline(22)),
-                              const SizedBox(height: 6),
-                              Text(
-                                service.blurb,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(color: Cult.muted),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '${service.priceLabel} · ${service.duration}',
-                                style: const TextStyle(
-                                  color: Cult.primary,
-                                  fontWeight: FontWeight.w600,
+                                const SizedBox(height: 4),
+                                Text(service.title, style: cultHeadline(22)),
+                                const SizedBox(height: 6),
+                                Text(
+                                  service.blurb,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Cult.muted),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${service.priceLabel} · ${service.duration}',
+                                  style: const TextStyle(
+                                    color: Cult.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-              ],
-          ],
+                  const SizedBox(height: 16),
+                ],
+            ],
+          ),
         ),
         Positioned(
           right: 20,
@@ -469,6 +471,8 @@ class DoctorsPage extends StatefulWidget {
 }
 
 class _DoctorsPageState extends State<DoctorsPage> {
+  final _query = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -479,94 +483,136 @@ class _DoctorsPageState extends State<DoctorsPage> {
   }
 
   @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
-    final live = store.liveStaff;
+    final needle = _query.text.trim().toLowerCase();
+    final live = store.liveStaff.where((doctor) {
+      if (needle.isEmpty) return true;
+      final hay = '${doctor.name} ${doctor.specialization}'.toLowerCase();
+      return hay.contains(needle);
+    }).toList();
+    final local = doctors.where((doctor) {
+      if (needle.isEmpty) return true;
+      final hay = '${doctor.name} ${doctor.role}'.toLowerCase();
+      return hay.contains(needle);
+    }).toList();
     return Scaffold(
       appBar: AppBar(title: const Text('Специалисты')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text('Команда CULT', style: cultHeadline(28)),
-          const SizedBox(height: 6),
-          const Text(
-            'Врачи филиала в Сочи. Запись и чат — в карточке.',
-            style: TextStyle(color: Cult.muted),
-          ),
-          const SizedBox(height: 16),
-          if (live.isEmpty && store.yclientsReady)
-            const LinearProgressIndicator(),
-          if (live.isNotEmpty)
-            for (final doctor in live)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: InkWell(
-                  onTap: () =>
-                      pushPage(context, LiveDoctorPage(doctor: doctor)),
-                  child: CultCard(
-                    child: Row(
-                      children: [
-                        _Avatar(url: doctor.avatar, name: doctor.name),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(doctor.name, style: cultHeadline(20)),
-                              Text(
-                                doctor.specialization.isEmpty
-                                    ? 'Врач филиала'
-                                    : doctor.specialization,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const Text(
-                                'CULT · Сочи',
-                                style: TextStyle(color: Cult.muted),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right, color: Cult.muted),
-                      ],
-                    ),
-                  ),
-                ),
-              )
-          else
-            for (final doctor in doctors)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: InkWell(
-                  onTap: () => pushPage(context, DoctorPage(doctor: doctor)),
-                  child: CultCard(
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 72,
-                          child: CultImage(doctor.image, aspect: 1, radius: 16),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(doctor.name, style: cultHeadline(20)),
-                              Text(doctor.role),
-                              Text(
-                                doctor.exp,
-                                style: const TextStyle(color: Cult.muted),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right, color: Cult.muted),
-                      ],
-                    ),
-                  ),
-                ),
+      body: RefreshIndicator(
+        color: Cult.primary,
+        onRefresh: () async {
+          await store.refreshStaff();
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text('Команда CULT', style: cultHeadline(28)),
+            const SizedBox(height: 6),
+            const Text(
+              'Врачи филиала в Сочи. Запись и чат — в карточке.',
+              style: TextStyle(color: Cult.muted),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _query,
+              decoration: const InputDecoration(
+                hintText: 'Имя или специализация',
+                prefixIcon: Icon(Icons.search),
               ),
-        ],
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 16),
+            if (store.liveStaff.isEmpty && store.yclientsReady)
+              const CultLoading(label: 'Загружаем специалистов…'),
+            if (live.isNotEmpty)
+              for (final doctor in live)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                    onTap: () =>
+                        pushPage(context, LiveDoctorPage(doctor: doctor)),
+                    child: CultCard(
+                      child: Row(
+                        children: [
+                          _Avatar(url: doctor.avatar, name: doctor.name),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(doctor.name, style: cultHeadline(20)),
+                                Text(
+                                  doctor.specialization.isEmpty
+                                      ? 'Врач филиала'
+                                      : doctor.specialization,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const Text(
+                                  'CULT · Сочи',
+                                  style: TextStyle(color: Cult.muted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right, color: Cult.muted),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+            else if (local.isEmpty)
+              CultEmpty(
+                title: 'Никого не найдено',
+                note: 'Смените запрос — покажем врачей филиала.',
+                actionLabel: 'Сбросить',
+                onAction: () => setState(() => _query.clear()),
+              )
+            else
+              for (final doctor in local)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                    onTap: () => pushPage(context, DoctorPage(doctor: doctor)),
+                    child: CultCard(
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 72,
+                            child: CultImage(
+                              doctor.image,
+                              aspect: 1,
+                              radius: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(doctor.name, style: cultHeadline(20)),
+                                Text(doctor.role),
+                                Text(
+                                  doctor.exp,
+                                  style: const TextStyle(color: Cult.muted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right, color: Cult.muted),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+          ],
+        ),
       ),
     );
   }

@@ -404,14 +404,15 @@ class _VisitsPageState extends State<VisitsPage> {
                     pushPage(context, const AuthPage(allowSkip: false)),
               )
             else ...[
-              if (store.visitsLoading) const LinearProgressIndicator(),
-              if (store.visitsError.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  store.visitsError,
-                  style: const TextStyle(color: Cult.error),
+              if (store.visitsLoading)
+                const CultLoading(label: 'Обновляем записи…'),
+              if (store.visitsError.isNotEmpty)
+                CultErrorBanner(
+                  message: store.visitsError,
+                  onRetry: () {
+                    store.refreshVisits();
+                  },
                 ),
-              ],
               Text('Предстоящие', style: cultHeadline(22)),
               if (store.upcoming.isEmpty)
                 Padding(

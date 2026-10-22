@@ -20,7 +20,15 @@ class CategoryHubPage extends StatelessWidget {
       'science' => const SciencePage(),
       _ => Scaffold(
         appBar: AppBar(title: const Text('CULT')),
-        body: const Center(child: Text('Раздел не найден')),
+        body: ListView(
+          padding: const EdgeInsets.all(20),
+          children: const [
+            CultEmpty(
+              title: 'Раздел не найден',
+              note: 'Откройте услуги из меню или с главной.',
+            ),
+          ],
+        ),
       ),
     };
   }

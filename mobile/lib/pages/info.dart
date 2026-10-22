@@ -114,21 +114,15 @@ class _PricesPageState extends State<PricesPage> {
                 ? 'Цены филиала CULT в Сочи.$genderNote Поиск ищет и по категориям.'
                 : 'Точная сумма подтверждается на консультации.$genderNote',
           ),
-          if (store.liveError.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(store.liveError, style: const TextStyle(color: Cult.error)),
-            TextButton(
-              onPressed: store.refreshCatalog,
-              child: const Text('Повторить'),
+          if (store.liveError.isNotEmpty)
+            CultErrorBanner(
+              message: store.liveError,
+              onRetry: store.refreshCatalog,
             ),
-          ],
           if (store.yclientsReady &&
               store.liveServices.isEmpty &&
               store.liveError.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: LinearProgressIndicator(),
-            ),
+            const CultLoading(label: 'Загружаем прайс…'),
           const SizedBox(height: 8),
           TextField(
             controller: _query,
@@ -303,27 +297,56 @@ class BlogPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Блог')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
+          Text('CULT TV', style: cultHeadline(28)),
+          const SizedBox(height: 6),
+          const Text(
+            'Короткие разборы протоколов и новости клиники.',
+            style: TextStyle(color: Cult.muted),
+          ),
+          const SizedBox(height: 16),
           for (final article in articles)
             Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.only(bottom: 14),
               child: InkWell(
+                borderRadius: BorderRadius.circular(16),
                 onTap: () => pushPage(context, ArticlePage(article: article)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CultImage(article.image, aspect: 16 / 9, radius: 12),
-                    const SizedBox(height: 8),
-                    Text(
-                      article.kicker.toUpperCase(),
-                      style: const TextStyle(
-                        color: Cult.primary,
-                        letterSpacing: 1,
+                child: CultCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CultImage(article.image, aspect: 16 / 9, radius: 16),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              article.kicker.toUpperCase(),
+                              style: const TextStyle(
+                                color: Cult.primary,
+                                letterSpacing: 1.1,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(article.title, style: cultHeadline(22)),
+                            const SizedBox(height: 4),
+                            Text(
+                              article.author,
+                              style: const TextStyle(
+                                color: Cult.muted,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Text(article.title, style: cultHeadline(24)),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

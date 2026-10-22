@@ -605,7 +605,7 @@ class _BookingPageState extends State<BookingPage> {
               ),
             ),
           const SizedBox(height: 12),
-          if (_loading) const LinearProgressIndicator(),
+          if (_loading) const CultLoading(label: 'Загружаем слоты филиала…'),
           if (_done)
             _doneCard()
           else if (serviceItems.isEmpty && !_loading)
@@ -1058,7 +1058,19 @@ class _ServiceSheetState extends State<_ServiceSheet> {
             const SizedBox(height: 8),
             Expanded(
               child: visible.isEmpty
-                  ? const Center(child: Text('Ничего не найдено.'))
+                  ? ListView(
+                      children: [
+                        CultEmpty(
+                          title: 'Ничего не найдено',
+                          note: 'Смените категорию или короче запрос.',
+                          actionLabel: 'Сбросить',
+                          onAction: () => setState(() {
+                            _group = 'Все';
+                            _query.clear();
+                          }),
+                        ),
+                      ],
+                    )
                   : ListView.separated(
                       itemCount: visible.length,
                       separatorBuilder: (_, _) => const Divider(height: 1),

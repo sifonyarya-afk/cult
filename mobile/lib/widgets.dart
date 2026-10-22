@@ -167,9 +167,85 @@ class CultCard extends StatelessWidget {
   }
 }
 
-Future<void> openExternal(String url) async {
+Future<void> openExternal(String url, {BuildContext? context}) async {
   final uri = Uri.parse(url);
-  await launchUrl(uri, mode: LaunchMode.externalApplication);
+  final ok =
+      await canLaunchUrl(uri) &&
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!ok && context != null && context.mounted) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Не удалось открыть ссылку')));
+  }
+}
+
+class CultLoading extends StatelessWidget {
+  const CultLoading({super.key, this.label = 'Обновляем филиал…'});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        children: [
+          const LinearProgressIndicator(
+            color: Cult.primary,
+            backgroundColor: Color(0xFFE8E0D6),
+          ),
+          const SizedBox(height: 10),
+          Text(label, style: const TextStyle(color: Cult.muted, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+}
+
+class CultErrorBanner extends StatelessWidget {
+  const CultErrorBanner({
+    super.key,
+    required this.message,
+    this.onRetry,
+    this.retryLabel = 'Повторить',
+  });
+
+  final String message;
+  final VoidCallback? onRetry;
+  final String retryLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8E8E6),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            message,
+            style: const TextStyle(color: Cult.error, height: 1.35),
+          ),
+          if (onRetry != null) ...[
+            const SizedBox(height: 4),
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Cult.primary,
+                padding: EdgeInsets.zero,
+              ),
+              onPressed: onRetry,
+              child: Text(retryLabel),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 void pushPage(BuildContext context, Widget page) {
