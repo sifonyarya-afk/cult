@@ -871,6 +871,9 @@ class ClinicStore extends ChangeNotifier {
       if (q.contains('мезотерап') || q.contains('биоревитал') || q.contains('плазмо')) {
         return 'Мезотерапия и биоревитализация — в меню «Инъекции». Перед курсом врач оценит показания.';
       }
+      if (q.contains('контурн') || q.contains('липо') || q.contains('скульпт')) {
+        return 'Контурная пластика и скульптурирование — в «Инъекциях». Объём и зоны согласуем на консультации.';
+      }
       if (q.contains('час') ||
           q.contains('режим') ||
           q.contains('выходн') ||

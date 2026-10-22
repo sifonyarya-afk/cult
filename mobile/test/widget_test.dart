@@ -54,6 +54,20 @@ void main() {
     expect(find.text('НАЧАТЬ'), findsOneWidget);
   });
 
+  testWidgets('Сплэш можно пропустить тапом', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    await tester.pumpWidget(
+      CultApp(store: store, splash: const Duration(seconds: 30)),
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Нажмите, чтобы продолжить'), findsOneWidget);
+    await tester.tap(find.text('CULT').first);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Ваш путь к совершенству'), findsOneWidget);
+  });
+
   test('Запись отменяется, бонусов не хватает на крупный сертификат', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -63,6 +65,14 @@ class Boot extends StatefulWidget {
 
 class _BootState extends State<Boot> {
   var _ready = false;
+  Timer? _splashTimer;
+
+  void _finishSplash() {
+    _splashTimer?.cancel();
+    _splashTimer = null;
+    if (_ready || !mounted) return;
+    setState(() => _ready = true);
+  }
 
   @override
   void initState() {
@@ -71,9 +81,13 @@ class _BootState extends State<Boot> {
       _ready = true;
       return;
     }
-    Future<void>.delayed(widget.splash, () {
-      if (mounted) setState(() => _ready = true);
-    });
+    _splashTimer = Timer(widget.splash, _finishSplash);
+  }
+
+  @override
+  void dispose() {
+    _splashTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -83,6 +97,7 @@ class _BootState extends State<Boot> {
       child = SplashScreen(
         key: const ValueKey('splash'),
         duration: widget.splash,
+        onSkip: _finishSplash,
       );
     } else {
       final store = ClinicScope.of(context);
@@ -107,9 +122,14 @@ class _BootState extends State<Boot> {
 }
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key, required this.duration});
+  const SplashScreen({
+    super.key,
+    required this.duration,
+    this.onSkip,
+  });
 
   final Duration duration;
+  final VoidCallback? onSkip;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -149,84 +169,99 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AnimatedBuilder(
-        animation: _ctrl,
-        builder: (context, _) {
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color.lerp(const Color(0xFFF3EFEA), Cult.bg, _fade.value)!,
-                  Cult.bg,
-                  Color.lerp(
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          cultTapFeedback();
+          widget.onSkip?.call();
+        },
+        child: AnimatedBuilder(
+          animation: _ctrl,
+          builder: (context, _) {
+            return DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color.lerp(const Color(0xFFF3EFEA), Cult.bg, _fade.value)!,
                     Cult.bg,
-                    Cult.sand.withValues(alpha: 0.35),
-                    _sub.value,
-                  )!,
-                ],
-              ),
-            ),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Opacity(
-                    opacity: 0.08 + (_sub.value * 0.08),
-                    child: Image.asset(
-                      'assets/media/bc16b5df11db.png',
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                    ),
-                  ),
+                    Color.lerp(
+                      Cult.bg,
+                      Cult.sand.withValues(alpha: 0.35),
+                      _sub.value,
+                    )!,
+                  ],
                 ),
-                Center(
-                  child: Opacity(
-                    opacity: _fade.value,
-                    child: Transform.translate(
-                      offset: Offset(0, _rise.value),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'CULT',
-                            style: cultHeadline(56).copyWith(letterSpacing: 8),
-                          ),
-                          const SizedBox(height: 14),
-                          SizedBox(
-                            width: 56 * _line.value.clamp(0.05, 1),
-                            height: 2,
-                            child: const ColoredBox(color: Cult.gold),
-                          ),
-                          const SizedBox(height: 14),
-                          Opacity(
-                            opacity: _sub.value,
-                            child: const Column(
-                              children: [
-                                Text(
-                                  'CLINIC',
-                                  style: TextStyle(
-                                    letterSpacing: 5,
-                                    color: Cult.muted,
-                                  ),
-                                ),
-                                SizedBox(height: 6),
-                                Text(
-                                  'Сочи',
-                                  style: TextStyle(color: Cult.muted),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+              ),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 0.08 + (_sub.value * 0.08),
+                      child: Image.asset(
+                        'assets/media/bc16b5df11db.png',
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
+                  Center(
+                    child: Opacity(
+                      opacity: _fade.value,
+                      child: Transform.translate(
+                        offset: Offset(0, _rise.value),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'CULT',
+                              style: cultHeadline(56).copyWith(letterSpacing: 8),
+                            ),
+                            const SizedBox(height: 14),
+                            SizedBox(
+                              width: 56 * _line.value.clamp(0.05, 1),
+                              height: 2,
+                              child: const ColoredBox(color: Cult.gold),
+                            ),
+                            const SizedBox(height: 14),
+                            Opacity(
+                              opacity: _sub.value,
+                              child: const Column(
+                                children: [
+                                  Text(
+                                    'CLINIC',
+                                    style: TextStyle(
+                                      letterSpacing: 5,
+                                      color: Cult.muted,
+                                    ),
+                                  ),
+                                  SizedBox(height: 6),
+                                  Text(
+                                    'Сочи',
+                                    style: TextStyle(color: Cult.muted),
+                                  ),
+                                  SizedBox(height: 18),
+                                  Text(
+                                    'Нажмите, чтобы продолжить',
+                                    style: TextStyle(
+                                      color: Cult.muted,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

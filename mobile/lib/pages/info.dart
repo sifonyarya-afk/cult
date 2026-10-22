@@ -269,6 +269,32 @@ class AboutPage extends StatelessWidget {
             'Клиника на Черноморской, 6. Парковка для гостей у входа.',
             style: TextStyle(height: 1.4),
           ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ActionChip(
+                avatar: const Icon(Icons.copy_outlined, size: 18),
+                label: const Text('Скопировать адрес'),
+                onPressed: () {
+                  Clipboard.setData(
+                    const ClipboardData(text: 'Сочи, Черноморская, 6'),
+                  );
+                  cultTapFeedback();
+                  showCultSnack(context, 'Адрес скопирован');
+                },
+              ),
+              ActionChip(
+                avatar: const Icon(Icons.directions_car_outlined, size: 18),
+                label: const Text('Трансфер'),
+                onPressed: () {
+                  cultTapFeedback();
+                  pushPage(context, const TransferPage());
+                },
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
           const CultSectionLabel('Документы'),
           const SizedBox(height: 8),

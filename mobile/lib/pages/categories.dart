@@ -42,7 +42,14 @@ class HardwareCosmeticsPage extends StatefulWidget {
 }
 
 class _HardwareCosmeticsPageState extends State<HardwareCosmeticsPage> {
+  final _query = TextEditingController();
   var _zone = 'Лицо';
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
 
   bool _matchesZone(Device device) {
     final zone = device.zone.toLowerCase();
@@ -56,7 +63,15 @@ class _HardwareCosmeticsPageState extends State<HardwareCosmeticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = devices.where(_matchesZone).toList();
+    final needle = _query.text.trim().toLowerCase();
+    final filtered = devices.where((device) {
+      if (!_matchesZone(device)) return false;
+      if (needle.isEmpty) return true;
+      final hay =
+          '${device.title} ${device.zone} ${device.badge} ${device.text}'
+              .toLowerCase();
+      return hay.contains(needle);
+    }).toList();
     return Scaffold(
       appBar: AppBar(title: const Text('CULT')),
       floatingActionButton: FloatingActionButton(
@@ -110,7 +125,13 @@ class _HardwareCosmeticsPageState extends State<HardwareCosmeticsPage> {
               ],
             ],
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 14),
+          CultSearchField(
+            controller: _query,
+            hint: 'Найти аппарат',
+            onChanged: () => setState(() {}),
+          ),
+          const SizedBox(height: 18),
           Text(
             'ПРОЦЕДУРЫ',
             style: cultHeadline(
@@ -121,10 +142,21 @@ class _HardwareCosmeticsPageState extends State<HardwareCosmeticsPage> {
           const SizedBox(height: 14),
           if (filtered.isEmpty)
             CultEmpty(
-              title: 'Аппараты для тела скоро',
-              note: 'Запишитесь — подберём протокол для тела в филиале.',
-              actionLabel: 'Записаться',
-              onAction: () => pushPage(context, const BookingPage()),
+              title: needle.isEmpty
+                  ? 'Аппараты для тела скоро'
+                  : 'Ничего не найдено',
+              note: needle.isEmpty
+                  ? 'Запишитесь — подберём протокол для тела в филиале.'
+                  : 'Смягчите запрос или сбросьте поиск.',
+              actionLabel: needle.isEmpty ? 'Записаться' : 'Сбросить',
+              onAction: () {
+                if (needle.isEmpty) {
+                  pushPage(context, const BookingPage());
+                  return;
+                }
+                _query.clear();
+                setState(() {});
+              },
             )
           else
             for (final device in filtered) ...[

@@ -580,6 +580,16 @@ class _CartPageState extends State<CartPage> {
                     },
                     child: const Text('Скопировать чек'),
                   ),
+                  TextButton(
+                    onPressed: () {
+                      cultTapFeedback();
+                      showCultSnack(
+                        context,
+                        'Заказ уже у администратора — откройте вкладку Чат',
+                      );
+                    },
+                    child: const Text('Статус в чате'),
+                  ),
                 ],
               ),
             )
