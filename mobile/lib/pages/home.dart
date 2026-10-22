@@ -187,15 +187,19 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Прецизионный анализ кожи',
+                  store.gender == ClientGender.man
+                      ? 'Мужской уход за лицом'
+                      : 'Прецизионный анализ кожи',
                   style: cultHeadline(24),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Мультиспектральная диагностика и прогноз на 10 лет.',
+                Text(
+                  store.gender == ClientGender.man
+                      ? 'Очищение, тонус и уход без тяжёлого блеска.'
+                      : 'Мультиспектральная диагностика и прогноз на 10 лет.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Cult.muted, height: 1.35),
+                  style: const TextStyle(color: Cult.muted, height: 1.35),
                 ),
                 const SizedBox(height: 12),
                 const CultImage('offer', aspect: 1, radius: 90),
@@ -204,17 +208,19 @@ class HomePage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      '295 ₽',
+                      store.gender == ClientGender.man ? '6 500 ₽' : '295 ₽',
                       style: cultHeadline(26).copyWith(color: Cult.secondary),
                     ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      '450 ₽',
-                      style: TextStyle(
-                        color: Cult.muted,
-                        decoration: TextDecoration.lineThrough,
+                    if (store.gender != ClientGender.man) ...[
+                      const SizedBox(width: 10),
+                      const Text(
+                        '450 ₽',
+                        style: TextStyle(
+                          color: Cult.muted,
+                          decoration: TextDecoration.lineThrough,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -222,8 +228,10 @@ class HomePage extends StatelessWidget {
                   label: 'Получить предложение',
                   onPressed: () => pushPage(
                     context,
-                    const BookingPage(
-                      initialService: 'Прецизионный анализ кожи',
+                    BookingPage(
+                      initialService: store.gender == ClientGender.man
+                          ? 'Мужской уход за лицом'
+                          : 'Прецизионный анализ кожи',
                     ),
                   ),
                 ),

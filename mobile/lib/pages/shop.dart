@@ -528,7 +528,10 @@ class _CartPageState extends State<CartPage> {
               title: const Text('Курьер'),
               subtitle: const Text('Иначе самовывоз в клинике'),
               value: _courier,
-              onChanged: (value) => setState(() => _courier = value),
+              onChanged: (value) {
+                cultTapFeedback();
+                setState(() => _courier = value);
+              },
             ),
             if (_courier) ...[
               const SizedBox(height: 4),
@@ -540,7 +543,10 @@ class _CartPageState extends State<CartPage> {
             ],
             RadioGroup<String>(
               groupValue: _pay,
-              onChanged: (value) => setState(() => _pay = value ?? _pay),
+              onChanged: (value) {
+                cultTapFeedback();
+                setState(() => _pay = value ?? _pay);
+              },
               child: const Column(
                 children: [
                   RadioListTile<String>(

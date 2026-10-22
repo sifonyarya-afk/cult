@@ -234,60 +234,72 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
       body: Column(
         children: [
           Expanded(
-            child: ListView(
-              controller: _scroll,
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-              children: [
-                Center(
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3EFEA),
-                          borderRadius: BorderRadius.circular(18),
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                if (notification is ScrollStartNotification) {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                }
+                return false;
+              },
+              child: ListView(
+                controller: _scroll,
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                children: [
+                  Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3EFEA),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Icon(_iconFor(contact.id), color: Cult.ink),
                         ),
-                        child: Icon(_iconFor(contact.id), color: Cult.ink),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(contact.name, style: cultHeadline(20)),
-                      Text(
-                        contact.role,
-                        style: const TextStyle(color: Cult.muted, fontSize: 13),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-                ),
-                if (messages.isEmpty) _Bubble(text: contact.seed, mine: false),
-                for (final message in messages)
-                  _Bubble(text: message.text, mine: message.from == 'me'),
-                if (!messages.any((m) => m.from == 'me')) ...[
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final tip in _quick)
-                        ActionChip(
-                          label: Text(tip),
-                          onPressed: () => _send(store, tip),
+                        const SizedBox(height: 10),
+                        Text(contact.name, style: cultHeadline(20)),
+                        Text(
+                          contact.role,
+                          style: const TextStyle(
+                            color: Cult.muted,
+                            fontSize: 13,
+                          ),
                         ),
-                    ],
-                  ),
-                ] else ...[
-                  const SizedBox(height: 8),
-                  ActionChip(
-                    avatar: const Icon(
-                      Icons.event_available_outlined,
-                      size: 18,
+                        const SizedBox(height: 16),
+                      ],
                     ),
-                    label: const Text('Записаться'),
-                    onPressed: () => pushPage(context, const BookingPage()),
                   ),
+                  if (messages.isEmpty)
+                    _Bubble(text: contact.seed, mine: false),
+                  for (final message in messages)
+                    _Bubble(text: message.text, mine: message.from == 'me'),
+                  if (!messages.any((m) => m.from == 'me')) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final tip in _quick)
+                          ActionChip(
+                            label: Text(tip),
+                            onPressed: () => _send(store, tip),
+                          ),
+                      ],
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 8),
+                    ActionChip(
+                      avatar: const Icon(
+                        Icons.event_available_outlined,
+                        size: 18,
+                      ),
+                      label: const Text('Записаться'),
+                      onPressed: () => pushPage(context, const BookingPage()),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
           Material(
@@ -917,7 +929,9 @@ class _BookingPageState extends State<BookingPage> {
             onPressed: () => pushPage(context, const VisitsPage()),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
             child: const Text('На главную'),
           ),
         ],
@@ -1012,6 +1026,11 @@ class _BookingPageState extends State<BookingPage> {
       return;
     }
     final iso = _iso(_date!);
+    store.rememberContact(
+      name: _name.text,
+      phone: _phone.text.trim(),
+      email: _email.text.trim(),
+    );
     store.bookVisit(service: _service, doctor: _doctor, date: iso, time: _time);
     store.sendMessage(
       'admin',

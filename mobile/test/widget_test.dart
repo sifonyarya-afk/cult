@@ -1,6 +1,7 @@
 import 'package:cult_clinic/data.dart';
 import 'package:cult_clinic/main.dart';
 import 'package:cult_clinic/pages/browse.dart';
+import 'package:cult_clinic/pages/home.dart';
 import 'package:cult_clinic/pages/shop.dart';
 import 'package:cult_clinic/pages/talk.dart';
 import 'package:cult_clinic/store.dart';
@@ -234,5 +235,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(CultBookBar), findsOneWidget);
     expect(find.textContaining('В КОРЗИНУ'), findsOneWidget);
+  });
+
+  testWidgets('Мужской профиль меняет оффер на главной', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    await store.setGender(ClientGender.man);
+    await tester.pumpWidget(
+      ClinicScope(
+        store: store,
+        child: MaterialApp(
+          home: Scaffold(body: HomePage(onShop: () {})),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -1200));
+    await tester.pumpAndSettle();
+    expect(find.text('Мужской уход за лицом'), findsOneWidget);
+    expect(find.text('Прецизионный анализ кожи'), findsNothing);
   });
 }

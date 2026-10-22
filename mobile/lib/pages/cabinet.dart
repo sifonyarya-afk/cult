@@ -720,6 +720,7 @@ class PharmacyPage extends StatelessWidget {
                       CultButton(
                         label: 'Купить сейчас · ${rub(product.price)}',
                         onPressed: () {
+                          HapticFeedback.mediumImpact();
                           store.addToCart(
                             product.id,
                             product.name,
