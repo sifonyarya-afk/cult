@@ -874,6 +874,11 @@ class ClinicStore extends ChangeNotifier {
       if (q.contains('контурн') || q.contains('липо') || q.contains('скульпт')) {
         return 'Контурная пластика и скульптурирование — в «Инъекциях». Объём и зоны согласуем на консультации.';
       }
+      if (q.contains('ресепшен') ||
+          q.contains('ресепшн') ||
+          q.contains('администрац')) {
+        return 'Ресепшен CULT Сочи — Черноморская, 6, ежедневно 9:00–21:00. Самовывоз шопа и вопросы по записи — там же.';
+      }
       if (q.contains('час') ||
           q.contains('режим') ||
           q.contains('выходн') ||

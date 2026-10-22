@@ -459,6 +459,16 @@ void main() {
     expect(formatVisitWeekday('не дата'), isEmpty);
   });
 
+  test('Бот отвечает про ресепшен и контур', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Где ресепшен?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('ресепшен'));
+    store.sendMessage('bot', 'Интересует контурная пластика');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('контурн'));
+  });
+
   test('Бот отвечает про эпиляцию и мезотерапию', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();

@@ -491,11 +491,19 @@ class InfusionTherapyPage extends StatefulWidget {
 }
 
 class _InfusionTherapyPageState extends State<InfusionTherapyPage> {
+  final _query = TextEditingController();
   var _chip = 'Energy';
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final chips = const ['Energy', 'Detox', 'Longevity', 'Beauty'];
+    final needle = _query.text.trim().toLowerCase();
     final list = infusions
         .where(
           (item) => _chip == 'Longevity'
@@ -504,7 +512,7 @@ class _InfusionTherapyPageState extends State<InfusionTherapyPage> {
                     (_chip == 'Energy' && item.chip == 'Energy'),
         )
         .toList();
-    final shown =
+    final byChip =
         _chip == 'Longevity' ||
             _chip == 'Detox' ||
             _chip == 'Beauty' ||
@@ -516,6 +524,16 @@ class _InfusionTherapyPageState extends State<InfusionTherapyPage> {
             return true;
           }).toList()
         : list;
+    final shown = needle.isEmpty
+        ? byChip
+        : byChip
+              .where(
+                (item) =>
+                    item.title.toLowerCase().contains(needle) ||
+                    item.blurb.toLowerCase().contains(needle) ||
+                    item.chip.toLowerCase().contains(needle),
+              )
+              .toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('CULT')),
@@ -554,13 +572,28 @@ class _InfusionTherapyPageState extends State<InfusionTherapyPage> {
               },
             ),
           ),
+          const SizedBox(height: 12),
+          CultSearchField(
+            controller: _query,
+            hint: 'Найти коктейль',
+            onChanged: () => setState(() {}),
+          ),
           const SizedBox(height: 16),
           if (shown.isEmpty)
             CultEmpty(
-              title: 'В этой группе пусто',
-              note: 'Выберите другую категорию коктейлей.',
-              actionLabel: 'Все',
-              onAction: () => setState(() => _chip = 'Longevity'),
+              title: needle.isEmpty ? 'В этой группе пусто' : 'Ничего не найдено',
+              note: needle.isEmpty
+                  ? 'Выберите другую категорию коктейлей.'
+                  : 'Смягчите запрос или сбросьте поиск.',
+              actionLabel: needle.isEmpty ? 'Все' : 'Сбросить',
+              onAction: () {
+                if (needle.isEmpty) {
+                  setState(() => _chip = 'Longevity');
+                  return;
+                }
+                _query.clear();
+                setState(() {});
+              },
             )
           else
             for (final item in shown) ...[

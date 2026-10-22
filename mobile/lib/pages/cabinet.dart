@@ -1754,6 +1754,40 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 12),
           const CultSectionLabel('Уведомления'),
           const SizedBox(height: 4),
+          Row(
+            children: [
+              TextButton(
+                onPressed: () {
+                  cultTapFeedback();
+                  for (final key in const [
+                    'visits',
+                    'analyses',
+                    'pharmacy',
+                    'offers',
+                  ]) {
+                    store.setNotice(key, true);
+                  }
+                  showCultSnack(context, 'Все уведомления включены');
+                },
+                child: const Text('Все вкл.'),
+              ),
+              TextButton(
+                onPressed: () {
+                  cultTapFeedback();
+                  for (final key in const [
+                    'visits',
+                    'analyses',
+                    'pharmacy',
+                    'offers',
+                  ]) {
+                    store.setNotice(key, false);
+                  }
+                  showCultSnack(context, 'Все уведомления выключены');
+                },
+                child: const Text('Все выкл.'),
+              ),
+            ],
+          ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Визиты'),
