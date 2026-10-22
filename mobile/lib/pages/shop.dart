@@ -31,7 +31,16 @@ class _ShopPageState extends State<ShopPage> with SingleTickerProviderStateMixin
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Магазин', style: cultHeadline(30)),
+              Row(
+                children: [
+                  Expanded(child: Text('Биохакинг-шоп', style: cultHeadline(28))),
+                  ActionChip(
+                    avatar: const Icon(Icons.smart_toy_outlined, size: 18),
+                    label: const Text('ИИ'),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
               const SizedBox(height: 4),
               const Text('Уход, БАДы и наборы для дома.', style: TextStyle(color: Cult.muted)),
             ],

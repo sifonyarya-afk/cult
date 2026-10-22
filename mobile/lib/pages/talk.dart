@@ -12,33 +12,13 @@ class ChatPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hour = DateTime.now().hour;
-    final closed = hour < 9 || hour >= 21;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
-        Text('Чат', style: cultHeadline(30)),
-        const SizedBox(height: 4),
-        const Text('Врач, администратор или бот — ответим по делу.', style: TextStyle(color: Cult.muted)),
-        const SizedBox(height: 14),
-        CultCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(closed ? 'Сейчас отвечает бот' : 'Линия открыта', style: cultHeadline(22)),
-              const SizedBox(height: 6),
-              Text(
-                closed ? 'До 9:00 и после 21:00 первым отвечает ИИ. Врач увидит чат утром.' : 'При нагрузке первым отвечает бот, затем врач.',
-                style: const TextStyle(color: Cult.muted, height: 1.35),
-              ),
-              const SizedBox(height: 8),
-              TextButton(onPressed: () => pushPage(context, const ChatThreadPage(contactId: 'bot')), child: const Text('Написать боту')),
-            ],
-          ),
-        ),
-        const SizedBox(height: 18),
-        Text('Диалоги', style: cultHeadline(22)),
-        const SizedBox(height: 10),
+        Text('Центр поддержки', style: cultHeadline(30)),
+        const SizedBox(height: 6),
+        const Text('Администратор, бот или специалист — ответим по делу.', style: TextStyle(color: Cult.muted)),
+        const SizedBox(height: 16),
         for (final contact in contacts)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
@@ -67,9 +47,7 @@ class ChatPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(contact.name, style: cultHeadline(20)),
-                          Text(contact.role.toUpperCase(), style: const TextStyle(color: Cult.primary, letterSpacing: 1, fontSize: 11)),
-                          const SizedBox(height: 4),
-                          Text(contact.seed, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Cult.muted)),
+                          Text(contact.role, style: const TextStyle(color: Cult.muted, fontSize: 13)),
                         ],
                       ),
                     ),
@@ -79,6 +57,28 @@ class ChatPage extends StatelessWidget {
               ),
             ),
           ),
+        const SizedBox(height: 12),
+        Text('Альтернативная поддержка', style: cultHeadline(20)),
+        const SizedBox(height: 8),
+        CultCard(
+          child: Column(
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Часто задаваемые вопросы'),
+                trailing: const Icon(Icons.chevron_right, color: Cult.muted),
+                onTap: () => pushPage(context, const ChatThreadPage(contactId: 'bot')),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Экстренные протоколы'),
+                trailing: const Icon(Icons.chevron_right, color: Cult.muted),
+                onTap: () => pushPage(context, const ChatThreadPage(contactId: 'admin')),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

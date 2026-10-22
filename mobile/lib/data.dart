@@ -337,9 +337,9 @@ const doctors = <Doctor>[
     role: 'Эстетическая дерматология',
     exp: '12+ лет',
     image: 'alethia',
-    education: 'Сертификации Morpheus8, Ultherapy и инъекционные протоколы лица.',
-    about: 'Ведёт контур, аппараты и реабилитацию после процедур. В чате отвечает по уходу между визитами.',
-    reviews: ['Овал собрался к третьему сеансу, без ощущения «сделанного лица».'],
+    education: 'Morpheus8, Ultherapy, инъекции лица.',
+    about: 'Контур, аппараты и уход между визитами.',
+    reviews: ['Овал собрался к третьему сеансу — без «сделанного» лица.'],
   ),
   Doctor(
     slug: 'thorne',
@@ -347,9 +347,9 @@ const doctors = <Doctor>[
     role: 'Холистическое здоровье',
     exp: '15+ лет',
     image: 'thorne',
-    education: 'MD, нутрициология и протоколы долголетия.',
-    about: 'Собирает инфузии и добавки после короткого разбора сна, нагрузки и анализов.',
-    reviews: ['Курс Beauty & Glow изменил плотность кожи, хотя на лице ничего не кололи.'],
+    education: 'MD · нутрициология · долголетие.',
+    about: 'Инфузии и добавки после разбора сна и анализов.',
+    reviews: ['Beauty & Glow дал плотность кожи без инъекций.'],
   ),
   Doctor(
     slug: 'julian',
@@ -357,9 +357,9 @@ const doctors = <Doctor>[
     role: 'Инфузии и нутрициология',
     exp: '10+ лет',
     image: 'julian',
-    education: 'Протоколы NAD+ и архитектура сна.',
-    about: 'Объясняет, кому инфузия действительно нужна, и не ставит капельницу «для галочки».',
-    reviews: ['После курса NAD+ утро стало собранным, без скачка от кофе.'],
+    education: 'NAD+ и архитектура сна.',
+    about: 'Подбирает инфузии по задаче, без лишних капельниц.',
+    reviews: ['После NAD+ утро стало собранным.'],
   ),
 ];
 
@@ -415,17 +415,87 @@ const cases = <ClinicCase>[
 ];
 
 class Device {
-  const Device({required this.title, required this.meta, required this.price, required this.text});
+  const Device({
+    required this.title,
+    required this.meta,
+    required this.price,
+    required this.text,
+    this.badge = '',
+    this.tag = '',
+    this.zone = 'Лицо / шея',
+    this.image = 'science',
+    this.indications = const [],
+    this.benefits = const [],
+  });
   final String title;
   final String meta;
   final String price;
   final String text;
+  final String badge;
+  final String tag;
+  final String zone;
+  final String image;
+  final List<String> indications;
+  final List<String> benefits;
 }
 
 const devices = <Device>[
-  Device(title: 'Morpheus8', meta: '90 мин', price: '42 000 ₽', text: 'Фракционная игольчатая RF-терапия для плотности кожи и овала.'),
-  Device(title: 'Ultherapy®', meta: '90 мин', price: '85 000 ₽', text: 'Лифтинг на уровне SMAS с визуализацией глубины.'),
-  Device(title: 'Lumecca IPL', meta: '40 мин', price: '18 500 ₽', text: 'Фотоомоложение пигмента и сосудов за один-два сеанса.'),
+  Device(
+    title: 'Ultherapy®',
+    meta: '90 мин',
+    price: '85 000 ₽',
+    badge: 'TOP 2026',
+    tag: 'Face Lift',
+    image: 'after',
+    text: 'SMAS-лифтинг с визуализацией. Без операции.',
+    indications: ['Снижение овала', 'Дряблость', 'Морщины шеи'],
+    benefits: ['Лифтинг на уровне SMAS', 'Короткий период восстановления', 'Эффект до 2–3 лет'],
+  ),
+  Device(
+    title: 'Morpheus8',
+    meta: '60 мин',
+    price: '42 000 ₽',
+    badge: 'Выбор Голливуда',
+    tag: 'Skin Tightening',
+    image: 'rf',
+    text: 'Игольчатый RF для плотности кожи и овала.',
+    indications: ['Дряблость', 'Потеря овала', 'Неровный рельеф', 'Постакне'],
+    benefits: ['Стимуляция коллагена', 'Реабилитация 2–3 дня', 'Лицо и шея'],
+  ),
+  Device(
+    title: 'Lumecca IPL',
+    meta: '45 мин',
+    price: '18 500 ₽',
+    badge: 'CULT рекомендует',
+    tag: 'Photo-rejuvenation',
+    image: 'tone',
+    text: 'Фотоомоложение пигмента и сосудов за 1–2 сеанса.',
+    indications: ['Пигмент', 'Сосуды', 'Нервный тон'],
+    benefits: ['Быстрый результат', 'Мягкая реабилитация', 'Ровный тон'],
+  ),
+];
+
+class Infusion {
+  const Infusion({
+    required this.title,
+    required this.price,
+    required this.duration,
+    required this.blurb,
+    required this.image,
+    required this.chip,
+  });
+  final String title;
+  final String price;
+  final String duration;
+  final String blurb;
+  final String image;
+  final String chip;
+}
+
+const infusions = <Infusion>[
+  Infusion(title: 'NAD+ Energy', price: '15 000 ₽', duration: '60 мин', blurb: 'Клеточная энергия и ясность.', image: 'nad', chip: 'Energy'),
+  Infusion(title: 'Immunity Boost', price: '12 000 ₽', duration: '45 мин', blurb: 'Защита в период стресса.', image: 'iv', chip: 'Detox'),
+  Infusion(title: 'Beauty & Glow', price: '18 000 ₽', duration: '75 мин', blurb: 'Сияние кожи изнутри.', image: 'glow', chip: 'Beauty'),
 ];
 
 class PastVisit {
@@ -481,9 +551,9 @@ class Contact {
 }
 
 const contacts = <Contact>[
-  Contact(id: 'admin', name: 'Администратор', role: 'Ресепшен', seed: 'Здравствуйте. Помогу с записью, трансфером и сертификатом.'),
+  Contact(id: 'admin', name: 'Администратор', role: 'Расписание и логистика', seed: 'Здравствуйте. Помогу с записью, трансфером и сертификатом.'),
   Contact(id: 'bot', name: 'Бот клиники', role: 'ИИ-ассистент, 24/7', seed: 'Я ассистент CULT. Спросите про услуги, часы или запись.'),
-  Contact(id: 'specialist', name: 'Специалист', role: 'Чат с доктором', seed: 'Здравствуйте. Я на связи по уходу после процедур.'),
+  Contact(id: 'specialist', name: 'Специалист', role: 'Клиническая консультация', seed: 'Здравствуйте. Я на связи по уходу после процедур.'),
 ];
 
 const loyaltyRules = [

@@ -5,6 +5,7 @@ import '../theme.dart';
 import '../widgets.dart';
 import 'auth_page.dart';
 import 'gender_page.dart';
+import 'info.dart';
 import 'shop.dart';
 import 'talk.dart';
 
@@ -122,45 +123,29 @@ class CabinetPage extends StatelessWidget {
         const Text('ОБЗОР АККАУНТА', style: TextStyle(letterSpacing: 1.4, fontSize: 12, fontWeight: FontWeight.w700)),
         const SizedBox(height: 10),
         _AccountRow(
-          icon: Icons.wc_outlined,
-          title: 'Профиль услуг',
-          note: store.gender?.servicesTitle ?? 'Не выбран',
-          onTap: () => pushPage(context, const GenderPage()),
-        ),
-        _AccountRow(
-          icon: Icons.calendar_month_outlined,
+          icon: Icons.calendar_today_outlined,
           title: 'Мои записи',
           note: next == null ? 'Предстоящих нет' : 'След: ${formatVisitDate(next.date)}, ${next.time}',
           onTap: () => pushPage(context, const VisitsPage()),
         ),
-        _AccountRow(
-          icon: Icons.history,
-          title: 'История визитов',
-          note: 'Чеки и прошлые визиты',
-          onTap: () => pushPage(context, const VisitsPage()),
-        ),
-        _AccountRow(icon: Icons.biotech_outlined, title: 'Мои анализы', note: 'Назначен · сдан · готов', onTap: () => pushPage(context, const AnalysesPage())),
-        _AccountRow(icon: Icons.medical_services_outlined, title: 'Аптечка', note: 'Рекомендации врача', onTap: () => pushPage(context, const PharmacyPage())),
-        _AccountRow(icon: Icons.receipt_long_outlined, title: 'Мои заказы', note: '${store.orders.length}', onTap: () => pushPage(context, const OrdersPage())),
-        _AccountRow(icon: Icons.card_giftcard_outlined, title: 'Сертификаты', note: 'Номинал и дизайн', onTap: () => pushPage(context, const CertificatesPage())),
-        _AccountRow(icon: Icons.favorite_border, title: 'Избранное', note: '${store.favorites.length}', onTap: () => pushPage(context, const FavoritesPage())),
-        _AccountRow(icon: Icons.workspace_premium_outlined, title: 'Бонусы', note: rub(store.balance), onTap: () => pushPage(context, const LoyaltyPage())),
-        _AccountRow(
-          icon: Icons.chat_bubble_outline,
-          title: 'Чат с врачом',
-          note: 'Клинические вопросы',
-          onTap: () => pushPage(context, const ChatThreadPage(contactId: 'specialist')),
-        ),
-        _AccountRow(icon: Icons.notifications_none, title: 'Уведомления', note: 'Визиты и анализы', onTap: () => pushPage(context, const SettingsPage())),
-        if (store.signedIn)
-          _AccountRow(
-            icon: Icons.logout,
-            title: 'Выйти',
-            note: _phoneLabel(store.profilePhone),
-            onTap: () async {
-              await store.signOut();
-            },
+        _AccountRow(icon: Icons.history, title: 'История визитов', note: '', onTap: () => pushPage(context, const VisitsPage())),
+        _AccountRow(icon: Icons.biotech_outlined, title: 'Мои анализы', note: '', onTap: () => pushPage(context, const AnalysesPage())),
+        _AccountRow(icon: Icons.inventory_2_outlined, title: 'Мои пакеты услуг', note: '', onTap: () => pushPage(context, const FavoritesPage())),
+        _AccountRow(icon: Icons.directions_car_outlined, title: 'Заказ трансфера', note: '', onTap: () => pushPage(context, const TransferPage())),
+        _AccountRow(icon: Icons.card_giftcard_outlined, title: 'Купить сертификат', note: '', onTap: () => pushPage(context, const CertificatesPage())),
+        _AccountRow(icon: Icons.medical_information_outlined, title: 'Рекомендации врача', note: '3 новых рекомендации', onTap: () => pushPage(context, const PharmacyPage())),
+        _AccountRow(icon: Icons.rule_outlined, title: 'Правила лояльности', note: '', onTap: () => pushPage(context, const LoyaltyPage())),
+        _AccountRow(icon: Icons.wc_outlined, title: 'Профиль услуг', note: store.gender?.servicesTitle ?? 'Не выбран', onTap: () => pushPage(context, const GenderPage())),
+        if (store.signedIn) ...[
+          const SizedBox(height: 16),
+          Center(
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(foregroundColor: Cult.error, side: BorderSide(color: Cult.error.withValues(alpha: 0.35))),
+              onPressed: () => store.signOut(),
+              child: const Text('ВЫЙТИ'),
+            ),
           ),
+        ],
       ],
     );
   }
@@ -208,8 +193,10 @@ class _AccountRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 2),
-                      Text(note, style: const TextStyle(color: Cult.muted, fontSize: 13)),
+                      if (note.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(note, style: const TextStyle(color: Cult.muted, fontSize: 13)),
+                      ],
                     ],
                   ),
                 ),
