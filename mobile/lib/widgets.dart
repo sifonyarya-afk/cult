@@ -212,9 +212,7 @@ Future<void> openExternal(String url, {BuildContext? context}) async {
       await canLaunchUrl(uri) &&
       await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!ok && context != null && context.mounted) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Не удалось открыть ссылку')));
+    showCultSnack(context, 'Не удалось открыть ссылку');
   }
 }
 

@@ -46,7 +46,10 @@ class _ShopPageState extends State<ShopPage>
                   ActionChip(
                     avatar: const Icon(Icons.smart_toy_outlined, size: 18),
                     label: const Text('ИИ Помощник'),
-                    onPressed: () => _openAiPicker(context),
+                    onPressed: () {
+                      cultTapFeedback();
+                      _openAiPicker(context);
+                    },
                   ),
                 ],
               ),
@@ -454,7 +457,11 @@ class _CartPageState extends State<CartPage> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () => store.setQty(item.id, item.qty - 1),
+                        tooltip: 'Меньше',
+                        onPressed: () {
+                          cultTapFeedback();
+                          store.setQty(item.id, item.qty - 1);
+                        },
                         icon: const Icon(Icons.remove_circle_outline),
                         constraints: const BoxConstraints(
                           minWidth: 44,
@@ -466,7 +473,11 @@ class _CartPageState extends State<CartPage> {
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       IconButton(
-                        onPressed: () => store.setQty(item.id, item.qty + 1),
+                        tooltip: 'Больше',
+                        onPressed: () {
+                          cultTapFeedback();
+                          store.setQty(item.id, item.qty + 1);
+                        },
                         icon: const Icon(Icons.add_circle_outline),
                         constraints: const BoxConstraints(
                           minWidth: 44,

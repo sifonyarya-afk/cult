@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../data.dart';
 import '../theme.dart';
@@ -185,10 +186,13 @@ class _PricesPageState extends State<PricesPage> {
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                       ),
-                      onTap: () => pushPage(
-                        context,
-                        BookingPage(initialService: row.name),
-                      ),
+                      onTap: () {
+                        cultTapFeedback();
+                        pushPage(
+                          context,
+                          BookingPage(initialService: row.name),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -429,17 +433,11 @@ class ArticlePage extends StatelessWidget {
               context: context,
             ),
           ),
-          const SizedBox(height: 8),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Cult.ink,
-              side: const BorderSide(color: Cult.ink),
-              minimumSize: const Size(double.infinity, 48),
-            ),
-            onPressed: () => pushPage(context, const BookingPage()),
-            child: const Text('Записаться на консультацию'),
-          ),
         ],
+      ),
+      bottomNavigationBar: CultBookBar(
+        label: 'Записаться на консультацию',
+        onPressed: () => pushPage(context, const BookingPage()),
       ),
     );
   }
@@ -532,13 +530,11 @@ class CasePage extends StatelessWidget {
             item.text,
             style: const TextStyle(height: 1.4, color: Cult.muted),
           ),
-          const SizedBox(height: 20),
-          CultButton(
-            label: 'Записаться',
-            onPressed: () =>
-                pushPage(context, BookingPage(initialService: item.procedure)),
-          ),
         ],
+      ),
+      bottomNavigationBar: CultBookBar(
+        onPressed: () =>
+            pushPage(context, BookingPage(initialService: item.procedure)),
       ),
     );
   }
@@ -649,7 +645,7 @@ class _TransferPageState extends State<TransferPage> {
                             'admin',
                             'Трансфер: забрать с «${_from.text.trim()}» → Черноморская, 6.',
                           );
-                          cultTapFeedback();
+                          HapticFeedback.mediumImpact();
                           setState(() {
                             _error = '';
                             _done = true;

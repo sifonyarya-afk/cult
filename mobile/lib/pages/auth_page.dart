@@ -119,6 +119,7 @@ class _AuthPageState extends State<AuthPage> {
                 onPressed: _busy
                     ? null
                     : () {
+                        cultTapFeedback();
                         if (widget.onDone != null) {
                           widget.onDone!();
                         } else if (Navigator.of(context).canPop()) {

@@ -114,7 +114,8 @@ String rub(int value) {
 }
 
 String formatVisitDate(String iso) {
-  final parts = iso.split('-');
+  final clean = iso.trim().split('T').first.split(' ').first;
+  final parts = clean.split('-');
   if (parts.length != 3) return iso;
   const months = [
     'января',
@@ -131,7 +132,7 @@ String formatVisitDate(String iso) {
     'декабря',
   ];
   final month = int.tryParse(parts[1]);
-  final day = int.tryParse(parts[2]);
+  final day = int.tryParse(parts[2].split('.').first);
   if (month == null || day == null || month < 1 || month > 12) return iso;
   return '$day ${months[month - 1]}';
 }

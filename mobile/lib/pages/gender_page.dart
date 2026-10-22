@@ -90,29 +90,32 @@ class _GenderPageState extends State<GenderPage> {
                       ),
                     ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _GenderCircle(
-                        label: 'Мужчина',
-                        icon: Icons.male,
-                        selected: _selected == ClientGender.man,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setState(() => _selected = ClientGender.man);
-                        },
-                      ),
-                      const SizedBox(width: 36),
-                      _GenderCircle(
-                        label: 'Женщина',
-                        icon: Icons.female,
-                        selected: _selected == ClientGender.woman,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setState(() => _selected = ClientGender.woman);
-                        },
-                      ),
-                    ],
+                  Semantics(
+                    label: 'Выбор профиля услуг',
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _GenderCircle(
+                          label: 'Мужчина',
+                          icon: Icons.male,
+                          selected: _selected == ClientGender.man,
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _selected = ClientGender.man);
+                          },
+                        ),
+                        const SizedBox(width: 36),
+                        _GenderCircle(
+                          label: 'Женщина',
+                          icon: Icons.female,
+                          selected: _selected == ClientGender.woman,
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _selected = ClientGender.woman);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 36),
                   SizedBox(

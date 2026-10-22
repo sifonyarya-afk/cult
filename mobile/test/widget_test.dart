@@ -3,6 +3,7 @@ import 'package:cult_clinic/main.dart';
 import 'package:cult_clinic/pages/browse.dart';
 import 'package:cult_clinic/pages/talk.dart';
 import 'package:cult_clinic/store.dart';
+import 'package:cult_clinic/theme.dart';
 import 'package:cult_clinic/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -194,5 +195,28 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('ЗАПИСАТЬСЯ'), findsOneWidget);
     expect(find.byType(CultBookBar), findsOneWidget);
+  });
+
+  test('Бот отвечает про сертификат и трансфер', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Нужен сертификат');
+    expect(
+      store.threads['bot']!.last.text.toLowerCase(),
+      contains('сертификат'),
+    );
+    store.sendMessage('bot', 'Нужен трансфер');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('трансфер'));
+    store.sendMessage('admin', 'такси к отелю');
+    expect(
+      store.threads['admin']!.last.text.toLowerCase(),
+      contains('трансфер'),
+    );
+  });
+
+  test('formatVisitDate понимает дату со временем', () {
+    expect(formatVisitDate('2026-04-12T10:30:00'), '12 апреля');
+    expect(formatVisitDate('2026-04-12 10:30:00'), '12 апреля');
   });
 }

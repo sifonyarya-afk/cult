@@ -18,9 +18,10 @@ class HomePage extends StatelessWidget {
     final store = ClinicScope.of(context);
     final next = store.upcoming.isEmpty ? null : store.upcoming.first;
     final first = store.displayName.trim().split(RegExp(r'\s+')).first;
+    final part = _dayPartGreeting();
     final hello = first.isEmpty || first == 'Гость'
-        ? 'Доброго дня!'
-        : '$first, доброго дня!';
+        ? part
+        : '$first, ${part[0].toLowerCase()}${part.substring(1)}';
     return RefreshIndicator(
       color: Cult.primary,
       onRefresh: () => store.syncClinic(),
@@ -326,6 +327,14 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+}
+
+String _dayPartGreeting() {
+  final hour = DateTime.now().hour;
+  if (hour < 5) return 'Доброй ночи!';
+  if (hour < 12) return 'Доброе утро!';
+  if (hour < 18) return 'Добрый день!';
+  return 'Добрый вечер!';
 }
 
 class _Quick extends StatelessWidget {

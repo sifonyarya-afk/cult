@@ -621,7 +621,7 @@ class SciencePage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
-          CultImage('science', aspect: 16 / 9, radius: 18),
+          const CultImage('science', aspect: 16 / 9, radius: 18),
           const SizedBox(height: 16),
           const Text(
             'АКТУАЛЬНОЕ',

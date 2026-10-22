@@ -45,12 +45,15 @@ class CabinetPage extends StatelessWidget {
                   shape: const CircleBorder(),
                   child: InkWell(
                     customBorder: const CircleBorder(),
-                    onTap: () => pushPage(
-                      context,
-                      store.signedIn
-                          ? const SettingsPage()
-                          : const AuthPage(allowSkip: false),
-                    ),
+                    onTap: () {
+                      cultTapFeedback();
+                      pushPage(
+                        context,
+                        store.signedIn
+                            ? const SettingsPage()
+                            : const AuthPage(allowSkip: false),
+                      );
+                    },
                     child: const SizedBox(
                       width: 34,
                       height: 34,
@@ -197,14 +200,7 @@ class CabinetPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 22),
-        const Text(
-          'ОБЗОР АККАУНТА',
-          style: TextStyle(
-            letterSpacing: 1.4,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        const CultSectionLabel('Обзор аккаунта'),
         const SizedBox(height: 10),
         _AccountRow(
           icon: Icons.calendar_today_outlined,
@@ -217,7 +213,7 @@ class CabinetPage extends StatelessWidget {
         _AccountRow(
           icon: Icons.history,
           title: 'История визитов',
-          note: '',
+          note: store.past.isEmpty ? 'Пусто' : '${store.past.length} в архиве',
           onTap: () => pushPage(context, const VisitsPage()),
         ),
         _AccountRow(
@@ -746,29 +742,40 @@ class OrdersPage extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: CultCard(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(order.title, style: cultHeadline(18)),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${order.at} · ${order.pay}',
-                                  style: const TextStyle(
-                                    color: Cult.muted,
-                                    fontSize: 13,
+                      child: InkWell(
+                        onTap: () {
+                          cultTapFeedback();
+                          showCultSnack(
+                            context,
+                            'Заказ от ${order.at} · ${order.pay}',
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(order.title, style: cultHeadline(18)),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${order.at} · ${order.pay}',
+                                    style: const TextStyle(
+                                      color: Cult.muted,
+                                      fontSize: 13,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          Text(
-                            rub(order.total),
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ],
+                            Text(
+                              rub(order.total),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -843,6 +850,27 @@ class FavoritesPage extends StatelessWidget {
                                       ),
                                     ),
                                   ],
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'В корзину',
+                                onPressed: () {
+                                  cultTapFeedback();
+                                  store.addToCart(
+                                    product.id,
+                                    product.name,
+                                    product.price,
+                                  );
+                                  showCultSnack(
+                                    context,
+                                    '${product.name} в корзине',
+                                    actionLabel: 'Оформить',
+                                    onAction: () =>
+                                        pushPage(context, const CartPage()),
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.add_shopping_cart_outlined,
                                 ),
                               ),
                               IconButton(

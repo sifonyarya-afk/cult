@@ -35,8 +35,10 @@ class ChatPage extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 10),
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
-              onTap: () =>
-                  pushPage(context, ChatThreadPage(contactId: contact.id)),
+              onTap: () {
+                cultTapFeedback();
+                pushPage(context, ChatThreadPage(contactId: contact.id));
+              },
               child: CultCard(
                 child: Row(
                   children: [
@@ -168,6 +170,8 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Часы работы',
     'Как добраться',
     'Бонусы',
+    'Сертификат',
+    'Трансфер',
   ];
 
   @override
@@ -351,29 +355,39 @@ class _Bubble extends StatelessWidget {
   Widget build(BuildContext context) {
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        constraints: const BoxConstraints(maxWidth: 290),
-        decoration: BoxDecoration(
-          color: mine ? Cult.ink : Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(18),
-            topRight: const Radius.circular(18),
-            bottomLeft: Radius.circular(mine ? 18 : 4),
-            bottomRight: Radius.circular(mine ? 4 : 18),
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0F000000),
-              blurRadius: 10,
-              offset: Offset(0, 3),
+      child: GestureDetector(
+        onLongPress: () {
+          Clipboard.setData(ClipboardData(text: text));
+          cultTapFeedback();
+          showCultSnack(context, 'Сообщение скопировано');
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          constraints: const BoxConstraints(maxWidth: 290),
+          decoration: BoxDecoration(
+            color: mine ? Cult.ink : Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(18),
+              topRight: const Radius.circular(18),
+              bottomLeft: Radius.circular(mine ? 18 : 4),
+              bottomRight: Radius.circular(mine ? 4 : 18),
             ),
-          ],
-        ),
-        child: Text(
-          text,
-          style: TextStyle(color: mine ? Colors.white : Cult.ink, height: 1.35),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0F000000),
+                blurRadius: 10,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: mine ? Colors.white : Cult.ink,
+              height: 1.35,
+            ),
+          ),
         ),
       ),
     );

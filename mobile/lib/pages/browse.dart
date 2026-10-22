@@ -124,7 +124,10 @@ class _ServicesPageState extends State<ServicesPage> {
                       child: ChoiceChip(
                         label: const Center(child: Text('Женские')),
                         selected: gender == ClientGender.woman,
-                        onSelected: (_) => store.setGender(ClientGender.woman),
+                        onSelected: (_) {
+                          cultTapFeedback();
+                          store.setGender(ClientGender.woman);
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -132,7 +135,10 @@ class _ServicesPageState extends State<ServicesPage> {
                       child: ChoiceChip(
                         label: const Center(child: Text('Мужские')),
                         selected: gender == ClientGender.man,
-                        onSelected: (_) => store.setGender(ClientGender.man),
+                        onSelected: (_) {
+                          cultTapFeedback();
+                          store.setGender(ClientGender.man);
+                        },
                       ),
                     ),
                   ],
@@ -179,31 +185,40 @@ class _ServicesPageState extends State<ServicesPage> {
                 children: [
                   ActionChip(
                     label: const Text('Аппаратная'),
-                    onPressed: () => pushPage(
-                      context,
-                      const CategoryHubPage(slug: 'hardware'),
-                    ),
+                    onPressed: () {
+                      cultTapFeedback();
+                      pushPage(
+                        context,
+                        const CategoryHubPage(slug: 'hardware'),
+                      );
+                    },
                   ),
                   ActionChip(
                     label: const Text('Инъекции'),
-                    onPressed: () => pushPage(
-                      context,
-                      const CategoryHubPage(slug: 'injections'),
-                    ),
+                    onPressed: () {
+                      cultTapFeedback();
+                      pushPage(
+                        context,
+                        const CategoryHubPage(slug: 'injections'),
+                      );
+                    },
                   ),
                   ActionChip(
                     label: const Text('Инфузии'),
-                    onPressed: () => pushPage(
-                      context,
-                      const CategoryHubPage(slug: 'infusions'),
-                    ),
+                    onPressed: () {
+                      cultTapFeedback();
+                      pushPage(
+                        context,
+                        const CategoryHubPage(slug: 'infusions'),
+                      );
+                    },
                   ),
                   ActionChip(
                     label: const Text('Наука'),
-                    onPressed: () => pushPage(
-                      context,
-                      const CategoryHubPage(slug: 'science'),
-                    ),
+                    onPressed: () {
+                      cultTapFeedback();
+                      pushPage(context, const CategoryHubPage(slug: 'science'));
+                    },
                   ),
                 ],
               ),
@@ -222,8 +237,10 @@ class _ServicesPageState extends State<ServicesPage> {
               if (liveFiltered.isNotEmpty)
                 for (final service in liveFiltered) ...[
                   InkWell(
-                    onTap: () =>
-                        pushPage(context, LiveServicePage(service: service)),
+                    onTap: () {
+                      cultTapFeedback();
+                      pushPage(context, LiveServicePage(service: service));
+                    },
                     child: CultCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,8 +298,10 @@ class _ServicesPageState extends State<ServicesPage> {
               else
                 for (final service in localFiltered) ...[
                   InkWell(
-                    onTap: () =>
-                        pushPage(context, ServicePage(service: service)),
+                    onTap: () {
+                      cultTapFeedback();
+                      pushPage(context, ServicePage(service: service));
+                    },
                     child: CultCard(
                       padding: EdgeInsets.zero,
                       child: Column(
@@ -528,8 +547,10 @@ class _DoctorsPageState extends State<DoctorsPage> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: InkWell(
-                    onTap: () =>
-                        pushPage(context, LiveDoctorPage(doctor: doctor)),
+                    onTap: () {
+                      cultTapFeedback();
+                      pushPage(context, LiveDoctorPage(doctor: doctor));
+                    },
                     child: CultCard(
                       child: Row(
                         children: [
@@ -572,7 +593,10 @@ class _DoctorsPageState extends State<DoctorsPage> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: InkWell(
-                    onTap: () => pushPage(context, DoctorPage(doctor: doctor)),
+                    onTap: () {
+                      cultTapFeedback();
+                      pushPage(context, DoctorPage(doctor: doctor));
+                    },
                     child: CultCard(
                       child: Row(
                         children: [
@@ -679,13 +703,11 @@ class LiveDoctorPage extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: Cult.muted, height: 1.4),
           ),
-          const SizedBox(height: 20),
-          CultButton(
-            label: 'Записаться',
-            onPressed: () =>
-                pushPage(context, BookingPage(initialDoctor: doctor.name)),
-          ),
         ],
+      ),
+      bottomNavigationBar: CultBookBar(
+        onPressed: () =>
+            pushPage(context, BookingPage(initialDoctor: doctor.name)),
       ),
     );
   }
@@ -827,13 +849,11 @@ class DoctorPage extends StatelessWidget {
                 child: Text('«$review»', style: const TextStyle(height: 1.35)),
               ),
             ),
-          const SizedBox(height: 20),
-          CultButton(
-            label: 'Записаться',
-            onPressed: () =>
-                pushPage(context, BookingPage(initialDoctor: doctor.name)),
-          ),
         ],
+      ),
+      bottomNavigationBar: CultBookBar(
+        onPressed: () =>
+            pushPage(context, BookingPage(initialDoctor: doctor.name)),
       ),
     );
   }

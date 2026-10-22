@@ -268,10 +268,21 @@ class _ShellState extends State<Shell> {
           appBar: AppBar(
             leading: IconButton(
               tooltip: 'Меню',
-              onPressed: () => _menu(context),
+              onPressed: () {
+                cultTapFeedback();
+                _menu(context);
+              },
               icon: const Icon(Icons.menu),
             ),
-            title: const Text('CULT'),
+            title: GestureDetector(
+              onTap: () {
+                cultTapFeedback();
+                FocusManager.instance.primaryFocus?.unfocus();
+                Navigator.of(context).popUntil((route) => route.isFirst);
+                setState(() => _index = 0);
+              },
+              child: const Text('CULT'),
+            ),
             actions: [
               if (store.syncing)
                 const Padding(
@@ -287,13 +298,19 @@ class _ShellState extends State<Shell> {
                 ),
               IconButton(
                 tooltip: 'Настройки',
-                onPressed: () => pushPage(context, const SettingsPage()),
-                icon: const Icon(Icons.notifications_none),
+                onPressed: () {
+                  cultTapFeedback();
+                  pushPage(context, const SettingsPage());
+                },
+                icon: const Icon(Icons.settings_outlined),
               ),
               if (_index == 2 || store.cartCount > 0)
                 IconButton(
                   tooltip: 'Корзина',
-                  onPressed: () => pushPage(context, const CartPage()),
+                  onPressed: () {
+                    cultTapFeedback();
+                    pushPage(context, const CartPage());
+                  },
                   icon: Badge(
                     isLabelVisible: store.cartCount > 0,
                     label: Text('${store.cartCount}'),
@@ -321,7 +338,10 @@ class _ShellState extends State<Shell> {
                     backgroundColor: Cult.ink,
                     foregroundColor: Colors.white,
                     tooltip: 'Запись',
-                    onPressed: () => pushPage(context, const BookingPage()),
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      pushPage(context, const BookingPage());
+                    },
                     child: const Icon(Icons.add),
                   )
                 : const SizedBox.shrink(key: ValueKey('fab-none')),
@@ -379,8 +399,19 @@ class _ShellState extends State<Shell> {
           shrinkWrap: true,
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           children: [
+            const SizedBox(height: 4),
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Cult.line,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
               child: Text('Меню', style: cultHeadline(28)),
             ),
             const _MenuLabel('Клиника'),
