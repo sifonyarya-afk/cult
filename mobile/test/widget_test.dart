@@ -112,4 +112,22 @@ void main() {
     expect(store.orders.first.title, 'Serum CULT');
     expect(store.orders.first.total, 9000);
   });
+
+  testWidgets('Поиск услуг очищается крестиком', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    await store.setGender(ClientGender.woman);
+    await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Услуги'));
+    await tester.pumpAndSettle();
+    expect(find.text('Поиск процедур...'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, 'морфеус');
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Очистить'), findsOneWidget);
+    await tester.tap(find.byTooltip('Очистить'));
+    await tester.pumpAndSettle();
+    expect(find.text('морфеус'), findsNothing);
+  });
 }

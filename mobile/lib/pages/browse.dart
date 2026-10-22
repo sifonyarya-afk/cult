@@ -139,13 +139,10 @@ class _ServicesPageState extends State<ServicesPage> {
                 ),
               ],
               const SizedBox(height: 16),
-              TextField(
+              CultSearchField(
                 controller: _query,
-                decoration: const InputDecoration(
-                  hintText: 'Поиск процедур...',
-                  prefixIcon: Icon(Icons.search),
-                ),
-                onChanged: (_) => setState(() {}),
+                hint: 'Поиск процедур...',
+                onChanged: () => setState(() {}),
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -167,7 +164,10 @@ class _ServicesPageState extends State<ServicesPage> {
                       ),
                       backgroundColor: const Color(0xFFF3EFEA),
                       side: BorderSide.none,
-                      onSelected: (_) => setState(() => _chip = chip),
+                      onSelected: (_) {
+                        cultTapFeedback();
+                        setState(() => _chip = chip);
+                      },
                     );
                   },
                 ),
@@ -519,13 +519,10 @@ class _DoctorsPageState extends State<DoctorsPage> {
               style: TextStyle(color: Cult.muted),
             ),
             const SizedBox(height: 14),
-            TextField(
+            CultSearchField(
               controller: _query,
-              decoration: const InputDecoration(
-                hintText: 'Имя или специализация',
-                prefixIcon: Icon(Icons.search),
-              ),
-              onChanged: (_) => setState(() {}),
+              hint: 'Имя или специализация',
+              onChanged: () => setState(() {}),
             ),
             const SizedBox(height: 16),
             if (store.liveStaff.isEmpty && store.yclientsReady)

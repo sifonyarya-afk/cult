@@ -106,90 +106,94 @@ class _PricesPageState extends State<PricesPage> {
         : ' Сейчас: ${store.gender!.servicesTitle.toLowerCase()}.';
     return Scaffold(
       appBar: AppBar(title: const Text('Прайс')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(
-            store.yclientsReady
-                ? 'Цены филиала CULT в Сочи.$genderNote Поиск ищет и по категориям.'
-                : 'Точная сумма подтверждается на консультации.$genderNote',
-          ),
-          if (store.liveError.isNotEmpty)
-            CultErrorBanner(
-              message: store.liveError,
-              onRetry: store.refreshCatalog,
+      body: RefreshIndicator(
+        color: Cult.primary,
+        onRefresh: () => store.refreshCatalog(),
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text(
+              store.yclientsReady
+                  ? 'Цены филиала CULT в Сочи.$genderNote Поиск ищет и по категориям.'
+                  : 'Точная сумма подтверждается на консультации.$genderNote',
             ),
-          if (store.yclientsReady &&
-              store.liveServices.isEmpty &&
-              store.liveError.isEmpty)
-            const CultLoading(label: 'Загружаем прайс…'),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _query,
-            decoration: const InputDecoration(
-              hintText: 'Найти услугу',
-              prefixIcon: Icon(Icons.search),
+            if (store.liveError.isNotEmpty)
+              CultErrorBanner(
+                message: store.liveError,
+                onRetry: store.refreshCatalog,
+              ),
+            if (store.yclientsReady &&
+                store.liveServices.isEmpty &&
+                store.liveError.isEmpty)
+              const CultLoading(label: 'Загружаем прайс…'),
+            const SizedBox(height: 8),
+            CultSearchField(
+              controller: _query,
+              hint: 'Найти услугу',
+              onChanged: () => setState(() {}),
             ),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 40,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: chips.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final chip = chips[index];
-                return ChoiceChip(
-                  label: Text(chip),
-                  selected: _chip == chip,
-                  onSelected: (_) => setState(() => _chip = chip),
-                );
-              },
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 40,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: chips.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final chip = chips[index];
+                  return ChoiceChip(
+                    label: Text(chip),
+                    selected: _chip == chip,
+                    onSelected: (_) {
+                      cultTapFeedback();
+                      setState(() => _chip = chip);
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          if (rows.isEmpty)
-            CultEmpty(
-              title: 'Ничего не найдено',
-              note: 'Смените категорию или короче запрос.',
-              actionLabel: 'Сбросить',
-              onAction: () => setState(() {
-                _chip = 'Все';
-                _query.clear();
-              }),
-            )
-          else
-            for (final row in rows)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Material(
-                  color: Colors.transparent,
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    minVerticalPadding: 10,
-                    title: Text(row.name),
-                    subtitle: Text(
-                      '${row.group} · ${row.meta}',
-                      style: const TextStyle(color: Cult.muted),
-                    ),
-                    trailing: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 108),
-                      child: Text(
-                        row.price,
-                        textAlign: TextAlign.end,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+            const SizedBox(height: 12),
+            if (rows.isEmpty)
+              CultEmpty(
+                title: 'Ничего не найдено',
+                note: 'Смените категорию или короче запрос.',
+                actionLabel: 'Сбросить',
+                onAction: () => setState(() {
+                  _chip = 'Все';
+                  _query.clear();
+                }),
+              )
+            else
+              for (final row in rows)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      minVerticalPadding: 10,
+                      title: Text(row.name),
+                      subtitle: Text(
+                        '${row.group} · ${row.meta}',
+                        style: const TextStyle(color: Cult.muted),
                       ),
-                    ),
-                    onTap: () => pushPage(
-                      context,
-                      BookingPage(initialService: row.name),
+                      trailing: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 108),
+                        child: Text(
+                          row.price,
+                          textAlign: TextAlign.end,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      onTap: () => pushPage(
+                        context,
+                        BookingPage(initialService: row.name),
+                      ),
                     ),
                   ),
                 ),
-              ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -218,11 +222,23 @@ class AboutPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _AboutRow(Icons.place_outlined, 'Сочи, Черноморская, 6'),
+                _AboutRow(
+                  Icons.place_outlined,
+                  'Сочи, Черноморская, 6',
+                  onTap: () => openExternal(
+                    'https://maps.google.com/?q=${Uri.encodeComponent('Сочи, Черноморская, 6')}',
+                    context: context,
+                  ),
+                ),
                 const Divider(height: 20),
-                _AboutRow(Icons.schedule, 'Ежедневно 9:00–21:00'),
+                const _AboutRow(Icons.schedule, 'Ежедневно 9:00–21:00'),
                 const Divider(height: 20),
-                _AboutRow(Icons.phone_outlined, '+7 495 000-00-07'),
+                _AboutRow(
+                  Icons.phone_outlined,
+                  '+7 495 000-00-07',
+                  onTap: () =>
+                      openExternal('tel:+74950000007', context: context),
+                ),
               ],
             ),
           ),
@@ -254,15 +270,18 @@ class AboutPage extends StatelessWidget {
             ),
             onPressed: () => openExternal(
               'https://www.youtube.com/results?search_query=CULT+Clinic',
+              context: context,
             ),
             child: const Text('CULT TV · YouTube'),
           ),
           TextButton(
-            onPressed: () => openExternal('https://t.me/cultclinic'),
+            onPressed: () =>
+                openExternal('https://t.me/cultclinic', context: context),
             child: const Text('Telegram'),
           ),
           TextButton(
-            onPressed: () => openExternal('https://wa.me/74950000007'),
+            onPressed: () =>
+                openExternal('https://wa.me/74950000007', context: context),
             child: const Text('WhatsApp'),
           ),
         ],
@@ -272,19 +291,30 @@ class AboutPage extends StatelessWidget {
 }
 
 class _AboutRow extends StatelessWidget {
-  const _AboutRow(this.icon, this.text);
+  const _AboutRow(this.icon, this.text, {this.onTap});
 
   final IconData icon;
   final String text;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final row = Row(
       children: [
         Icon(icon, color: Cult.primary, size: 22),
         const SizedBox(width: 12),
         Expanded(child: Text(text, style: const TextStyle(fontSize: 15))),
+        if (onTap != null)
+          const Icon(Icons.chevron_right, color: Cult.muted, size: 20),
       ],
+    );
+    if (onTap == null) return row;
+    return InkWell(
+      onTap: () {
+        cultTapFeedback();
+        onTap!();
+      },
+      child: row,
     );
   }
 }

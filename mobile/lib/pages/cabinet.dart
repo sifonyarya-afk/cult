@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../data.dart';
+import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import '../yclients.dart';
 import 'auth_page.dart';
 import 'gender_page.dart';
 import 'info.dart';
@@ -225,9 +227,19 @@ class CabinetPage extends StatelessWidget {
           onTap: () => pushPage(context, const AnalysesPage()),
         ),
         _AccountRow(
-          icon: Icons.inventory_2_outlined,
-          title: 'Мои пакеты услуг',
-          note: '',
+          icon: Icons.shopping_bag_outlined,
+          title: 'Мои заказы',
+          note: store.orders.isEmpty
+              ? 'Пока пусто'
+              : '${store.orders.length} заказ(ов)',
+          onTap: () => pushPage(context, const OrdersPage()),
+        ),
+        _AccountRow(
+          icon: Icons.favorite_border,
+          title: 'Избранное',
+          note: store.favorites.isEmpty
+              ? ''
+              : '${store.favorites.length} формул',
           onTap: () => pushPage(context, const FavoritesPage()),
         ),
         _AccountRow(
@@ -245,7 +257,7 @@ class CabinetPage extends StatelessWidget {
         _AccountRow(
           icon: Icons.medical_information_outlined,
           title: 'Рекомендации врача',
-          note: '3 новых рекомендации',
+          note: 'Аптека и уход',
           onTap: () => pushPage(context, const PharmacyPage()),
         ),
         _AccountRow(
@@ -279,11 +291,9 @@ class CabinetPage extends StatelessWidget {
 }
 
 String _phoneLabel(String raw) {
-  final digits = raw.replaceAll(RegExp(r'\D'), '');
-  if (digits.length == 11 && digits.startsWith('7')) {
-    return '+7 ${digits.substring(1, 4)} ${digits.substring(4, 7)}-${digits.substring(7, 9)}-${digits.substring(9)}';
-  }
-  return raw.isEmpty ? 'Телефон' : raw;
+  if (raw.trim().isEmpty) return 'Телефон';
+  final digits = normalizePhone(raw);
+  return digits.length >= 11 ? formatRuPhone(digits) : raw;
 }
 
 class _AccountRow extends StatelessWidget {
@@ -308,7 +318,10 @@ class _AccountRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
+          onTap: () {
+            cultTapFeedback();
+            onTap();
+          },
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
             child: Row(
@@ -456,17 +469,7 @@ class _VisitsPageState extends State<VisitsPage> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: () async {
-                                final message = await store.cancelVisit(
-                                  visit.id,
-                                );
-                                if (!context.mounted) return;
-                                if (message != null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(message)),
-                                  );
-                                }
-                              },
+                              onPressed: () => _confirmCancel(store, visit.id),
                               child: const Text(
                                 'Отменить',
                                 style: TextStyle(color: Cult.error),
@@ -489,9 +492,9 @@ class _VisitsPageState extends State<VisitsPage> {
               if (store.past.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text(
-                    'Истории визитов пока нет.',
-                    style: TextStyle(color: Cult.muted),
+                  child: CultEmpty(
+                    title: 'История пуста',
+                    note: 'После визитов здесь появятся прошлые процедуры.',
                   ),
                 )
               else
@@ -515,6 +518,16 @@ class _VisitsPageState extends State<VisitsPage> {
                               fontSize: 13,
                             ),
                           ),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () => pushPage(
+                                context,
+                                BookingPage(initialService: visit.service),
+                              ),
+                              child: const Text('Повторить запись'),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -524,6 +537,32 @@ class _VisitsPageState extends State<VisitsPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmCancel(ClinicStore store, String visitId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Отменить запись?'),
+        content: const Text(
+          'Слот освободится в филиале. При необходимости можно записаться снова.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Оставить'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Отменить', style: TextStyle(color: Cult.error)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final message = await store.cancelVisit(visitId);
+    if (!mounted) return;
+    showCultSnack(context, message ?? 'Запись отменена');
   }
 }
 

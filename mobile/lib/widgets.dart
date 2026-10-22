@@ -335,6 +335,44 @@ void pushPage(BuildContext context, Widget page) {
   );
 }
 
+class CultSearchField extends StatelessWidget {
+  const CultSearchField({
+    super.key,
+    required this.controller,
+    required this.hint,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final String hint;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasText = controller.text.isNotEmpty;
+    return TextField(
+      controller: controller,
+      textInputAction: TextInputAction.search,
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: const Icon(Icons.search),
+        suffixIcon: hasText
+            ? IconButton(
+                tooltip: 'Очистить',
+                onPressed: () {
+                  controller.clear();
+                  cultTapFeedback();
+                  onChanged();
+                },
+                icon: const Icon(Icons.close),
+              )
+            : null,
+      ),
+      onChanged: (_) => onChanged(),
+    );
+  }
+}
+
 class CultEmpty extends StatelessWidget {
   const CultEmpty({
     super.key,
