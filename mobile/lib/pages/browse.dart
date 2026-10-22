@@ -349,51 +349,93 @@ class _ServicesPageState extends State<ServicesPage> {
                 )
               else
                 for (final service in localFiltered) ...[
-                  InkWell(
-                    onTap: () {
-                      cultTapFeedback();
-                      pushPage(context, ServicePage(service: service));
-                    },
-                    child: CultCard(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CultImage(service.image, aspect: 16 / 10, radius: 16),
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  service.category.toUpperCase(),
-                                  style: const TextStyle(
-                                    color: Cult.primary,
-                                    letterSpacing: 1.1,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(service.title, style: cultHeadline(22)),
-                                const SizedBox(height: 6),
-                                Text(
-                                  service.blurb,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: Cult.muted),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '${service.priceLabel} · ${service.duration}',
-                                  style: const TextStyle(
-                                    color: Cult.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
+                  Semantics(
+                    button: true,
+                    label: '${service.title}, ${service.priceLabel}',
+                    child: InkWell(
+                      onTap: () {
+                        cultTapFeedback();
+                        pushPage(context, ServicePage(service: service));
+                      },
+                      onLongPress: () {
+                        Clipboard.setData(
+                          ClipboardData(
+                            text:
+                                '${service.title} · ${service.priceLabel} · ${service.duration}',
                           ),
-                        ],
+                        );
+                        cultTapFeedback();
+                        showCultSnack(context, 'Услуга скопирована');
+                      },
+                      child: CultCard(
+                        padding: EdgeInsets.zero,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CultImage(
+                              service.image,
+                              aspect: 16 / 10,
+                              radius: 16,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    service.category.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Cult.primary,
+                                      letterSpacing: 1.1,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    service.title,
+                                    style: cultHeadline(22),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    service.blurb,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(color: Cult.muted),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          '${service.priceLabel} · ${service.duration}',
+                                          style: const TextStyle(
+                                            color: Cult.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        tooltip: 'Записаться',
+                                        onPressed: () {
+                                          cultTapFeedback();
+                                          pushPage(
+                                            context,
+                                            BookingPage(
+                                              initialService: service.title,
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(
+                                          Icons.event_available_outlined,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -802,10 +844,19 @@ class LiveDoctorPage extends StatelessWidget {
             child: _Avatar(url: doctor.avatar, name: doctor.name, size: 120),
           ),
           const SizedBox(height: 14),
-          Text(
-            doctor.name,
-            style: cultHeadline(28),
-            textAlign: TextAlign.center,
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(
+                ClipboardData(text: '${doctor.name} · $role · CULT Сочи'),
+              );
+              cultTapFeedback();
+              showCultSnack(context, 'Специалист скопирован');
+            },
+            child: Text(
+              doctor.name,
+              style: cultHeadline(28),
+              textAlign: TextAlign.center,
+            ),
           ),
           Text(
             role.toUpperCase(),
@@ -857,6 +908,7 @@ class LiveDoctorPage extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: CultBookBar(
+        label: 'Записаться к ${doctor.name}',
         onPressed: () =>
             pushPage(context, BookingPage(initialDoctor: doctor.name)),
       ),
@@ -897,10 +949,21 @@ class DoctorPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          Text(
-            doctor.name,
-            style: cultHeadline(28),
-            textAlign: TextAlign.center,
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(
+                ClipboardData(
+                  text: '${doctor.name} · ${doctor.role} · CULT Сочи',
+                ),
+              );
+              cultTapFeedback();
+              showCultSnack(context, 'Специалист скопирован');
+            },
+            child: Text(
+              doctor.name,
+              style: cultHeadline(28),
+              textAlign: TextAlign.center,
+            ),
           ),
           Text(
             doctor.role.toUpperCase(),
@@ -1006,6 +1069,7 @@ class DoctorPage extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: CultBookBar(
+        label: 'Записаться к ${doctor.name}',
         onPressed: () =>
             pushPage(context, BookingPage(initialDoctor: doctor.name)),
       ),

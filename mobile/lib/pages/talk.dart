@@ -220,6 +220,8 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Мезотерапия',
     'Постакне',
     'Купероз',
+    'Реабилитация',
+    'Противопоказания',
   ];
 
   @override

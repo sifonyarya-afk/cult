@@ -183,31 +183,45 @@ class _PricesPageState extends State<PricesPage> {
               for (final row in rows)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      minVerticalPadding: 10,
-                      title: Text(row.name),
-                      subtitle: Text(
-                        '${row.group} · ${row.meta}',
-                        style: const TextStyle(color: Cult.muted),
-                      ),
-                      trailing: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 108),
-                        child: Text(
-                          row.price,
-                          textAlign: TextAlign.end,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                  child: Semantics(
+                    button: true,
+                    label: '${row.name}, ${row.price}',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        minVerticalPadding: 10,
+                        title: Text(row.name),
+                        subtitle: Text(
+                          '${row.group} · ${row.meta}',
+                          style: const TextStyle(color: Cult.muted),
                         ),
+                        trailing: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 108),
+                          child: Text(
+                            row.price,
+                            textAlign: TextAlign.end,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        onTap: () {
+                          cultTapFeedback();
+                          pushPage(
+                            context,
+                            BookingPage(initialService: row.name),
+                          );
+                        },
+                        onLongPress: () {
+                          Clipboard.setData(
+                            ClipboardData(
+                              text:
+                                  '${row.name} · ${row.price} · ${row.meta} · CULT',
+                            ),
+                          );
+                          cultTapFeedback();
+                          showCultSnack(context, 'Позиция скопирована');
+                        },
                       ),
-                      onTap: () {
-                        cultTapFeedback();
-                        pushPage(
-                          context,
-                          BookingPage(initialService: row.name),
-                        );
-                      },
                     ),
                   ),
                 ),

@@ -623,73 +623,90 @@ class _InfusionTherapyPageState extends State<InfusionTherapyPage> {
             )
           else
             for (final item in shown) ...[
-              CultCard(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    CultImage(item.image, aspect: 16 / 10, radius: 16),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+              Semantics(
+                button: true,
+                label: '${item.title}, ${item.price}',
+                child: GestureDetector(
+                  onLongPress: () {
+                    Clipboard.setData(
+                      ClipboardData(
+                        text: '${item.title} · ${item.price} · ${item.duration}',
+                      ),
+                    );
+                    cultTapFeedback();
+                    showCultSnack(context, 'Коктейль скопирован');
+                  },
+                  child: CultCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        CultImage(item.image, aspect: 16 / 10, radius: 16),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  item.title,
-                                  style: cultHeadline(22),
-                                ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      item.title,
+                                      style: cultHeadline(22),
+                                    ),
+                                  ),
+                                  Text(
+                                    item.price,
+                                    style: const TextStyle(
+                                      color: Cult.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
+                              const SizedBox(height: 6),
                               Text(
-                                item.price,
-                                style: const TextStyle(
-                                  color: Cult.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            item.blurb,
-                            style: const TextStyle(color: Cult.muted),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.schedule,
-                                size: 16,
-                                color: Cult.muted,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                item.duration,
+                                item.blurb,
                                 style: const TextStyle(color: Cult.muted),
                               ),
-                              const Spacer(),
-                              FilledButton(
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: Cult.ink,
-                                  shape: const StadiumBorder(),
-                                ),
-                                onPressed: () {
-                                  cultTapFeedback();
-                                  pushPage(
-                                    context,
-                                    BookingPage(initialService: item.title),
-                                  );
-                                },
-                                child: const Text('ЗАБРОНИРОВАТЬ'),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.schedule,
+                                    size: 16,
+                                    color: Cult.muted,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    item.duration,
+                                    style: const TextStyle(color: Cult.muted),
+                                  ),
+                                  const Spacer(),
+                                  FilledButton(
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: Cult.ink,
+                                      shape: const StadiumBorder(),
+                                    ),
+                                    onPressed: () {
+                                      cultTapFeedback();
+                                      pushPage(
+                                        context,
+                                        BookingPage(
+                                          initialService: item.title,
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('ЗАБРОНИРОВАТЬ'),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(height: 12),

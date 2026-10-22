@@ -198,36 +198,44 @@ class _FormCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          TextField(
-            controller: name,
-            textCapitalization: TextCapitalization.words,
-            textInputAction: TextInputAction.next,
-            autofillHints: const [AutofillHints.name],
-            decoration: const InputDecoration(labelText: 'Имя'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: phone,
-            keyboardType: TextInputType.phone,
-            textInputAction: TextInputAction.next,
-            autofillHints: const [AutofillHints.telephoneNumber],
-            inputFormatters: const [CultPhoneInputFormatter()],
-            decoration: const InputDecoration(
-              labelText: 'Номер телефона',
-              hintText: '+7 (___) ___-__-__',
-              prefixIcon: Icon(Icons.phone_outlined),
+          AutofillGroup(
+            child: Column(
+              children: [
+                TextField(
+                  controller: name,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.name],
+                  decoration: const InputDecoration(labelText: 'Имя'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phone,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.telephoneNumber],
+                  inputFormatters: const [CultPhoneInputFormatter()],
+                  decoration: const InputDecoration(
+                    labelText: 'Номер телефона',
+                    hintText: '+7 (___) ___-__-__',
+                    prefixIcon: Icon(Icons.phone_outlined),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: email,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.done,
+                  autofillHints: const [AutofillHints.email],
+                  decoration: const InputDecoration(
+                    labelText: 'Почта, по желанию',
+                  ),
+                  onSubmitted: (_) {
+                    if (!busy) onSubmit();
+                  },
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: email,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.done,
-            autofillHints: const [AutofillHints.email],
-            decoration: const InputDecoration(labelText: 'Почта, по желанию'),
-            onSubmitted: (_) {
-              if (!busy) onSubmit();
-            },
           ),
           if (error.isNotEmpty) ...[
             const SizedBox(height: 12),

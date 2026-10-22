@@ -484,6 +484,24 @@ void main() {
     );
   });
 
+  test('Бот отвечает про реабилитацию и анестезию', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Какая реабилитация после?');
+    expect(
+      store.threads['bot']!.last.text.toLowerCase(),
+      contains('реабилитац'),
+    );
+    store.sendMessage('bot', 'Делают ли обезболивание?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('анестез'));
+    store.sendMessage('specialist', 'Сильное шелушение');
+    expect(
+      store.threads['specialist']!.last.text.toLowerCase(),
+      contains('шелушен'),
+    );
+  });
+
   test('Переписку можно скопировать текстом', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
