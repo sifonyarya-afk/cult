@@ -321,12 +321,15 @@ class ClinicStore extends ChangeNotifier {
       'specialist': 'Здравствуйте. Я на связи по уходу после процедур.',
     };
     for (final entry in seeds.entries) {
-      threads.putIfAbsent(
-        entry.key,
-        () => [
-          ChatMessage(id: '${entry.key}-seed', from: 'them', text: entry.value),
-        ],
+      if (threads.containsKey(entry.key)) continue;
+      final seed = ChatMessage(
+        id: '${entry.key}-seed',
+        from: 'them',
+        text: entry.value,
       );
+      threads[entry.key] = [seed];
+      // Welcome seeds are not "new" replies — badge only for later messages.
+      chatRead.putIfAbsent(entry.key, () => seed.id);
     }
   }
 
@@ -823,6 +826,12 @@ class ClinicStore extends ChangeNotifier {
       }
       if (q.contains('беремен') || q.contains('кормлен')) {
         return 'При беременности и лактации часть процедур ограничена. Напишите срок врачу в чате — подскажем безопасный протокол.';
+      }
+      if (q.contains('аппарат') || q.contains('rf') || q.contains('smas')) {
+        return 'Аппаратная косметология — в меню «Аппаратная»: RF, IPL и SMAS. Выберите зону и запишитесь.';
+      }
+      if (q.contains('инъек') || q.contains('филлер') || q.contains('ботокс')) {
+        return 'Инъекции — в меню «Инъекции». Перед визитом врач уточнит показания на консультации.';
       }
       return 'Клиника открыта ежедневно с 9:00 до 21:00. Запись — в разделе «Запись» или через «+» на главной.';
     }

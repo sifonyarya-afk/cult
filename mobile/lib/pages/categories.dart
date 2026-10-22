@@ -603,10 +603,13 @@ class _InfusionTherapyPageState extends State<InfusionTherapyPage> {
                   style: TextStyle(color: Cult.muted),
                 ),
                 TextButton(
-                  onPressed: () => pushPage(
-                    context,
-                    const ChatThreadPage(contactId: 'specialist'),
-                  ),
+                  onPressed: () {
+                    cultTapFeedback();
+                    pushPage(
+                      context,
+                      const ChatThreadPage(contactId: 'specialist'),
+                    );
+                  },
                   child: const Text('НАПИСАТЬ СПЕЦИАЛИСТУ'),
                 ),
               ],
@@ -659,7 +662,10 @@ class SciencePage extends StatelessWidget {
                 child: CultSectionLabel('Клинические исследования'),
               ),
               TextButton(
-                onPressed: () => pushPage(context, const BlogPage()),
+                onPressed: () {
+                  cultTapFeedback();
+                  pushPage(context, const BlogPage());
+                },
                 child: const Text('Смотреть все'),
               ),
             ],

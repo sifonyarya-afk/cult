@@ -107,17 +107,24 @@ class _PricesPageState extends State<PricesPage> {
         : ' Сейчас: ${store.gender!.servicesTitle.toLowerCase()}.';
     return Scaffold(
       appBar: AppBar(title: const Text('Прайс')),
-      body: RefreshIndicator(
-        color: Cult.primary,
-        onRefresh: () => store.refreshCatalog(),
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Text(
-              store.yclientsReady
-                  ? 'Цены филиала CULT в Сочи.$genderNote Поиск ищет и по категориям.'
-                  : 'Точная сумма подтверждается на консультации.$genderNote',
-            ),
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollStartNotification) {
+            FocusManager.instance.primaryFocus?.unfocus();
+          }
+          return false;
+        },
+        child: RefreshIndicator(
+          color: Cult.primary,
+          onRefresh: () => store.refreshCatalog(),
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              Text(
+                store.yclientsReady
+                    ? 'Цены филиала CULT в Сочи.$genderNote Поиск ищет и по категориям.'
+                    : 'Точная сумма подтверждается на консультации.$genderNote',
+              ),
             if (store.liveError.isNotEmpty)
               CultErrorBanner(
                 message: store.liveError,
@@ -196,7 +203,8 @@ class _PricesPageState extends State<PricesPage> {
                     ),
                   ),
                 ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -272,20 +280,27 @@ class AboutPage extends StatelessWidget {
               side: const BorderSide(color: Cult.ink),
               minimumSize: const Size(double.infinity, 48),
             ),
-            onPressed: () => openExternal(
-              'https://www.youtube.com/results?search_query=CULT+Clinic',
-              context: context,
-            ),
+            onPressed: () {
+              cultTapFeedback();
+              openExternal(
+                'https://www.youtube.com/results?search_query=CULT+Clinic',
+                context: context,
+              );
+            },
             child: const Text('CULT TV · YouTube'),
           ),
           TextButton(
-            onPressed: () =>
-                openExternal('https://t.me/cultclinic', context: context),
+            onPressed: () {
+              cultTapFeedback();
+              openExternal('https://t.me/cultclinic', context: context);
+            },
             child: const Text('Telegram'),
           ),
           TextButton(
-            onPressed: () =>
-                openExternal('https://wa.me/74950000007', context: context),
+            onPressed: () {
+              cultTapFeedback();
+              openExternal('https://wa.me/74950000007', context: context);
+            },
             child: const Text('WhatsApp'),
           ),
         ],

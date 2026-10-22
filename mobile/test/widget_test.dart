@@ -252,6 +252,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
     await store.load();
+    expect(store.hasUnreadChat, isFalse);
     store.sendMessage('bot', 'Нужен врач');
     expect(store.threads['bot']!.last.text.toLowerCase(), contains('врач'));
     expect(store.isChatUnread('bot'), isTrue);
@@ -260,6 +261,16 @@ void main() {
     final restored = ClinicStore();
     await restored.load();
     expect(restored.isChatUnread('bot'), isFalse);
+  });
+
+  test('Бот отвечает про аппаратную косметологию', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Расскажите про аппаратную');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('аппарат'));
+    store.sendMessage('bot', 'Хочу филлеры');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('инъек'));
   });
 
   test('Корзина сохраняет контакт при оформлении', () async {

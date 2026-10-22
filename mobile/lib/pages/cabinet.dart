@@ -653,40 +653,58 @@ class AnalysesPage extends StatelessWidget {
             for (final visit in labs)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: CultCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(visit.service, style: cultHeadline(18)),
-                          ),
-                          Text(
-                            visit.status == 'upcoming' ? 'Назначен' : 'Сдан',
-                            style: const TextStyle(
-                              color: Cult.primary,
-                              fontWeight: FontWeight.w700,
+                child: GestureDetector(
+                  onLongPress: () {
+                    Clipboard.setData(
+                      ClipboardData(
+                        text:
+                            '${visit.service} · ${formatVisitDate(visit.date)} в ${visit.time}',
+                      ),
+                    );
+                    cultTapFeedback();
+                    showCultSnack(context, 'Анализ скопирован');
+                  },
+                  child: CultCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                visit.service,
+                                style: cultHeadline(18),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${formatVisitDate(visit.date)} · ${visit.time}',
-                        style: const TextStyle(color: Cult.muted),
-                      ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () => pushPage(
-                            context,
-                            BookingPage(initialService: visit.service),
-                          ),
-                          child: const Text('Записать снова'),
+                            Text(
+                              visit.status == 'upcoming' ? 'Назначен' : 'Сдан',
+                              style: const TextStyle(
+                                color: Cult.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          '${formatVisitDate(visit.date)} · ${visit.time}',
+                          style: const TextStyle(color: Cult.muted),
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              cultTapFeedback();
+                              pushPage(
+                                context,
+                                BookingPage(initialService: visit.service),
+                              );
+                            },
+                            child: const Text('Записать снова'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1009,54 +1027,94 @@ class _LoyaltyPageState extends State<LoyaltyPage> {
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Лояльность')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFE8CB8E), Color(0xFFC49A4E)],
-              ),
+      appBar: AppBar(
+        title: const Text('Лояльность'),
+        actions: [
+          if (store.signedIn)
+            IconButton(
+              tooltip: 'Обновить',
+              onPressed: () async {
+                cultTapFeedback();
+                setState(() => _loading = true);
+                final message = await store.refreshLoyalty();
+                if (!mounted) return;
+                setState(() {
+                  _loading = false;
+                  _note =
+                      message ??
+                      (store.loyaltyCards.isEmpty
+                          ? 'Карт лояльности по этому телефону нет.'
+                          : '');
+                });
+              },
+              icon: const Icon(Icons.refresh),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'БАЛАНС КЛУБА',
-                  style: TextStyle(
-                    letterSpacing: 1.2,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+        ],
+      ),
+      body: RefreshIndicator(
+        color: Cult.primary,
+        onRefresh: () async {
+          if (!store.signedIn) return;
+          setState(() => _loading = true);
+          final message = await store.refreshLoyalty();
+          if (!mounted) return;
+          setState(() {
+            _loading = false;
+            _note =
+                message ??
+                (store.loyaltyCards.isEmpty
+                    ? 'Карт лояльности по этому телефону нет.'
+                    : '');
+          });
+        },
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFE8CB8E), Color(0xFFC49A4E)],
                 ),
-                const SizedBox(height: 8),
-                Text(rub(store.balance), style: cultHeadline(36)),
-                if (store.welcomeGranted)
-                  Text(
-                    'включая welcome ${rub(store.welcomeBonus)}',
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'БАЛАНС КЛУБА',
                     style: TextStyle(
+                      letterSpacing: 1.2,
                       fontSize: 12,
-                      color: Cult.ink.withValues(alpha: 0.7),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(rub(store.balance), style: cultHeadline(36)),
+                  if (store.welcomeGranted)
+                    Text(
+                      'включая welcome ${rub(store.welcomeBonus)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Cult.ink.withValues(alpha: 0.7),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-          if (!store.signedIn) ...[
-            const SizedBox(height: 14),
-            CultEmpty(
-              title: 'Войдите по телефону',
-              note: 'Карта филиала и бонусы YClients подтянутся к номеру.',
-              actionLabel: 'Войти',
-              onAction: () =>
-                  pushPage(context, const AuthPage(allowSkip: false)),
-            ),
-          ] else if (store.loyaltyCards.isNotEmpty) ...[
+            if (!store.signedIn) ...[
+              const SizedBox(height: 14),
+              CultEmpty(
+                title: 'Войдите по телефону',
+                note: 'Карта филиала и бонусы YClients подтянутся к номеру.',
+                actionLabel: 'Войти',
+                onAction: () =>
+                    pushPage(context, const AuthPage(allowSkip: false)),
+              ),
+            ] else if (store.loyaltyCards.isNotEmpty) ...[
             const SizedBox(height: 18),
             const CultSectionLabel('Карты YClients'),
             for (final card in store.loyaltyCards)
@@ -1137,7 +1195,8 @@ class _LoyaltyPageState extends State<LoyaltyPage> {
                 ),
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }

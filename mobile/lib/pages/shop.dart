@@ -481,6 +481,16 @@ class _CartPageState extends State<CartPage> {
                       Navigator.pop(context);
                     },
                   ),
+                  TextButton(
+                    onPressed: () {
+                      final summary =
+                          'Заказ CULT · ${rub(_due)} · ${_courier ? 'Курьер: ${_address.text.trim()}' : 'Самовывоз'} · ${_name.text.trim()}';
+                      Clipboard.setData(ClipboardData(text: summary));
+                      cultTapFeedback();
+                      showCultSnack(context, 'Чек скопирован');
+                    },
+                    child: const Text('Скопировать чек'),
+                  ),
                 ],
               ),
             )

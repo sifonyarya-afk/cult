@@ -197,6 +197,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Парковка',
     'Анализы',
     'Скидки',
+    'Аппаратная',
   ];
 
   @override

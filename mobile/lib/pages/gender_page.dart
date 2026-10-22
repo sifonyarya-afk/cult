@@ -20,7 +20,7 @@ class _GenderPageState extends State<GenderPage> {
   Future<void> _start() async {
     final gender = _selected;
     if (gender == null) return;
-    HapticFeedback.selectionClick();
+    HapticFeedback.mediumImpact();
     await ClinicScope.of(context).setGender(gender);
     widget.onDone?.call();
     if (widget.onDone == null && mounted && Navigator.of(context).canPop()) {

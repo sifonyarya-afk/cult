@@ -82,21 +82,28 @@ class _ServicesPageState extends State<ServicesPage> {
 
     return Stack(
       children: [
-        RefreshIndicator(
-          color: Cult.primary,
-          onRefresh: () => store.refreshCatalog(),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
-            children: [
-              const Text(
-                'ИНДИВИДУАЛЬНЫЙ ПОДХОД',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Cult.muted,
-                  letterSpacing: 2,
-                  fontSize: 11,
+        NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification is ScrollStartNotification) {
+              FocusManager.instance.primaryFocus?.unfocus();
+            }
+            return false;
+          },
+          child: RefreshIndicator(
+            color: Cult.primary,
+            onRefresh: () => store.refreshCatalog(),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
+              children: [
+                const Text(
+                  'ИНДИВИДУАЛЬНЫЙ ПОДХОД',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Cult.muted,
+                    letterSpacing: 2,
+                    fontSize: 11,
+                  ),
                 ),
-              ),
               const SizedBox(height: 10),
               Text(
                 'Консультация, диагностика и персональные программы',
@@ -347,7 +354,8 @@ class _ServicesPageState extends State<ServicesPage> {
                   ),
                   const SizedBox(height: 16),
                 ],
-            ],
+              ],
+            ),
           ),
         ),
         Positioned(
@@ -360,7 +368,10 @@ class _ServicesPageState extends State<ServicesPage> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
-            onPressed: () => pushPage(context, const BookingPage()),
+            onPressed: () {
+              cultTapFeedback();
+              pushPage(context, const BookingPage());
+            },
             child: const Icon(Icons.calendar_month_outlined),
           ),
         ),
