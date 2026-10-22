@@ -4,23 +4,42 @@
 
 Нужны Mac, Xcode и Flutter.
 
-```bash
-flutter pub get
-flutter run
-```
+## Запуск на iPhone
 
-Подключите iPhone кабелем и подтвердите доверие к компьютеру. Сборку из Xcode открывайте так:
+Из папки `mobile`:
 
 ```bash
 flutter pub get
 cd ios
 pod install
-open Runner.xcworkspace
+cd ..
+open ios/Runner.xcworkspace
 ```
 
-Нужен файл `Runner.xcworkspace`, не `Runner.xcodeproj`. Иначе Xcode пишет `Framework 'Pods_Runner' not found`.
+Открывайте именно **`Runner.xcworkspace`**, не `Runner.xcodeproj`.
 
-В Xcode: цель Runner → Signing & Capabilities → Team. Выберите свой Apple ID (Personal Team). Без команды подписи сборка на iPhone не запускается. Если CocoaPods не установлен: `brew install cocoapods`.
+Если Xcode пишет `Missing package product 'FlutterGeneratedPluginSwiftPackage'` — вы открыли `.xcodeproj` до `flutter pub get`, либо старый кэш SPM. В этом репозитории Swift Package Manager для плагинов выключен (CocoaPods). Закройте Xcode и выполните:
+
+```bash
+flutter clean
+flutter pub get
+cd ios
+rm -rf Pods Podfile.lock .symlinks
+pod install
+cd ..
+open ios/Runner.xcworkspace
+```
+
+В Xcode: цель Runner → Signing & Capabilities → Team. Выберите свой Apple ID (Personal Team). Без команды подписи сборка на iPhone не запускается.
+
+Если CocoaPods не установлен: `brew install cocoapods`.
+
+Либо без Xcode:
+
+```bash
+flutter pub get
+flutter run
+```
 
 Собрать установочный файл iPhone с Linux нельзя: подпись делает только Xcode.
 
