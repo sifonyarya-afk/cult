@@ -496,6 +496,29 @@ void main() {
     expect(store.threads['bot']!.last.text, contains('495'));
   });
 
+  test('Бот отвечает про подготовку, документы и аллергию', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Какая подготовка к визиту?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('перед'));
+    store.sendMessage('bot', 'Какие документы нужны?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('паспорт'));
+    store.sendMessage('bot', 'У меня аллергия на анестезию');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('аллерг'));
+    store.sendMessage('bot', 'Сколько длится процедура?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('длительн'));
+    store.sendMessage('bot', 'Есть телеграм клиники?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('чат'));
+    store.sendMessage('admin', 'Какой телефон клиники?');
+    expect(store.threads['admin']!.last.text, contains('495'));
+    store.sendMessage('specialist', 'Как подготовиться к процедуре?');
+    expect(
+      store.threads['specialist']!.last.text.toLowerCase(),
+      contains('подготов'),
+    );
+  });
+
   test('Бот и админ отвечают про отмену записи', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();

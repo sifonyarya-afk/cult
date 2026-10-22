@@ -767,7 +767,12 @@ class AnalysesPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${formatVisitDate(visit.date)} · ${visit.time}',
+                          () {
+                            final weekday = formatVisitWeekday(visit.date);
+                            return '${formatVisitDate(visit.date)}'
+                                '${weekday.isEmpty ? '' : ', $weekday'}'
+                                ' · ${visit.time}';
+                          }(),
                           style: const TextStyle(color: Cult.muted),
                         ),
                         Wrap(
@@ -850,6 +855,16 @@ class PharmacyPage extends StatelessWidget {
                           onTap: () {
                             cultTapFeedback();
                             pushPage(context, ProductPage(product: product));
+                          },
+                          onLongPress: () {
+                            Clipboard.setData(
+                              ClipboardData(
+                                text:
+                                    '${product.name}\n${row.dose}\n${row.note}\n${row.doctor} · до ${row.until}',
+                              ),
+                            );
+                            cultTapFeedback();
+                            showCultSnack(context, 'Рекомендация скопирована');
                           },
                           child: Text(product.name, style: cultHeadline(20)),
                         ),

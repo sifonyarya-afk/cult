@@ -225,6 +225,10 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Рассрочка',
     'Оплата',
     'Телефон клиники',
+    'Подготовка к визиту',
+    'Документы',
+    'Аллергия',
+    'Длительность',
   ];
 
   @override

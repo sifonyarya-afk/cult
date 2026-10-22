@@ -122,25 +122,43 @@ class HomePage extends StatelessWidget {
           ),
           if (store.welcomeGranted) ...[
             const SizedBox(height: 12),
-            CultCard(
-              child: Row(
-                children: [
-                  const Icon(Icons.card_giftcard_outlined, color: Cult.primary),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Welcome-бонус ${rub(store.welcomeBonus)} на балансе.',
-                      style: const TextStyle(height: 1.35),
+            Semantics(
+              label: 'Welcome-бонус ${rub(store.welcomeBonus)}',
+              child: GestureDetector(
+                onLongPress: () {
+                  Clipboard.setData(
+                    ClipboardData(
+                      text:
+                          'Welcome-бонус CULT: ${rub(store.welcomeBonus)} на балансе',
                     ),
+                  );
+                  cultTapFeedback();
+                  showCultSnack(context, 'Бонус скопирован');
+                },
+                child: CultCard(
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.card_giftcard_outlined,
+                        color: Cult.primary,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Welcome-бонус ${rub(store.welcomeBonus)} на балансе.',
+                          style: const TextStyle(height: 1.35),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          cultTapFeedback();
+                          pushPage(context, const CertificatesPage());
+                        },
+                        child: const Text('Сертификат'),
+                      ),
+                    ],
                   ),
-                  TextButton(
-                    onPressed: () {
-                      cultTapFeedback();
-                      pushPage(context, const CertificatesPage());
-                    },
-                    child: const Text('Сертификат'),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
@@ -230,6 +248,18 @@ class HomePage extends StatelessWidget {
                 _LinkChip(
                   'Трансфер',
                   () => pushPage(context, const TransferPage()),
+                ),
+                _LinkChip(
+                  'Анализы',
+                  () => pushPage(context, const AnalysesPage()),
+                ),
+                _LinkChip(
+                  'Лояльность',
+                  () => pushPage(context, const LoyaltyPage()),
+                ),
+                _LinkChip(
+                  'Сертификаты',
+                  () => pushPage(context, const CertificatesPage()),
                 ),
               ],
             ),

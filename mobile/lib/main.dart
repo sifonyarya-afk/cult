@@ -551,6 +551,16 @@ class _ShellState extends State<Shell> {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.calendar_today_outlined),
+              title: const Text('Мои записи'),
+              onTap: () => _go(sheetContext, const VisitsPage()),
+            ),
+            ListTile(
+              leading: const Icon(Icons.biotech_outlined),
+              title: const Text('Мои анализы'),
+              onTap: () => _go(sheetContext, const AnalysesPage()),
+            ),
+            ListTile(
               leading: const Icon(Icons.favorite_border),
               title: const Text('Избранное'),
               onTap: () => _go(sheetContext, const FavoritesPage()),
@@ -564,6 +574,12 @@ class _ShellState extends State<Shell> {
               leading: const Icon(Icons.loyalty_outlined),
               title: const Text('Лояльность'),
               onTap: () => _go(sheetContext, const LoyaltyPage()),
+            ),
+            ListTile(
+              leading: const Icon(Icons.medical_information_outlined),
+              title: const Text('Аптечка'),
+              subtitle: const Text('Рекомендации врача'),
+              onTap: () => _go(sheetContext, const PharmacyPage()),
             ),
             ListTile(
               leading: const Icon(Icons.directions_car_outlined),
