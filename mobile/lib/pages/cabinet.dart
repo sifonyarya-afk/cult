@@ -179,7 +179,16 @@ class CabinetPage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(rub(store.balance), style: cultHeadline(36)),
+              GestureDetector(
+                onLongPress: () {
+                  Clipboard.setData(
+                    ClipboardData(text: 'Бонусный баланс CULT: ${rub(store.balance)}'),
+                  );
+                  cultTapFeedback();
+                  showCultSnack(context, 'Баланс скопирован');
+                },
+                child: Text(rub(store.balance), style: cultHeadline(36)),
+              ),
               if (store.welcomeGranted) ...[
                 const SizedBox(height: 6),
                 Text(
@@ -231,7 +240,11 @@ class CabinetPage extends StatelessWidget {
           title: 'Мои записи',
           note: next == null
               ? 'Предстоящих нет'
-              : 'След: ${formatVisitDate(next.date)}, ${next.time}',
+              : () {
+                  final weekday = formatVisitWeekday(next.date);
+                  return 'След: ${formatVisitDate(next.date)}'
+                      '${weekday.isEmpty ? '' : ', $weekday'}, ${next.time}';
+                }(),
           onTap: () => pushPage(context, const VisitsPage()),
         ),
         _AccountRow(
@@ -752,18 +765,34 @@ class AnalysesPage extends StatelessWidget {
                           '${formatVisitDate(visit.date)} · ${visit.time}',
                           style: const TextStyle(color: Cult.muted),
                         ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              cultTapFeedback();
-                              pushPage(
-                                context,
-                                BookingPage(initialService: visit.service),
-                              );
-                            },
-                            child: const Text('Записать снова'),
-                          ),
+                        Wrap(
+                          alignment: WrapAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                cultTapFeedback();
+                                store.sendMessage(
+                                  'specialist',
+                                  'Вопрос по анализу «${visit.service}» от ${formatVisitDate(visit.date)}.',
+                                );
+                                showCultSnack(
+                                  context,
+                                  'Сообщение врачу отправлено',
+                                );
+                              },
+                              child: const Text('Спросить врача'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                cultTapFeedback();
+                                pushPage(
+                                  context,
+                                  BookingPage(initialService: visit.service),
+                                );
+                              },
+                              child: const Text('Записать снова'),
+                            ),
+                          ],
                         ),
                       ],
                     ),

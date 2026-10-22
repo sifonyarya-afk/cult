@@ -161,6 +161,14 @@ class _PricesPageState extends State<PricesPage> {
               ),
             ),
             const SizedBox(height: 12),
+            if (rows.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  '${rows.length} позиц.',
+                  style: const TextStyle(color: Cult.muted, fontSize: 12),
+                ),
+              ),
             if (rows.isEmpty)
               CultEmpty(
                 title: 'Ничего не найдено',

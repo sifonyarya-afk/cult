@@ -797,14 +797,22 @@ class _CartPageState extends State<CartPage> {
                   phone: _phone.text.trim(),
                   email: store.profileEmail,
                 );
+                final title = store.cart.map((item) => item.name).join(', ');
+                final payLabel = _pay == 'card'
+                    ? 'Карта'
+                    : _pay == 'bonus'
+                    ? 'Бонусы'
+                    : 'Карта и бонусы';
                 store.placeOrder(
-                  title: store.cart.map((item) => item.name).join(', '),
+                  title: title,
                   total: due,
-                  pay: _pay == 'card'
-                      ? 'Карта'
-                      : _pay == 'bonus'
-                      ? 'Бонусы'
-                      : 'Карта и бонусы',
+                  pay: payLabel,
+                );
+                store.sendMessage(
+                  'admin',
+                  'Заказ шопа: $title · к оплате ${rub(due)} · $payLabel'
+                  '${_courier ? ' · курьер: ${_address.text.trim()}' : ' · самовывоз'}'
+                  ' · ${_name.text.trim()}.',
                 );
                 HapticFeedback.mediumImpact();
                 setState(() {

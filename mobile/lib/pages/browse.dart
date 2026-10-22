@@ -242,6 +242,14 @@ class _ServicesPageState extends State<ServicesPage> {
                   retryLabel: 'Обновить прайс',
                 ),
               const SizedBox(height: 16),
+              if (liveFiltered.isNotEmpty || localFiltered.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text(
+                    '${liveFiltered.isNotEmpty ? liveFiltered.length : localFiltered.length} услуг',
+                    style: const TextStyle(color: Cult.muted, fontSize: 12),
+                  ),
+                ),
               if (liveFiltered.isNotEmpty)
                 for (final service in liveFiltered) ...[
                   InkWell(
@@ -601,37 +609,62 @@ class _DoctorsPageState extends State<DoctorsPage> {
               for (final doctor in live)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: InkWell(
-                    onTap: () {
-                      cultTapFeedback();
-                      pushPage(context, LiveDoctorPage(doctor: doctor));
-                    },
-                    child: CultCard(
-                      child: Row(
-                        children: [
-                          _Avatar(url: doctor.avatar, name: doctor.name),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(doctor.name, style: cultHeadline(20)),
-                                Text(
-                                  doctor.specialization.isEmpty
-                                      ? 'Врач филиала'
-                                      : doctor.specialization,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const Text(
-                                  'CULT · Сочи',
-                                  style: TextStyle(color: Cult.muted),
-                                ),
-                              ],
-                            ),
+                  child: Semantics(
+                    button: true,
+                    label:
+                        '${doctor.name}, ${doctor.specialization.isEmpty ? 'врач филиала' : doctor.specialization}',
+                    child: InkWell(
+                      onTap: () {
+                        cultTapFeedback();
+                        pushPage(context, LiveDoctorPage(doctor: doctor));
+                      },
+                      onLongPress: () {
+                        Clipboard.setData(
+                          ClipboardData(
+                            text:
+                                '${doctor.name} · ${doctor.specialization.isEmpty ? 'CULT Сочи' : doctor.specialization}',
                           ),
-                          const Icon(Icons.chevron_right, color: Cult.muted),
-                        ],
+                        );
+                        cultTapFeedback();
+                        showCultSnack(context, 'Специалист скопирован');
+                      },
+                      child: CultCard(
+                        child: Row(
+                          children: [
+                            _Avatar(url: doctor.avatar, name: doctor.name),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(doctor.name, style: cultHeadline(20)),
+                                  Text(
+                                    doctor.specialization.isEmpty
+                                        ? 'Врач филиала'
+                                        : doctor.specialization,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const Text(
+                                    'CULT · Сочи',
+                                    style: TextStyle(color: Cult.muted),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Записаться',
+                              onPressed: () {
+                                cultTapFeedback();
+                                pushPage(
+                                  context,
+                                  BookingPage(initialDoctor: doctor.name),
+                                );
+                              },
+                              icon: const Icon(Icons.event_available_outlined),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -647,38 +680,61 @@ class _DoctorsPageState extends State<DoctorsPage> {
               for (final doctor in local)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: InkWell(
-                    onTap: () {
-                      cultTapFeedback();
-                      pushPage(context, DoctorPage(doctor: doctor));
-                    },
-                    child: CultCard(
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 72,
-                            child: CultImage(
-                              doctor.image,
-                              aspect: 1,
-                              radius: 16,
-                            ),
+                  child: Semantics(
+                    button: true,
+                    label: '${doctor.name}, ${doctor.role}',
+                    child: InkWell(
+                      onTap: () {
+                        cultTapFeedback();
+                        pushPage(context, DoctorPage(doctor: doctor));
+                      },
+                      onLongPress: () {
+                        Clipboard.setData(
+                          ClipboardData(
+                            text: '${doctor.name} · ${doctor.role}',
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(doctor.name, style: cultHeadline(20)),
-                                Text(doctor.role),
-                                Text(
-                                  doctor.exp,
-                                  style: const TextStyle(color: Cult.muted),
-                                ),
-                              ],
+                        );
+                        cultTapFeedback();
+                        showCultSnack(context, 'Специалист скопирован');
+                      },
+                      child: CultCard(
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 72,
+                              child: CultImage(
+                                doctor.image,
+                                aspect: 1,
+                                radius: 16,
+                              ),
                             ),
-                          ),
-                          const Icon(Icons.chevron_right, color: Cult.muted),
-                        ],
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(doctor.name, style: cultHeadline(20)),
+                                  Text(doctor.role),
+                                  Text(
+                                    doctor.exp,
+                                    style: const TextStyle(color: Cult.muted),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Записаться',
+                              onPressed: () {
+                                cultTapFeedback();
+                                pushPage(
+                                  context,
+                                  BookingPage(initialDoctor: doctor.name),
+                                );
+                              },
+                              icon: const Icon(Icons.event_available_outlined),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

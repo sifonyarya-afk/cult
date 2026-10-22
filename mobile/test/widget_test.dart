@@ -445,6 +445,38 @@ void main() {
     expect(formatVisitWeekday('не дата'), isEmpty);
   });
 
+  test('Бот отвечает про эпиляцию и мезотерапию', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Хочу эпиляцию');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('эпиляц'));
+    store.sendMessage('bot', 'Нужна мезотерапия');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('мезотерап'));
+  });
+
+  test('Оформление заказа пишет администратору', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    final before = store.threads['admin']!.length;
+    store.addToCart(products.first.id, products.first.name, products.first.price);
+    store.placeOrder(
+      title: products.first.name,
+      total: products.first.price,
+      pay: 'Карта',
+    );
+    store.sendMessage(
+      'admin',
+      'Заказ шопа: ${products.first.name} · к оплате ${rub(products.first.price)} · Карта · самовывоз.',
+    );
+    expect(store.threads['admin']!.length, greaterThan(before));
+    expect(
+      store.threads['admin']!.any((m) => m.text.contains(products.first.name)),
+      isTrue,
+    );
+  });
+
   test('Все чаты можно отметить прочитанными', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();

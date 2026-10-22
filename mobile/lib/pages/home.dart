@@ -197,6 +197,14 @@ class HomePage extends StatelessWidget {
                   () =>
                       pushPage(context, const CategoryHubPage(slug: 'science')),
                 ),
+                _LinkChip(
+                  'Прайс',
+                  () => pushPage(context, const PricesPage()),
+                ),
+                _LinkChip(
+                  'Кейсы',
+                  () => pushPage(context, const CasesPage()),
+                ),
               ],
             ),
           ),
