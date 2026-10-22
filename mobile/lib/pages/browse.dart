@@ -530,26 +530,33 @@ class _DoctorsPageState extends State<DoctorsPage> {
     }).toList();
     return Scaffold(
       appBar: AppBar(title: const Text('Специалисты')),
-      body: RefreshIndicator(
-        color: Cult.primary,
-        onRefresh: () async {
-          await store.refreshStaff();
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollStartNotification) {
+            FocusManager.instance.primaryFocus?.unfocus();
+          }
+          return false;
         },
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Text('Команда CULT', style: cultHeadline(28)),
-            const SizedBox(height: 6),
-            const Text(
-              'Врачи филиала в Сочи. Запись и чат — в карточке.',
-              style: TextStyle(color: Cult.muted),
-            ),
-            const SizedBox(height: 14),
-            CultSearchField(
-              controller: _query,
-              hint: 'Имя или специализация',
-              onChanged: () => setState(() {}),
-            ),
+        child: RefreshIndicator(
+          color: Cult.primary,
+          onRefresh: () async {
+            await store.refreshStaff();
+          },
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              Text('Команда CULT', style: cultHeadline(28)),
+              const SizedBox(height: 6),
+              const Text(
+                'Врачи филиала в Сочи. Запись и чат — в карточке.',
+                style: TextStyle(color: Cult.muted),
+              ),
+              const SizedBox(height: 14),
+              CultSearchField(
+                controller: _query,
+                hint: 'Имя или специализация',
+                onChanged: () => setState(() {}),
+              ),
             const SizedBox(height: 16),
             if (store.liveStaff.isEmpty && store.yclientsReady)
               const CultLoading(label: 'Загружаем специалистов…'),
@@ -639,7 +646,8 @@ class _DoctorsPageState extends State<DoctorsPage> {
                     ),
                   ),
                 ),
-          ],
+            ],
+          ),
         ),
       ),
     );

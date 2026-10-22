@@ -25,6 +25,14 @@ class _ShopPageState extends State<ShopPage>
   );
 
   @override
+  void initState() {
+    super.initState();
+    _tabs.addListener(() {
+      if (_tabs.indexIsChanging) cultTapFeedback();
+    });
+  }
+
+  @override
   void dispose() {
     _tabs.dispose();
     super.dispose();
@@ -258,6 +266,17 @@ class _ProductListState extends State<_ProductList> {
                       rub(product.price),
                       style: cultHeadline(22).copyWith(color: Cult.primary),
                     ),
+                    if (product.stock == 'low') ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Осталось мало',
+                        style: TextStyle(
+                          color: Cult.error.withValues(alpha: 0.9),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

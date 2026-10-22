@@ -240,7 +240,10 @@ class _HardwareCosmeticsPageState extends State<HardwareCosmeticsPage> {
                     backgroundColor: Colors.white,
                     foregroundColor: Cult.ink,
                   ),
-                  onPressed: () => pushPage(context, const BookingPage()),
+                  onPressed: () {
+                    cultTapFeedback();
+                    pushPage(context, const BookingPage());
+                  },
                   child: const Text('ЗАПИСАТЬСЯ'),
                 ),
               ],
@@ -304,34 +307,41 @@ class _InjectionCosmeticsPageState extends State<InjectionCosmeticsPage> {
         icon: const Icon(Icons.calendar_month_outlined),
         label: const Text('Записаться'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-        children: [
-          Stack(
-            children: [
-              const CultImage('botox', aspect: 4 / 5, radius: 18),
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 16,
-                child: Text(
-                  'Инъекционная\nкосметология',
-                  style: cultHeadline(30).copyWith(
-                    color: Colors.white,
-                    shadows: const [
-                      Shadow(blurRadius: 10, color: Colors.black54),
-                    ],
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollStartNotification) {
+            FocusManager.instance.primaryFocus?.unfocus();
+          }
+          return false;
+        },
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+          children: [
+            Stack(
+              children: [
+                const CultImage('botox', aspect: 4 / 5, radius: 18),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  child: Text(
+                    'Инъекционная\nкосметология',
+                    style: cultHeadline(30).copyWith(
+                      color: Colors.white,
+                      shadows: const [
+                        Shadow(blurRadius: 10, color: Colors.black54),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Естественное преображение с медицинской точностью.',
-            style: TextStyle(color: Cult.muted, height: 1.4),
-          ),
-          const SizedBox(height: 14),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Естественное преображение с медицинской точностью.',
+              style: TextStyle(color: Cult.muted, height: 1.4),
+            ),
+            const SizedBox(height: 14),
           CultCard(
             child: Row(
               children: [
@@ -434,7 +444,8 @@ class _InjectionCosmeticsPageState extends State<InjectionCosmeticsPage> {
               ),
               const SizedBox(height: 12),
             ],
-        ],
+          ],
+        ),
       ),
     );
   }

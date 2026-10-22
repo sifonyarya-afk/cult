@@ -131,8 +131,22 @@ String formatVisitDate(String iso) {
     'ноября',
     'декабря',
   ];
+  final year = int.tryParse(parts[0]);
   final month = int.tryParse(parts[1]);
   final day = int.tryParse(parts[2].split('.').first);
-  if (month == null || day == null || month < 1 || month > 12) return iso;
+  if (year == null ||
+      month == null ||
+      day == null ||
+      month < 1 ||
+      month > 12) {
+    return iso;
+  }
+  final visit = DateTime(year, month, day);
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final delta = visit.difference(today).inDays;
+  if (delta == 0) return 'сегодня';
+  if (delta == 1) return 'завтра';
+  if (delta == -1) return 'вчера';
   return '$day ${months[month - 1]}';
 }

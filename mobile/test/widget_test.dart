@@ -290,6 +290,34 @@ void main() {
   test('formatVisitDate понимает дату со временем', () {
     expect(formatVisitDate('2026-04-12T10:30:00'), '12 апреля');
     expect(formatVisitDate('2026-04-12 10:30:00'), '12 апреля');
+    final now = DateTime.now();
+    String iso(DateTime d) =>
+        '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    expect(formatVisitDate(iso(now)), 'сегодня');
+    expect(formatVisitDate(iso(now.add(const Duration(days: 1)))), 'завтра');
+    expect(
+      formatVisitDate(iso(now.subtract(const Duration(days: 1)))),
+      'вчера',
+    );
+  });
+
+  test('Покупка сертификата пишет администратору', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    final before = store.threads['admin']!.length;
+    final code = store.buyGift(5000, 'Песок');
+    store.sendMessage('admin', 'Сертификат $code на ${rub(5000)}, дизайн Песок.');
+    expect(store.threads['admin']!.length, greaterThan(before));
+    expect(store.threads['admin']!.any((m) => m.text.contains(code)), isTrue);
+  });
+
+  test('Бот отвечает про инфузии', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Хочу капельницу');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('инфуз'));
   });
 
   testWidgets('Товар держит кнопку «В корзину» внизу', (tester) async {

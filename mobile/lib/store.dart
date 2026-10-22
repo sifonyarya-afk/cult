@@ -833,6 +833,9 @@ class ClinicStore extends ChangeNotifier {
       if (q.contains('инъек') || q.contains('филлер') || q.contains('ботокс')) {
         return 'Инъекции — в меню «Инъекции». Перед визитом врач уточнит показания на консультации.';
       }
+      if (q.contains('инфуз') || q.contains('капель')) {
+        return 'Инфузии — в меню «Инфузии»: NAD+, Immunity и Beauty & Glow. Запись через «+» на главной.';
+      }
       return 'Клиника открыта ежедневно с 9:00 до 21:00. Запись — в разделе «Запись» или через «+» на главной.';
     }
     if (contactId == 'specialist') {

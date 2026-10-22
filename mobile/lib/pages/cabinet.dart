@@ -1350,6 +1350,10 @@ class _CertificatesPageState extends State<CertificatesPage> {
                 return;
               }
               final code = store.buyGift(_nominal, _design);
+              store.sendMessage(
+                'admin',
+                'Сертификат $code на ${rub(_nominal)}, дизайн $_design.',
+              );
               HapticFeedback.mediumImpact();
               setState(() {
                 _error = '';

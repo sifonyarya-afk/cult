@@ -9,9 +9,10 @@ import 'info.dart';
 import 'talk.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key, required this.onShop});
+  const HomePage({super.key, required this.onShop, this.scrollController});
 
   final VoidCallback onShop;
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +27,7 @@ class HomePage extends StatelessWidget {
       color: Cult.primary,
       onRefresh: () => store.syncClinic(),
       child: ListView(
+        controller: scrollController,
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
         children: [
           if (store.syncing)

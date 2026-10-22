@@ -243,6 +243,7 @@ class _ShellState extends State<Shell> {
   var _index = 0;
   var _shopTab = 0;
   var _synced = false;
+  final _homeScroll = ScrollController();
 
   void _openShop() => setState(() {
     _shopTab = 2;
@@ -256,6 +257,12 @@ class _ShellState extends State<Shell> {
     _synced = true;
     final store = ClinicScope.of(context);
     WidgetsBinding.instance.addPostFrameCallback((_) => store.syncClinic());
+  }
+
+  @override
+  void dispose() {
+    _homeScroll.dispose();
+    super.dispose();
   }
 
   @override
@@ -322,7 +329,7 @@ class _ShellState extends State<Shell> {
           body: IndexedStack(
             index: _index,
             children: [
-              HomePage(onShop: _openShop),
+              HomePage(onShop: _openShop, scrollController: _homeScroll),
               const ServicesPage(),
               ShopPage(key: ValueKey(_shopTab), initialTab: _shopTab),
               const ChatPage(),
@@ -353,6 +360,13 @@ class _ShellState extends State<Shell> {
               HapticFeedback.selectionClick();
               if (value == _index) {
                 Navigator.of(context).popUntil((route) => route.isFirst);
+                if (value == 0 && _homeScroll.hasClients) {
+                  _homeScroll.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 320),
+                    curve: Curves.easeOutCubic,
+                  );
+                }
                 return;
               }
               setState(() => _index = value);
