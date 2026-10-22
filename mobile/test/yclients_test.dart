@@ -248,14 +248,66 @@ void main() {
     var cancelled = false;
     store.yclients = YClientsApi(
       client: _Scripted((request) async {
-        cancelled = request.method == 'DELETE' && request.url.path.endsWith('/user/records/99/abc');
-        expect(request.headers['Authorization'], startsWith('Bearer ${ClinicStore.partnerKey}, User'));
-        return http.Response('{"success":true,"data":null}', 200);
+        if (request.method == 'DELETE' && request.url.path.endsWith('/user/records/99/abc')) {
+          cancelled = true;
+          expect(request.headers['Authorization'], startsWith('Bearer ${ClinicStore.partnerKey}, User'));
+          return http.Response('{"success":true,"data":null}', 200);
+        }
+        // refreshVisits after cancel
+        if (request.url.path.contains('/records/') || request.url.path.contains('/visits/search')) {
+          return _json({'success': true, 'data': []});
+        }
+        return http.Response('{"meta":{"message":"нет"}}', 404);
       }),
     );
     expect(await store.cancelVisit(store.upcoming.first.id), isNull);
     expect(cancelled, isTrue);
     expect(store.upcoming.where((visit) => visit.recordId == 99), isEmpty);
+  });
+
+  test('Записи клиента читаются из YClients', () async {
+    final api = YClientsApi(
+      client: _Scripted((request) async {
+        expect(request.url.path, contains('/records/988587'));
+        expect(request.url.queryParameters['client_id'], '410');
+        return _json({
+          'success': true,
+          'data': [
+            {
+              'id': 1770015888,
+              'deleted': false,
+              'datetime': '2027-06-22T19:00:00+03:00',
+              'visit_attendance': 0,
+              'services': [
+                {'title': 'Консультация главного врача-косметолога', 'cost_to_pay': 5000},
+              ],
+              'staff': {'name': 'Иванов Иван Иванович'},
+            },
+            {
+              'id': 1767838719,
+              'deleted': false,
+              'datetime': '2025-01-10T10:00:00+03:00',
+              'visit_attendance': 1,
+              'services': [
+                {'title': 'Забор Анализов в клинике', 'cost_to_pay': 0},
+              ],
+              'staff': {'name': 'Петрова Анна Сергеевна'},
+            },
+          ],
+        });
+      }),
+    );
+    final records = await api.clientRecords(
+      partnerToken: 'partner',
+      userToken: 'user',
+      companyId: 988587,
+      clientId: 410,
+    );
+    expect(records, hasLength(2));
+    expect(records.first.service, 'Консультация главного врача-косметолога');
+    expect(records.first.status, 'upcoming');
+    expect(records.last.status, 'past');
+    expect(records.last.doctor, 'Петрова Анна Сергеевна');
   });
 }
 

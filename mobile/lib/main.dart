@@ -114,11 +114,21 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   var _index = 0;
   var _shopTab = 0;
+  var _synced = false;
 
   void _openShop() => setState(() {
         _shopTab = 2;
         _index = 2;
       });
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_synced) return;
+    _synced = true;
+    final store = ClinicScope.of(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) => store.syncClinic());
+  }
 
   @override
   Widget build(BuildContext context) {

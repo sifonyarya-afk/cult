@@ -22,9 +22,7 @@ void main() {
 
     await tester.tap(find.text('Мои анализы'));
     await tester.pumpAndSettle();
-    expect(find.text('Назначен'), findsOneWidget);
-    expect(find.text('Готов'), findsOneWidget);
-    expect(find.text('Сдан'), findsOneWidget);
+    expect(find.textContaining('Войдите по телефону'), findsOneWidget);
 
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
@@ -40,7 +38,7 @@ void main() {
     final store = ClinicStore();
     await store.load();
     store.bookVisit(service: 'Анализ крови', doctor: 'AlethiaPro', date: '2026-04-12', time: '10:30');
-    expect(store.upcoming.length, 2);
+    expect(store.upcoming.length, 1);
     await store.cancelVisit(store.upcoming.first.id);
     expect(store.upcoming.where((visit) => visit.service == 'Анализ крови'), isEmpty);
     expect(store.spendBonus(30000), isFalse);

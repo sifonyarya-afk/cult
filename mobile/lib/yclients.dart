@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' show min;
 
 import 'package:http/http.dart' as http;
 
@@ -67,12 +68,43 @@ class YcService {
 }
 
 class YcStaff {
-  YcStaff({required this.id, required this.name, required this.specialization, required this.bookable});
+  YcStaff({
+    required this.id,
+    required this.name,
+    required this.specialization,
+    required this.bookable,
+    this.avatar = '',
+    this.about = '',
+  });
 
   final int id;
   final String name;
   final String specialization;
   final bool bookable;
+  final String avatar;
+  final String about;
+}
+
+class YcRecord {
+  YcRecord({
+    required this.id,
+    required this.service,
+    required this.doctor,
+    required this.date,
+    required this.time,
+    required this.status,
+    this.cost = 0,
+    this.recordHash = '',
+  });
+
+  final int id;
+  final String service;
+  final String doctor;
+  final String date;
+  final String time;
+  final String status;
+  final int cost;
+  final String recordHash;
 }
 
 class YcSlot {
@@ -181,14 +213,127 @@ class YClientsApi {
     if (data is! List) return [];
     return [
       for (final item in data)
-        if (item is Map)
-          YcStaff(
-            id: _asInt(item['id']),
-            name: '${item['name'] ?? ''}',
-            specialization: '${item['specialization'] ?? ''}',
-            bookable: item['bookable'] != false,
-          ),
-    ].where((item) => item.id > 0 && item.name.isNotEmpty).toList();
+        if (item is Map) _staff(item, bookableDefault: true),
+    ].whereType<YcStaff>().where((item) => item.id > 0 && item.name.isNotEmpty).toList();
+  }
+
+  Future<List<YcStaff>> companyStaff(String partnerToken, String userToken, int companyId) async {
+    final data = await _get('/staff/$companyId', partnerToken, userToken: userToken);
+    if (data is! List) return [];
+    return [
+      for (final item in data)
+        if (item is Map && item['fired'] != 1 && item['hidden'] != 1) _staff(item, bookableDefault: false),
+    ].whereType<YcStaff>().where((item) => item.id > 0 && item.name.isNotEmpty).toList();
+  }
+
+  YcStaff? _staff(Map item, {required bool bookableDefault}) {
+    final id = _asInt(item['id']);
+    final name = '${item['name'] ?? ''}'.trim();
+    if (id <= 0 || name.isEmpty) return null;
+    final info = '${item['information'] ?? ''}'.replaceAll(RegExp(r'<[^>]+>'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+    return YcStaff(
+      id: id,
+      name: name,
+      specialization: '${item['specialization'] ?? ''}',
+      bookable: item.containsKey('bookable') ? item['bookable'] != false : bookableDefault,
+      avatar: '${item['avatar_big'] ?? item['avatar'] ?? ''}',
+      about: info,
+    );
+  }
+
+  Future<List<YcRecord>> clientRecords({
+    required String partnerToken,
+    required String userToken,
+    required int companyId,
+    int clientId = 0,
+    String phone = '',
+  }) async {
+    final digits = normalizePhone(phone);
+    if (clientId > 0) {
+      final now = DateTime.now();
+      final from = DateTime(now.year - 2, 1, 1);
+      final to = DateTime(now.year + 2, 12, 31);
+      String ymd(DateTime value) =>
+          '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
+      final data = await _get(
+        '/records/$companyId',
+        partnerToken,
+        userToken: userToken,
+        query: {
+          'client_id': '$clientId',
+          'start_date': ymd(from),
+          'end_date': ymd(to),
+          'page': '1',
+          'count': '100',
+        },
+      );
+      if (data is List && data.isNotEmpty) {
+        return [for (final item in data) if (item is Map) _record(item)].whereType<YcRecord>().toList();
+      }
+    }
+    if (digits.length >= 11) {
+      final data = await _post(
+        '/company/$companyId/clients/visits/search',
+        partnerToken,
+        {'client_phone': digits, 'page': 1, 'page_size': 50},
+        userToken: userToken,
+      );
+      final records = data is Map ? data['records'] : null;
+      if (records is List) {
+        return [for (final item in records) if (item is Map) _record(item)].whereType<YcRecord>().toList();
+      }
+    }
+    return [];
+  }
+
+  YcRecord? _record(Map item) {
+    if (item['deleted'] == true) return null;
+    final id = _asInt(item['id']);
+    if (id <= 0) return null;
+    final services = item['services'];
+    var title = 'Визит';
+    var cost = 0;
+    if (services is List && services.isNotEmpty && services.first is Map) {
+      final first = services.first as Map;
+      title = '${first['title'] ?? title}';
+      cost = _asInt(first['cost_to_pay'] ?? first['cost'] ?? first['first_cost'] ?? first['paid_sum']);
+    }
+    final staff = item['staff'];
+    final doctor = staff is Map ? '${staff['name'] ?? ''}' : '';
+    final rawDate = '${item['datetime'] ?? item['date'] ?? ''}';
+    final parsed = DateTime.tryParse(rawDate.replaceFirst(' ', 'T')) ?? _parseLooseDate(rawDate);
+    final date = parsed == null
+        ? rawDate.split(' ').first
+        : '${parsed.year.toString().padLeft(4, '0')}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
+    final time = parsed == null
+        ? (rawDate.contains(' ') ? rawDate.split(' ').last.substring(0, min(5, rawDate.split(' ').last.length)) : '')
+        : '${parsed.hour.toString().padLeft(2, '0')}:${parsed.minute.toString().padLeft(2, '0')}';
+    final attendance = _asInt(item['visit_attendance'] ?? item['attendance']);
+    final now = DateTime.now();
+    final isPast = parsed != null ? parsed.isBefore(now) : false;
+    final status = attendance == 1 || attendance == -1 || isPast ? 'past' : 'upcoming';
+    return YcRecord(
+      id: id,
+      service: title,
+      doctor: doctor.isEmpty ? 'Врач филиала' : doctor,
+      date: date,
+      time: time,
+      status: status,
+      cost: cost,
+      recordHash: '${item['record_hash'] ?? item['hash'] ?? ''}',
+    );
+  }
+
+  DateTime? _parseLooseDate(String raw) {
+    final match = RegExp(r'(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})').firstMatch(raw);
+    if (match == null) return null;
+    return DateTime(
+      int.parse(match.group(1)!),
+      int.parse(match.group(2)!),
+      int.parse(match.group(3)!),
+      int.parse(match.group(4)!),
+      int.parse(match.group(5)!),
+    );
   }
 
   Future<List<String>> bookableDates(String partnerToken, int companyId, {int? staffId, int? serviceId}) async {
@@ -267,6 +412,15 @@ class YClientsApi {
     required String recordHash,
   }) async {
     await _delete('/user/records/$recordId/$recordHash', partnerToken, userToken: userToken);
+  }
+
+  Future<void> deleteRecord({
+    required String partnerToken,
+    required String userToken,
+    required int companyId,
+    required int recordId,
+  }) async {
+    await _delete('/record/$companyId/$recordId', partnerToken, userToken: userToken);
   }
 
   Future<YcClient?> findClientByPhone({

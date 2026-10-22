@@ -628,6 +628,7 @@ class _BookingPageState extends State<BookingPage> {
       store.rememberContact(name: _name.text, phone: _phone.text.trim(), email: _email.text.trim());
       store.bookVisit(service: _service, doctor: _doctor, date: iso, time: slot.time, recordId: booked.recordId, recordHash: booked.recordHash);
       store.sendMessage('admin', 'Запись YClients №${booked.recordId}: $_service, $_doctor, $iso в ${slot.time}.');
+      await store.refreshVisits();
       if (!mounted) return;
       setState(() {
         _sending = false;

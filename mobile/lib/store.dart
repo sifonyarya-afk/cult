@@ -124,17 +124,7 @@ class ChatMessage {
 }
 
 class ClinicStore extends ChangeNotifier {
-  ClinicStore() {
-    appointments = [
-      Appointment(
-        id: 'seed-visit',
-        service: 'Скульптурный массаж лица',
-        doctor: 'AlethiaPro',
-        date: '2026-03-12',
-        time: '10:30',
-      ),
-    ];
-  }
+  ClinicStore();
 
   static const _key = 'cult-flutter';
   static const branchId = '988587';
@@ -159,12 +149,22 @@ class ClinicStore extends ChangeNotifier {
   String partnerToken = '';
   String userToken = '';
   List<YcService> liveServices = [];
+  List<YcStaff> liveStaff = [];
   List<YcCard> loyaltyCards = [];
   String liveError = '';
+  String visitsError = '';
+  var visitsLoading = false;
+  var syncing = false;
 
   YClientsApi yclients = YClientsApi();
 
-  int get balance => max(0, 12450 - spent);
+  int get balance {
+    if (loyaltyCards.isNotEmpty) {
+      return loyaltyCards.fold(0, (sum, card) => sum + card.balance);
+    }
+    return max(0, 12450 - spent);
+  }
+
   int? get companyIdInt => int.tryParse(companyId.trim());
   bool get yclientsReady => companyIdInt != null && partnerToken.trim().isNotEmpty && userToken.trim().isNotEmpty;
   bool get signedIn => ycClientId > 0 && normalizePhone(profilePhone).length >= 11;
@@ -178,6 +178,13 @@ class ClinicStore extends ChangeNotifier {
   int get cartTotal => cart.fold(0, (sum, item) => sum + item.price * item.qty);
 
   List<Appointment> get upcoming => appointments.where((item) => item.status == 'upcoming').toList();
+  List<Appointment> get past => appointments.where((item) => item.status == 'past').toList();
+  List<Appointment> get labHistory {
+    return [
+      for (final visit in [...upcoming, ...past])
+        if (RegExp(r'анализ|днк|забор', caseSensitive: false).hasMatch(visit.service)) visit,
+    ];
+  }
 
   List<Service> get catalogServices {
     final current = gender;
@@ -205,7 +212,10 @@ class ClinicStore extends ChangeNotifier {
     }
     final json = jsonDecode(raw) as Map<String, dynamic>;
     cart = (json['cart'] as List<dynamic>? ?? []).map((item) => CartItem.fromJson(item as Map<String, dynamic>)).toList();
-    appointments = (json['appointments'] as List<dynamic>? ?? []).map((item) => Appointment.fromJson(item as Map<String, dynamic>)).toList();
+    appointments = (json['appointments'] as List<dynamic>? ?? [])
+        .map((item) => Appointment.fromJson(item as Map<String, dynamic>))
+        .where((item) => item.id != 'seed-visit')
+        .toList();
     orders = (json['orders'] as List<dynamic>? ?? []).map((item) => ShopOrder.fromJson(item as Map<String, dynamic>)).toList();
     gifts = (json['gifts'] as List<dynamic>? ?? []).map((item) => GiftCard.fromJson(item as Map<String, dynamic>)).toList();
     favorites = (json['favorites'] as List<dynamic>? ?? []).cast<String>();
@@ -325,20 +335,31 @@ class ClinicStore extends ChangeNotifier {
   Future<String?> cancelVisit(String id) async {
     final visit = appointments.where((item) => item.id == id).firstOrNull;
     if (visit == null || visit.status == 'cancelled') return null;
-    if (yclientsReady && visit.recordId != null && (visit.recordHash ?? '').isNotEmpty) {
+    final company = companyIdInt;
+    if (yclientsReady && visit.recordId != null && company != null) {
       try {
-        await yclients.cancel(
-          partnerToken: partnerToken,
-          userToken: userToken,
-          recordId: visit.recordId!,
-          recordHash: visit.recordHash!,
-        );
+        if ((visit.recordHash ?? '').isNotEmpty) {
+          await yclients.cancel(
+            partnerToken: partnerToken,
+            userToken: userToken,
+            recordId: visit.recordId!,
+            recordHash: visit.recordHash!,
+          );
+        } else {
+          await yclients.deleteRecord(
+            partnerToken: partnerToken,
+            userToken: userToken,
+            companyId: company,
+            recordId: visit.recordId!,
+          );
+        }
       } on YcException catch (error) {
         return error.message;
       }
     }
     visit.status = 'cancelled';
     await _save();
+    await refreshVisits();
     return null;
   }
 
@@ -387,6 +408,7 @@ class ClinicStore extends ChangeNotifier {
       }
       await _save();
       if (gender != null) await _syncGenderToYclients();
+      await syncClinic();
       return null;
     } on YcException catch (error) {
       return error.message;
@@ -417,7 +439,23 @@ class ClinicStore extends ChangeNotifier {
     profilePhone = '';
     profileEmail = '';
     loyaltyCards = [];
+    appointments = [];
+    visitsError = '';
     await _save();
+  }
+
+  Future<void> syncClinic() async {
+    if (syncing || !yclientsReady) return;
+    syncing = true;
+    notifyListeners();
+    await Future.wait([
+      refreshCatalog(),
+      refreshStaff(),
+      if (signedIn) refreshVisits(),
+      if (signedIn) refreshLoyalty(),
+    ]);
+    syncing = false;
+    notifyListeners();
   }
 
   Future<String?> refreshCatalog() async {
@@ -430,6 +468,65 @@ class ClinicStore extends ChangeNotifier {
       return null;
     } on YcException catch (error) {
       liveError = error.message;
+      notifyListeners();
+      return error.message;
+    }
+  }
+
+  Future<String?> refreshStaff() async {
+    final id = companyIdInt;
+    if (id == null || partnerToken.isEmpty) return 'YClients не подключён.';
+    try {
+      var list = await yclients.companyStaff(partnerToken, userToken, id);
+      if (list.isEmpty) list = await yclients.staff(partnerToken, id);
+      liveStaff = list;
+      notifyListeners();
+      return null;
+    } on YcException catch (error) {
+      return error.message;
+    }
+  }
+
+  Future<String?> refreshVisits() async {
+    final id = companyIdInt;
+    if (!signedIn || id == null || partnerToken.isEmpty || userToken.isEmpty) {
+      if (!signedIn) {
+        appointments = [];
+        visitsError = '';
+        notifyListeners();
+      }
+      return null;
+    }
+    visitsLoading = true;
+    visitsError = '';
+    notifyListeners();
+    try {
+      final records = await yclients.clientRecords(
+        partnerToken: partnerToken,
+        userToken: userToken,
+        companyId: id,
+        clientId: ycClientId,
+        phone: profilePhone,
+      );
+      appointments = [
+        for (final record in records)
+          Appointment(
+            id: 'yc-${record.id}',
+            service: record.service,
+            doctor: record.doctor,
+            date: record.date,
+            time: record.time,
+            status: record.status,
+            recordId: record.id,
+            recordHash: record.recordHash.isEmpty ? null : record.recordHash,
+          ),
+      ]..sort((a, b) => '${b.date}${b.time}'.compareTo('${a.date}${a.time}'));
+      visitsLoading = false;
+      await _save();
+      return null;
+    } on YcException catch (error) {
+      visitsLoading = false;
+      visitsError = error.message;
       notifyListeners();
       return error.message;
     }
