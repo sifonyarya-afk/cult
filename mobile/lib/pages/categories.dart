@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../data.dart';
 import '../theme.dart';
@@ -704,6 +705,10 @@ class SciencePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Наука')),
+      bottomNavigationBar: CultBookBar(
+        label: 'Консультация по протоколу',
+        onPressed: () => pushPage(context, const BookingPage()),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
@@ -719,7 +724,21 @@ class SciencePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text('Будущее клеточной регенерации', style: cultHeadline(28)),
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(
+                const ClipboardData(
+                  text: 'Будущее клеточной регенерации · CULT Clinic',
+                ),
+              );
+              cultTapFeedback();
+              showCultSnack(context, 'Заголовок скопирован');
+            },
+            child: Text(
+              'Будущее клеточной регенерации',
+              style: cultHeadline(28),
+            ),
+          ),
           const SizedBox(height: 8),
           const Text(
             'Короткие разборы протоколов CULT.',
@@ -867,6 +886,9 @@ class DevicePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final store = ClinicScope.of(context);
+    final summary =
+        '${device.title} · ${device.price} · ${device.meta} · CULT Сочи';
     return Scaffold(
       appBar: AppBar(title: const Text('CULT')),
       bottomNavigationBar: CultBookBar(
@@ -891,12 +913,34 @@ class DevicePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(device.title, style: cultHeadline(32)),
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: summary));
+              cultTapFeedback();
+              showCultSnack(context, 'Процедура скопирована');
+            },
+            child: Text(device.title, style: cultHeadline(32)),
+          ),
           Text(
             device.text,
             style: const TextStyle(color: Cult.muted, height: 1.35),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+          TextButton(
+            onPressed: () {
+              store.sendMessage(
+                'specialist',
+                'Вопрос по аппарату «${device.title}» (${device.price}).',
+              );
+              cultTapFeedback();
+              showCultSnack(
+                context,
+                'Сообщение врачу отправлено — откройте Чат',
+              );
+            },
+            child: const Text('Спросить врача'),
+          ),
+          const SizedBox(height: 4),
           Wrap(
             spacing: 16,
             runSpacing: 8,

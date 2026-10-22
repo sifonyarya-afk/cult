@@ -427,7 +427,13 @@ class _BlogPageState extends State<BlogPage> {
               hint: 'Найти материал',
               onChanged: () => setState(() {}),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            if (list.isNotEmpty)
+              Text(
+                '${list.length} материал${list.length == 1 ? '' : 'ов'}',
+                style: const TextStyle(color: Cult.muted, fontSize: 12),
+              ),
+            const SizedBox(height: 12),
             if (list.isEmpty)
               CultEmpty(
                 title: 'Ничего не найдено',
@@ -442,46 +448,71 @@ class _BlogPageState extends State<BlogPage> {
               for (final article in list)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 14),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: () {
-                      cultTapFeedback();
-                      pushPage(context, ArticlePage(article: article));
-                    },
-                    child: CultCard(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CultImage(article.image, aspect: 16 / 9, radius: 16),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  article.kicker.toUpperCase(),
-                                  style: const TextStyle(
-                                    color: Cult.primary,
-                                    letterSpacing: 1.1,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(article.title, style: cultHeadline(22)),
-                                const SizedBox(height: 4),
-                                Text(
-                                  article.author,
-                                  style: const TextStyle(
-                                    color: Cult.muted,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
+                  child: Semantics(
+                    button: true,
+                    label: '${article.title}, ${article.author}',
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        cultTapFeedback();
+                        pushPage(context, ArticlePage(article: article));
+                      },
+                      onLongPress: () {
+                        Clipboard.setData(
+                          ClipboardData(
+                            text: '${article.title} — ${article.author}',
                           ),
-                        ],
+                        );
+                        cultTapFeedback();
+                        showCultSnack(context, 'Материал скопирован');
+                      },
+                      child: CultCard(
+                        padding: EdgeInsets.zero,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CultImage(
+                              article.image,
+                              aspect: 16 / 9,
+                              radius: 16,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                12,
+                                16,
+                                16,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    article.kicker.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Cult.primary,
+                                      letterSpacing: 1.1,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    article.title,
+                                    style: cultHeadline(22),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    article.author,
+                                    style: const TextStyle(
+                                      color: Cult.muted,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -601,7 +632,13 @@ class _CasesPageState extends State<CasesPage> {
               hint: 'Процедура или врач',
               onChanged: () => setState(() {}),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            if (list.isNotEmpty)
+              Text(
+                '${list.length} кейс${list.length == 1 ? '' : 'ов'}',
+                style: const TextStyle(color: Cult.muted, fontSize: 12),
+              ),
+            const SizedBox(height: 12),
             if (list.isEmpty)
               CultEmpty(
                 title: 'Ничего не найдено',
@@ -616,33 +653,52 @@ class _CasesPageState extends State<CasesPage> {
               for (final item in list)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 14),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: () {
-                      cultTapFeedback();
-                      pushPage(context, CasePage(item: item));
-                    },
-                    child: CultCard(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CultImage(item.image, aspect: 4 / 3, radius: 16),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(item.title, style: cultHeadline(22)),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${item.procedure} · ${item.doctor}',
-                                  style: const TextStyle(color: Cult.muted),
-                                ),
-                              ],
-                            ),
+                  child: Semantics(
+                    button: true,
+                    label: '${item.title}, ${item.procedure}',
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        cultTapFeedback();
+                        pushPage(context, CasePage(item: item));
+                      },
+                      onLongPress: () {
+                        Clipboard.setData(
+                          ClipboardData(
+                            text:
+                                '${item.title} · ${item.procedure} · ${item.doctor}',
                           ),
-                        ],
+                        );
+                        cultTapFeedback();
+                        showCultSnack(context, 'Кейс скопирован');
+                      },
+                      child: CultCard(
+                        padding: EdgeInsets.zero,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CultImage(item.image, aspect: 4 / 3, radius: 16),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                12,
+                                16,
+                                16,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(item.title, style: cultHeadline(22)),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${item.procedure} · ${item.doctor}',
+                                    style: const TextStyle(color: Cult.muted),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -661,17 +717,45 @@ class CasePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final store = ClinicScope.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('CULT')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
-          Text(item.title, style: cultHeadline(28)),
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(
+                ClipboardData(
+                  text:
+                      '${item.title} · ${item.procedure} · ${item.doctor} · CULT',
+                ),
+              );
+              cultTapFeedback();
+              showCultSnack(context, 'Кейс скопирован');
+            },
+            child: Text(item.title, style: cultHeadline(28)),
+          ),
           Text(
             '${item.procedure} · ${item.doctor}',
             style: const TextStyle(color: Cult.muted),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () {
+              store.sendMessage(
+                'specialist',
+                'Вопрос по кейсу «${item.title}» (${item.procedure}).',
+              );
+              cultTapFeedback();
+              showCultSnack(
+                context,
+                'Сообщение врачу отправлено — откройте Чат',
+              );
+            },
+            child: const Text('Спросить врача о результате'),
+          ),
+          const SizedBox(height: 8),
           const CultSectionLabel('До'),
           const SizedBox(height: 8),
           const CultImage('before', aspect: 4 / 3, radius: 16),

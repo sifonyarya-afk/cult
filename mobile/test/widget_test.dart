@@ -469,6 +469,27 @@ void main() {
     expect(store.threads['bot']!.last.text.toLowerCase(), contains('контурн'));
   });
 
+  test('Бот отвечает про постакне и купероз', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Как убрать постакне?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('постакне'));
+    store.sendMessage('bot', 'Беспокоит купероз');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('купероз'));
+  });
+
+  test('Переписку можно скопировать текстом', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Хочу записаться');
+    final text = store.chatTranscript('bot');
+    expect(text, contains('CULT'));
+    expect(text, contains('Вы:'));
+    expect(text.toLowerCase(), contains('запись'));
+  });
+
   test('Бот отвечает про эпиляцию и мезотерапию', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();

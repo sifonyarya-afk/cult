@@ -218,6 +218,8 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Лазер',
     'Эпиляция',
     'Мезотерапия',
+    'Постакне',
+    'Купероз',
   ];
 
   @override
@@ -310,6 +312,18 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
           ],
         ),
         actions: [
+          if (messages.isNotEmpty)
+            IconButton(
+              tooltip: 'Скопировать переписку',
+              onPressed: () {
+                final text = store.chatTranscript(widget.contactId);
+                if (text.isEmpty) return;
+                Clipboard.setData(ClipboardData(text: text));
+                cultTapFeedback();
+                showCultSnack(context, 'Переписка скопирована');
+              },
+              icon: const Icon(Icons.copy_outlined),
+            ),
           if (canClear)
             IconButton(
               tooltip: 'Очистить переписку',

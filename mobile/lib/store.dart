@@ -838,6 +838,22 @@ class ClinicStore extends ChangeNotifier {
     _save();
   }
 
+  /// Plain-text transcript for clipboard / support.
+  String chatTranscript(String contactId) {
+    final thread = threads[contactId] ?? [];
+    if (thread.isEmpty) return '';
+    final name = contacts
+        .where((item) => item.id == contactId)
+        .map((item) => item.name)
+        .firstOrNull;
+    final buffer = StringBuffer('CULT · ${name ?? contactId}\n');
+    for (final message in thread) {
+      final who = message.from == 'me' ? 'Вы' : (name ?? 'Клиника');
+      buffer.writeln('$who: ${message.text}');
+    }
+    return buffer.toString().trimRight();
+  }
+
   String _autoReply(String contactId, String text) {
     final q = text.toLowerCase();
     if (contactId == 'bot') {
@@ -936,6 +952,20 @@ class ClinicStore extends ChangeNotifier {
           q.contains('longevity') ||
           q.contains('долголет')) {
         return 'NAD+ и longevity-протоколы — в разделе «Инфузии». Курс подберём на консультации.';
+      }
+      if (q.contains('постакне') || q.contains('рубец') || q.contains('шрам')) {
+        return 'Постакне и рубцы — комбинация аппаратных и инъекционных протоколов. Запишитесь на консультацию — оценим тип кожи.';
+      }
+      if (q.contains('купероз') ||
+          q.contains('сосудист') ||
+          q.contains('розацеа')) {
+        return 'Купероз и сосудистые сетки часто ведём IPL и уходом. Подробности — в «Аппаратной» и на осмотре врача.';
+      }
+      if (q.contains('отбеливан') || q.contains('пятн')) {
+        return 'Пигментацию разбираем на консультации: пилинги, IPL или домашний протокол. Не отбеливайте кожу самостоятельно до визита.';
+      }
+      if (q.contains('мимическ') || q.contains('морщин')) {
+        return 'Мимические морщины — зона инъекций и ухода. Запишитесь к специалисту через меню «Врачи» или «+».';
       }
       if (q.contains('консультац')) {
         return 'Консультацию можно открыть через «+» на главной или в карточке врача. Первый визит часто начинается с осмотра.';
