@@ -130,4 +130,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('морфеус'), findsNothing);
   });
+
+  test('Уведомления и избранное сохраняются', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.setNotice('offers', true);
+    store.toggleFavorite('serum-cult');
+    expect(store.notices['offers'], isTrue);
+    expect(store.favorites, contains('serum-cult'));
+    final restored = ClinicStore();
+    await restored.load();
+    expect(restored.notices['offers'], isTrue);
+    expect(restored.favorites, contains('serum-cult'));
+  });
 }

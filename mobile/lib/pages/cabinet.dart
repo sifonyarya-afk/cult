@@ -596,17 +596,42 @@ class AnalysesPage extends StatelessWidget {
             )
           else
             for (final visit in labs)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(visit.service),
-                subtitle: Text(
-                  '${formatVisitDate(visit.date)} · ${visit.time}',
-                ),
-                trailing: Text(
-                  visit.status == 'upcoming' ? 'Назначен' : 'Сдан',
-                  style: const TextStyle(
-                    color: Cult.primary,
-                    fontWeight: FontWeight.w700,
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: CultCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(visit.service, style: cultHeadline(18)),
+                          ),
+                          Text(
+                            visit.status == 'upcoming' ? 'Назначен' : 'Сдан',
+                            style: const TextStyle(
+                              color: Cult.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${formatVisitDate(visit.date)} · ${visit.time}',
+                        style: const TextStyle(color: Cult.muted),
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => pushPage(
+                            context,
+                            BookingPage(initialService: visit.service),
+                          ),
+                          child: const Text('Записать снова'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -675,7 +700,12 @@ class PharmacyPage extends StatelessWidget {
                             product.name,
                             product.price,
                           );
-                          pushPage(context, const CartPage());
+                          showCultSnack(
+                            context,
+                            '${product.name} в корзине',
+                            actionLabel: 'Корзина',
+                            onAction: () => pushPage(context, const CartPage()),
+                          );
                         },
                       ),
                     ],
@@ -1066,7 +1096,10 @@ class _CertificatesPageState extends State<CertificatesPage> {
                 ChoiceChip(
                   label: Text(rub(value)),
                   selected: _nominal == value,
-                  onSelected: (_) => setState(() => _nominal = value),
+                  onSelected: (_) {
+                    cultTapFeedback();
+                    setState(() => _nominal = value);
+                  },
                 ),
             ],
           ),
@@ -1078,7 +1111,10 @@ class _CertificatesPageState extends State<CertificatesPage> {
                 ChoiceChip(
                   label: Text(name),
                   selected: _design == name,
-                  onSelected: (_) => setState(() => _design = name),
+                  onSelected: (_) {
+                    cultTapFeedback();
+                    setState(() => _design = name);
+                  },
                 ),
             ],
           ),
@@ -1088,33 +1124,49 @@ class _CertificatesPageState extends State<CertificatesPage> {
             value: _bonus,
             onChanged: (value) => setState(() => _bonus = value),
           ),
-          if (_error.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(_error, style: const TextStyle(color: Cult.error)),
-            ),
-          if (_code.isNotEmpty) ...[
-            CultCard(
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.card_giftcard,
-                    color: Cult.primary,
-                    size: 36,
+          if (_error.isNotEmpty) CultErrorBanner(message: _error),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 280),
+            child: _code.isEmpty
+                ? const SizedBox.shrink(key: ValueKey('idle'))
+                : CultCard(
+                    key: ValueKey(_code),
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.card_giftcard,
+                          color: Cult.primary,
+                          size: 36,
+                        ),
+                        const SizedBox(height: 10),
+                        Text('Сертификат готов', style: cultHeadline(22)),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Код $_code',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            letterSpacing: 0.8,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Сохраните код — отправим также в WhatsApp и на почту.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Cult.muted, height: 1.35),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: _code));
+                            showCultSnack(context, 'Код скопирован');
+                          },
+                          child: const Text('Скопировать код'),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 10),
-                  Text('Сертификат готов', style: cultHeadline(22)),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Код $_code отправлен в WhatsApp и на почту.',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Cult.muted, height: 1.35),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
+          ),
+          if (_code.isNotEmpty) const SizedBox(height: 12),
           CultButton(
             label: _code.isEmpty ? 'Оплатить сертификат' : 'Купить ещё',
             onPressed: () {
@@ -1123,6 +1175,7 @@ class _CertificatesPageState extends State<CertificatesPage> {
                 return;
               }
               final code = store.buyGift(_nominal, _design);
+              HapticFeedback.mediumImpact();
               setState(() {
                 _error = '';
                 _code = code;
@@ -1133,31 +1186,42 @@ class _CertificatesPageState extends State<CertificatesPage> {
           const CultSectionLabel('Уже купленные'),
           const SizedBox(height: 8),
           if (store.gifts.isEmpty)
-            const Text(
-              'Пока нет сертификатов на этом телефоне.',
-              style: TextStyle(color: Cult.muted),
+            const CultEmpty(
+              title: 'Сертификатов пока нет',
+              note: 'Купите номинал выше — код появится в списке.',
             )
           else
             for (final gift in store.gifts)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: CultCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${rub(gift.nominal)} · ${gift.design}',
-                        style: cultHeadline(18),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        gift.code,
-                        style: const TextStyle(
-                          color: Cult.muted,
-                          letterSpacing: 0.6,
+                  child: InkWell(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: gift.code));
+                      showCultSnack(context, 'Код ${gift.code} скопирован');
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${rub(gift.nominal)} · ${gift.design}',
+                          style: cultHeadline(18),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          gift.code,
+                          style: const TextStyle(
+                            color: Cult.muted,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Нажмите, чтобы скопировать',
+                          style: TextStyle(color: Cult.muted, fontSize: 12),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1224,12 +1288,18 @@ class _SettingsPageState extends State<SettingsPage> {
               ChoiceChip(
                 label: const Text('Женские'),
                 selected: store.gender == ClientGender.woman,
-                onSelected: (_) => store.setGender(ClientGender.woman),
+                onSelected: (_) {
+                  cultTapFeedback();
+                  store.setGender(ClientGender.woman);
+                },
               ),
               ChoiceChip(
                 label: const Text('Мужские'),
                 selected: store.gender == ClientGender.man,
-                onSelected: (_) => store.setGender(ClientGender.man),
+                onSelected: (_) {
+                  cultTapFeedback();
+                  store.setGender(ClientGender.man);
+                },
               ),
             ],
           ),
@@ -1257,25 +1327,37 @@ class _SettingsPageState extends State<SettingsPage> {
             contentPadding: EdgeInsets.zero,
             title: const Text('Визиты'),
             value: store.notices['visits'] ?? true,
-            onChanged: (value) => store.setNotice('visits', value),
+            onChanged: (value) {
+              cultTapFeedback();
+              store.setNotice('visits', value);
+            },
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Анализы'),
             value: store.notices['analyses'] ?? true,
-            onChanged: (value) => store.setNotice('analyses', value),
+            onChanged: (value) {
+              cultTapFeedback();
+              store.setNotice('analyses', value);
+            },
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Аптечка'),
             value: store.notices['pharmacy'] ?? true,
-            onChanged: (value) => store.setNotice('pharmacy', value),
+            onChanged: (value) {
+              cultTapFeedback();
+              store.setNotice('pharmacy', value);
+            },
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Предложения'),
             value: store.notices['offers'] ?? false,
-            onChanged: (value) => store.setNotice('offers', value),
+            onChanged: (value) {
+              cultTapFeedback();
+              store.setNotice('offers', value);
+            },
           ),
         ],
       ),

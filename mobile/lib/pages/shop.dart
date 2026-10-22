@@ -141,61 +141,97 @@ void _openAiPicker(BuildContext context) {
   );
 }
 
-class _ProductList extends StatelessWidget {
+class _ProductList extends StatefulWidget {
   const _ProductList({required this.tab});
 
   final String tab;
 
   @override
+  State<_ProductList> createState() => _ProductListState();
+}
+
+class _ProductListState extends State<_ProductList> {
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
-    final list = products.where((item) => item.tab == tab).toList();
+    final needle = _query.text.trim().toLowerCase();
+    final list = products.where((item) {
+      if (item.tab != widget.tab) return false;
+      if (needle.isEmpty) return true;
+      return item.name.toLowerCase().contains(needle) ||
+          item.blurb.toLowerCase().contains(needle);
+    }).toList();
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        for (final product in list) ...[
-          InkWell(
-            onTap: () => pushPage(context, ProductPage(product: product)),
-            child: Column(
-              children: [
-                CultImage(product.image, radius: 12),
-                const SizedBox(height: 10),
-                Text(
-                  product.name,
-                  style: cultHeadline(22),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  product.blurb,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Cult.muted),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  rub(product.price),
-                  style: cultHeadline(22).copyWith(color: Cult.primary),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          CultButton(
-            label: 'В корзину',
-            onPressed: () {
-              store.addToCart(product.id, product.name, product.price);
-              showCultSnack(
-                context,
-                '${product.name} в корзине',
-                actionLabel: 'Оформить',
-                onAction: () => pushPage(context, const CartPage()),
-              );
+        CultSearchField(
+          controller: _query,
+          hint: 'Найти формулу',
+          onChanged: () => setState(() {}),
+        ),
+        const SizedBox(height: 16),
+        if (list.isEmpty)
+          CultEmpty(
+            title: 'Ничего не найдено',
+            note: 'Смягчите запрос или сбросьте поиск.',
+            actionLabel: 'Сбросить',
+            onAction: () {
+              _query.clear();
+              setState(() {});
             },
-          ),
-          const SizedBox(height: 28),
-        ],
+          )
+        else
+          for (final product in list) ...[
+            InkWell(
+              onTap: () => pushPage(context, ProductPage(product: product)),
+              child: Column(
+                children: [
+                  CultImage(product.image, radius: 12),
+                  const SizedBox(height: 10),
+                  Text(
+                    product.name,
+                    style: cultHeadline(22),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    product.blurb,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Cult.muted),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    rub(product.price),
+                    style: cultHeadline(22).copyWith(color: Cult.primary),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            CultButton(
+              label: 'В корзину',
+              onPressed: () {
+                store.addToCart(product.id, product.name, product.price);
+                showCultSnack(
+                  context,
+                  '${product.name} в корзине',
+                  actionLabel: 'Оформить',
+                  onAction: () => pushPage(context, const CartPage()),
+                );
+              },
+            ),
+            const SizedBox(height: 28),
+          ],
       ],
     );
   }
@@ -238,7 +274,14 @@ class ProductPage extends StatelessWidget {
               ),
               IconButton(
                 tooltip: liked ? 'Убрать из избранного' : 'В избранное',
-                onPressed: () => store.toggleFavorite(product.id),
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  store.toggleFavorite(product.id);
+                  showCultSnack(
+                    context,
+                    liked ? 'Убрали из избранного' : 'В избранном',
+                  );
+                },
                 icon: Icon(
                   liked ? Icons.favorite : Icons.favorite_border,
                   color: Cult.primary,
