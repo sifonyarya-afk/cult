@@ -148,14 +148,14 @@ class ClinicStore extends ChangeNotifier {
   Map<String, List<ChatMessage>> threads = {};
   Map<String, bool> notices = {'visits': true, 'analyses': true, 'pharmacy': true, 'offers': false};
   int spent = 0;
-  String profileName = 'Александра В.';
+  String profileName = '';
   String profilePhone = '';
   String profileEmail = '';
+  int ycClientId = 0;
   String companyId = '';
   String chainId = '0';
   String partnerToken = '';
   String userToken = '';
-  bool clinicAccount = true;
   List<YcService> liveServices = [];
   List<YcCard> loyaltyCards = [];
   String liveError = '';
@@ -164,7 +164,13 @@ class ClinicStore extends ChangeNotifier {
 
   int get balance => max(0, 12450 - spent);
   int? get companyIdInt => int.tryParse(companyId.trim());
-  bool get yclientsReady => companyIdInt != null && partnerToken.trim().isNotEmpty;
+  bool get yclientsReady => companyIdInt != null && partnerToken.trim().isNotEmpty && userToken.trim().isNotEmpty;
+  bool get signedIn => ycClientId > 0 && normalizePhone(profilePhone).length >= 11;
+  String get displayName {
+    final name = profileName.trim();
+    if (name.isNotEmpty) return name;
+    return signedIn ? 'Клиент CULT' : 'Гость';
+  }
   int get cartCount => cart.fold(0, (sum, item) => sum + item.qty);
   int get cartTotal => cart.fold(0, (sum, item) => sum + item.price * item.qty);
 
@@ -186,15 +192,15 @@ class ClinicStore extends ChangeNotifier {
     gifts = (json['gifts'] as List<dynamic>? ?? []).map((item) => GiftCard.fromJson(item as Map<String, dynamic>)).toList();
     favorites = (json['favorites'] as List<dynamic>? ?? []).cast<String>();
     spent = json['spent'] as int? ?? 0;
-    profileName = json['profileName'] as String? ?? profileName;
+    profileName = json['profileName'] as String? ?? '';
     profilePhone = json['profilePhone'] as String? ?? '';
     profileEmail = json['profileEmail'] as String? ?? '';
+    ycClientId = json['ycClientId'] as int? ?? 0;
     companyId = json['companyId'] as String? ?? '';
     chainId = json['chainId'] as String? ?? '0';
     partnerToken = json['partnerToken'] as String? ?? '';
     userToken = json['userToken'] as String? ?? '';
-    clinicAccount = json['clinicAccount'] as bool? ?? true;
-    if (clinicAccount) _applyClinicDefaults();
+    _applyClinicDefaults();
     final savedNotices = json['notices'] as Map<String, dynamic>?;
     if (savedNotices != null) {
       notices = savedNotices.map((key, value) => MapEntry(key, value as bool));
@@ -233,11 +239,11 @@ class ClinicStore extends ChangeNotifier {
       'profileName': profileName,
       'profilePhone': profilePhone,
       'profileEmail': profileEmail,
+      'ycClientId': ycClientId,
       'companyId': companyId,
       'chainId': chainId,
       'partnerToken': partnerToken,
       'userToken': userToken,
-      'clinicAccount': clinicAccount,
       'notices': notices,
       'threads': threads.map((key, value) => MapEntry(key, value.map((item) => item.toJson()).toList())),
     };
@@ -323,42 +329,46 @@ class ClinicStore extends ChangeNotifier {
     _save();
   }
 
-  Future<String?> connectYclients({
-    required String companyId,
-    required String chainId,
-    required String partnerToken,
-    required String userToken,
-    required String phone,
-    required String email,
-  }) async {
-    final id = int.tryParse(companyId.trim());
-    if (id == null || partnerToken.trim().isEmpty) return 'Укажите ID филиала и токен партнера.';
+  Future<String?> registerWithPhone({required String name, required String phone, String email = ''}) async {
+    _applyClinicDefaults();
+    final id = companyIdInt;
+    if (id == null || partnerToken.isEmpty || userToken.isEmpty) {
+      return 'Клиника временно недоступна. Попробуйте позже.';
+    }
+    final digits = normalizePhone(phone);
+    final trimmed = name.trim();
+    if (trimmed.length < 2) return 'Укажите имя.';
+    if (digits.length < 11) return 'Укажите телефон в формате +7.';
     try {
-      liveServices = await _fetchLive(partner: partnerToken.trim(), user: userToken.trim(), companyId: id);
-      liveError = '';
+      final client = await yclients.registerClient(
+        partnerToken: partnerToken,
+        userToken: userToken,
+        companyId: id,
+        name: trimmed,
+        phone: digits,
+        email: email,
+      );
+      ycClientId = client.id;
+      profileName = trimmed;
+      profilePhone = digits;
+      if (email.trim().isNotEmpty) {
+        profileEmail = email.trim();
+      } else if (client.email.isNotEmpty) {
+        profileEmail = client.email;
+      }
+      await _save();
+      return null;
     } on YcException catch (error) {
       return error.message;
     }
-    clinicAccount = true;
-    this.companyId = companyId.trim();
-    this.chainId = chainId.trim().isEmpty ? '0' : chainId.trim();
-    this.partnerToken = partnerToken.trim();
-    this.userToken = userToken.trim();
-    profilePhone = phone.trim();
-    profileEmail = email.trim();
-    await _save();
-    return null;
   }
 
-  Future<void> disconnectYclients() async {
-    clinicAccount = false;
-    companyId = '';
-    chainId = '0';
-    partnerToken = '';
-    userToken = '';
-    liveServices = [];
+  Future<void> signOut() async {
+    ycClientId = 0;
+    profileName = '';
+    profilePhone = '';
+    profileEmail = '';
     loyaltyCards = [];
-    liveError = '';
     await _save();
   }
 
@@ -378,9 +388,10 @@ class ClinicStore extends ChangeNotifier {
   }
 
   void _applyClinicDefaults() {
-    if (companyId.trim().isEmpty) companyId = branchId;
-    if (partnerToken.trim().isEmpty) partnerToken = partnerKey;
-    if (userToken.trim().isEmpty) userToken = userKey;
+    companyId = branchId;
+    partnerToken = partnerKey;
+    userToken = userKey;
+    if (chainId.trim().isEmpty) chainId = '0';
   }
 
   Future<List<YcService>> _fetchLive({required String partner, required String user, required int companyId}) async {

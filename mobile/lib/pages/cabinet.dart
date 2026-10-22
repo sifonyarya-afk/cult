@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../data.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'auth_page.dart';
 import 'shop.dart';
 import 'talk.dart';
-import 'yclients_page.dart';
 
 class CabinetPage extends StatelessWidget {
   const CabinetPage({super.key});
@@ -19,8 +19,28 @@ class CabinetPage extends StatelessWidget {
       children: [
         Center(child: SizedBox(width: 96, child: CultImage('avatar', aspect: 1, radius: 48))),
         const SizedBox(height: 8),
-        Center(child: Text(store.profileName, style: cultHeadline(26))),
-        const Center(child: Text('ПЛАТИНОВЫЙ СТАТУС', style: TextStyle(letterSpacing: 1.2, color: Cult.muted))),
+        Center(child: Text(store.displayName, style: cultHeadline(26))),
+        Center(
+          child: Text(
+            store.signedIn ? _phoneLabel(store.profilePhone) : 'ПЛАТИНОВЫЙ СТАТУС',
+            style: const TextStyle(letterSpacing: 1.2, color: Cult.muted),
+          ),
+        ),
+        if (!store.signedIn) ...[
+          const SizedBox(height: 16),
+          CultCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Войдите по телефону', style: cultHeadline(22)),
+                const SizedBox(height: 6),
+                const Text('Сохраним вас в филиале CULT в Сочи. Запись и кабинет будут на вашем номере.'),
+                const SizedBox(height: 12),
+                CultButton(label: 'Войти', onPressed: () => pushPage(context, const AuthPage(allowSkip: false))),
+              ],
+            ),
+          ),
+        ],
         if (next != null) ...[
           const SizedBox(height: 16),
           InkWell(
@@ -65,11 +85,22 @@ class CabinetPage extends StatelessWidget {
         _Row('Избранное', '${store.favorites.length}', () => pushPage(context, const FavoritesPage())),
         _Row('Бонусы и правила', rub(store.balance), () => pushPage(context, const LoyaltyPage())),
         _Row('Чат с доктором', 'Клинические вопросы', () => pushPage(context, const ChatThreadPage(contactId: 'specialist'))),
-        _Row('YClients', store.yclientsReady ? 'Филиал ${store.companyId}' : 'Подключить запись', () => pushPage(context, const YClientsPage())),
         _Row('Уведомления', 'Визиты, анализы, аптека', () => pushPage(context, const SettingsPage())),
+        if (store.signedIn)
+          _Row('Выйти', _phoneLabel(store.profilePhone), () async {
+            await store.signOut();
+          }),
       ],
     );
   }
+}
+
+String _phoneLabel(String raw) {
+  final digits = raw.replaceAll(RegExp(r'\D'), '');
+  if (digits.length == 11 && digits.startsWith('7')) {
+    return '+7 ${digits.substring(1, 4)} ${digits.substring(4, 7)}-${digits.substring(7, 9)}-${digits.substring(9)}';
+  }
+  return raw.isEmpty ? 'Телефон' : raw;
 }
 
 class _Row extends StatelessWidget {
@@ -336,10 +367,10 @@ class _LoyaltyPageState extends State<LoyaltyPage> {
             Text('Карты YClients', style: cultHeadline(22)),
             for (final card in store.loyaltyCards)
               ListTile(contentPadding: EdgeInsets.zero, title: Text(card.title), trailing: Text(rub(card.balance))),
-          ] else if (store.yclientsReady && store.userToken.isEmpty)
+          ] else if (!store.signedIn)
             const Padding(
               padding: EdgeInsets.only(top: 12),
-              child: Text('Карта филиала появится, когда в разделе YClients будет токен пользователя и телефон.'),
+              child: Text('Войдите по телефону в кабинете — карта филиала подтянется к номеру.'),
             )
           else if (_note.isNotEmpty)
             Padding(padding: const EdgeInsets.only(top: 12), child: Text(_note)),
@@ -479,6 +510,18 @@ class _SettingsPageState extends State<SettingsPage> {
           TextField(controller: _name, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Имя в кабинете')),
           const SizedBox(height: 12),
           CultButton(label: 'Сохранить имя', onPressed: () => store.setProfileName(_name.text)),
+          if (store.signedIn) ...[
+            const SizedBox(height: 8),
+            Text('Телефон ${_phoneLabel(store.profilePhone)}', style: const TextStyle(color: Cult.muted)),
+            TextButton(
+              onPressed: () => pushPage(context, const AuthPage(allowSkip: false)),
+              child: const Text('Сменить номер'),
+            ),
+          ] else
+            TextButton(
+              onPressed: () => pushPage(context, const AuthPage(allowSkip: false)),
+              child: const Text('Войти по телефону'),
+            ),
           SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Визиты'), value: store.notices['visits'] ?? true, onChanged: (value) => store.setNotice('visits', value)),
           SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Анализы'), value: store.notices['analyses'] ?? true, onChanged: (value) => store.setNotice('analyses', value)),
           SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Аптечка'), value: store.notices['pharmacy'] ?? true, onChanged: (value) => store.setNotice('pharmacy', value)),

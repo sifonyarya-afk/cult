@@ -96,6 +96,15 @@ class YcCard {
   final int balance;
 }
 
+class YcClient {
+  YcClient({required this.id, required this.name, required this.phone, this.email = ''});
+
+  final int id;
+  final String name;
+  final String phone;
+  final String email;
+}
+
 String normalizePhone(String raw) {
   var digits = raw.replaceAll(RegExp(r'\D'), '');
   if (digits.startsWith('8') && digits.length == 11) digits = '7${digits.substring(1)}';
@@ -260,15 +269,95 @@ class YClientsApi {
     await _delete('/user/records/$recordId/$recordHash', partnerToken, userToken: userToken);
   }
 
-  Future<String> login(String partnerToken, String login, String password) async {
-    final data = await _post('/auth', partnerToken, {'login': login, 'password': password});
-    if (data is Map && data['user_token'] is String && (data['user_token'] as String).isNotEmpty) {
-      return data['user_token'] as String;
+  Future<YcClient?> findClientByPhone({
+    required String partnerToken,
+    required String userToken,
+    required int companyId,
+    required String phone,
+  }) async {
+    final digits = normalizePhone(phone);
+    if (digits.length < 11) return null;
+    final data = await _get(
+      '/clients/$companyId',
+      partnerToken,
+      userToken: userToken,
+      query: {'phone': digits, 'page': '1', 'count': '5'},
+    );
+    if (data is! List || data.isEmpty) return null;
+    for (final item in data) {
+      if (item is! Map) continue;
+      final client = _parseClient(item);
+      if (client != null && normalizePhone(client.phone) == digits) return client;
     }
-    if (data is Map && data['flow'] != null) {
-      throw YcException('Включена проверка в два шага. Вставьте токен пользователя вручную.');
+    final first = data.first;
+    return first is Map ? _parseClient(first) : null;
+  }
+
+  Future<YcClient> createClient({
+    required String partnerToken,
+    required String userToken,
+    required int companyId,
+    required String name,
+    required String phone,
+    String email = '',
+  }) async {
+    final digits = normalizePhone(phone);
+    if (digits.length < 11) throw YcException('Укажите телефон в формате +7.');
+    final body = <String, Object?>{
+      'name': name.trim(),
+      'phone': int.tryParse(digits) ?? digits,
+      'comment': 'Регистрация из приложения CULT',
+    };
+    if (email.trim().isNotEmpty) body['email'] = email.trim();
+    try {
+      final data = await _post('/clients/$companyId', partnerToken, body, userToken: userToken);
+      final client = data is Map ? _parseClient(data) : null;
+      if (client == null) throw YcException('YClients не сохранил клиента.');
+      return client;
+    } on YcException catch (error) {
+      if (!error.message.toLowerCase().contains('уже существует')) rethrow;
+      final existing = await findClientByPhone(
+        partnerToken: partnerToken,
+        userToken: userToken,
+        companyId: companyId,
+        phone: digits,
+      );
+      if (existing != null) return existing;
+      rethrow;
     }
-    throw YcException('YClients не вернул токен пользователя.');
+  }
+
+  Future<YcClient> registerClient({
+    required String partnerToken,
+    required String userToken,
+    required int companyId,
+    required String name,
+    required String phone,
+    String email = '',
+  }) async {
+    final existing = await findClientByPhone(
+      partnerToken: partnerToken,
+      userToken: userToken,
+      companyId: companyId,
+      phone: phone,
+    );
+    if (existing != null) return existing;
+    return createClient(
+      partnerToken: partnerToken,
+      userToken: userToken,
+      companyId: companyId,
+      name: name,
+      phone: phone,
+      email: email,
+    );
+  }
+
+  YcClient? _parseClient(Map item) {
+    final id = _asInt(item['id']);
+    final name = '${item['display_name'] ?? item['name'] ?? ''}'.trim();
+    final phone = '${item['phone'] ?? ''}';
+    if (id <= 0) return null;
+    return YcClient(id: id, name: name.isEmpty ? 'Клиент' : name, phone: phone, email: '${item['email'] ?? ''}');
   }
 
   Future<List<YcCard>> loyaltyCards({

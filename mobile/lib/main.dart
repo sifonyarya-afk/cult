@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'pages/auth_page.dart';
 import 'pages/browse.dart';
 import 'pages/cabinet.dart';
 import 'pages/home.dart';
 import 'pages/info.dart';
 import 'pages/shop.dart';
 import 'pages/talk.dart';
-import 'pages/yclients_page.dart';
 import 'store.dart';
 import 'theme.dart';
 import 'widgets.dart';
@@ -57,12 +57,14 @@ class Boot extends StatefulWidget {
 
 class _BootState extends State<Boot> {
   var _ready = false;
+  var _entered = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.splash == Duration.zero) {
       _ready = true;
+      _entered = true;
       return;
     }
     Future<void>.delayed(widget.splash, () {
@@ -89,6 +91,15 @@ class _BootState extends State<Boot> {
             ],
           ),
         ),
+      );
+    }
+    final store = ClinicScope.of(context);
+    if (!_entered && !store.signedIn) {
+      return AuthPage(
+        allowSkip: true,
+        onDone: () {
+          if (mounted) setState(() => _entered = true);
+        },
       );
     }
     return const Shell();
@@ -154,27 +165,32 @@ class _ShellState extends State<Shell> {
   }
 
   void _menu(BuildContext context) {
+    final store = ClinicScope.of(context);
     showModalBottomSheet<void>(
       context: context,
-      builder: (context) => SafeArea(
+      builder: (sheetContext) => SafeArea(
         child: ListView(
           shrinkWrap: true,
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           children: [
             Padding(padding: const EdgeInsets.fromLTRB(8, 0, 8, 8), child: Text('Меню', style: cultHeadline(28))),
             const _MenuLabel('Клиника'),
-            ListTile(title: const Text('Запись'), subtitle: const Text('Услуга, врач, время'), onTap: () => _go(context, const BookingPage())),
-            ListTile(title: const Text('Прайс'), subtitle: const Text('Цены филиала'), onTap: () => _go(context, const PricesPage())),
-            ListTile(title: const Text('Врачи'), onTap: () => _go(context, const DoctorsPage())),
-            ListTile(title: const Text('Оборудование'), onTap: () => _go(context, const EquipmentPage())),
+            ListTile(title: const Text('Запись'), subtitle: const Text('Услуга, врач, время'), onTap: () => _go(sheetContext, const BookingPage())),
+            ListTile(title: const Text('Прайс'), subtitle: const Text('Цены филиала'), onTap: () => _go(sheetContext, const PricesPage())),
+            ListTile(title: const Text('Врачи'), onTap: () => _go(sheetContext, const DoctorsPage())),
+            ListTile(title: const Text('Оборудование'), onTap: () => _go(sheetContext, const EquipmentPage())),
             const _MenuLabel('Журнал'),
-            ListTile(title: const Text('Кейсы'), onTap: () => _go(context, const CasesPage())),
-            ListTile(title: const Text('Блог'), onTap: () => _go(context, const BlogPage())),
-            ListTile(title: const Text('О клинике'), onTap: () => _go(context, const AboutPage())),
+            ListTile(title: const Text('Кейсы'), onTap: () => _go(sheetContext, const CasesPage())),
+            ListTile(title: const Text('Блог'), onTap: () => _go(sheetContext, const BlogPage())),
+            ListTile(title: const Text('О клинике'), onTap: () => _go(sheetContext, const AboutPage())),
             const _MenuLabel('Ещё'),
-            ListTile(title: const Text('Трансфер'), onTap: () => _go(context, const TransferPage())),
-            ListTile(title: const Text('Сертификаты'), onTap: () => _go(context, const CertificatesPage())),
-            ListTile(title: const Text('YClients'), subtitle: const Text('Филиал и ключи'), onTap: () => _go(context, const YClientsPage())),
+            ListTile(title: const Text('Трансфер'), onTap: () => _go(sheetContext, const TransferPage())),
+            ListTile(title: const Text('Сертификаты'), onTap: () => _go(sheetContext, const CertificatesPage())),
+            ListTile(
+              title: Text(store.signedIn ? 'Профиль' : 'Войти по телефону'),
+              subtitle: Text(store.signedIn ? store.profilePhone : 'Сохраним вас в филиале'),
+              onTap: () => _go(sheetContext, store.signedIn ? const SettingsPage() : const AuthPage(allowSkip: false)),
+            ),
           ],
         ),
       ),

@@ -93,11 +93,72 @@ void main() {
     expect(store.partnerToken, ClinicStore.partnerKey);
     expect(store.userToken, ClinicStore.userKey);
     expect(store.yclientsReady, isTrue);
-    await store.disconnectYclients();
+    expect(store.signedIn, isFalse);
+  });
+
+  test('Регистрация по телефону создаёт клиента в YClients', () async {
+    SharedPreferences.setMockInitialValues({});
+    var created = false;
+    final api = YClientsApi(
+      client: _Scripted((request) async {
+        if (request.method == 'GET' && request.url.path.endsWith('/clients/988587')) {
+          return _json({'success': true, 'data': []});
+        }
+        if (request.method == 'POST' && request.url.path.endsWith('/clients/988587')) {
+          created = true;
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body['phone'], 79001112233);
+          expect(body['name'], 'Мария');
+          expect(request.headers['Authorization'], contains('User'));
+          return _json({
+            'success': true,
+            'data': {'id': 42, 'name': 'Мария', 'phone': '+79001112233', 'email': 'm@cult.clinic'},
+          });
+        }
+        return http.Response('{"meta":{"message":"нет"}}', 404);
+      }),
+    );
+    final store = ClinicStore();
+    await store.load();
+    store.yclients = api;
+    expect(await store.registerWithPhone(name: 'Мария', phone: '+7 900 111-22-33', email: 'm@cult.clinic'), isNull);
+    expect(created, isTrue);
+    expect(store.signedIn, isTrue);
+    expect(store.ycClientId, 42);
+    expect(store.profilePhone, '79001112233');
+    expect(store.profileName, 'Мария');
+
     final next = ClinicStore();
     await next.load();
-    expect(next.yclientsReady, isFalse);
-    expect(next.partnerToken, isEmpty);
+    expect(next.signedIn, isTrue);
+    expect(next.ycClientId, 42);
+    await next.signOut();
+    expect(next.signedIn, isFalse);
+    expect(next.ycClientId, 0);
+  });
+
+  test('Повторный вход находит существующего клиента', () async {
+    final api = YClientsApi(
+      client: _Scripted((request) async {
+        expect(request.method, 'GET');
+        expect(request.url.queryParameters['phone'], '79991112233');
+        return _json({
+          'success': true,
+          'data': [
+            {'id': 459368479, 'name': 'CULT App Test', 'phone': '+79991112233', 'email': 'cult.app.test@cult.clinic'},
+          ],
+        });
+      }),
+    );
+    final client = await api.registerClient(
+      partnerToken: 'partner',
+      userToken: 'user',
+      companyId: 988587,
+      name: 'Новое Имя',
+      phone: '79991112233',
+    );
+    expect(client.id, 459368479);
+    expect(client.name, 'CULT App Test');
   });
 
   test('Пустой онлайн-каталог дополняется услугами филиала', () async {
@@ -159,40 +220,16 @@ void main() {
     expect(api.services('bad', 1), throwsA(isA<YcException>().having((error) => error.message, 'message', 'Неверный токен')));
   });
 
-  test('Ключи филиала сохраняются на телефоне и не светятся в коде записи', () async {
+  test('Отмена записи уходит в YClients с ключами филиала', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
     await store.load();
-    store.yclients = YClientsApi(
-      client: _Scripted((request) async => _json({
-            'success': true,
-            'data': {'services': []},
-          })),
-    );
-    final error = await store.connectYclients(
-      companyId: '77',
-      chainId: '0',
-      partnerToken: 'secret-partner',
-      userToken: 'secret-user',
-      phone: '+7 916 000-00-00',
-      email: 'a@cult.clinic',
-    );
-    expect(error, isNull);
-    expect(store.yclientsReady, isTrue);
-
-    final next = ClinicStore();
-    next.yclients = store.yclients;
-    await next.load();
-    expect(next.partnerToken, 'secret-partner');
-    expect(next.userToken, 'secret-user');
-    expect(next.companyId, '77');
-
     store.bookVisit(service: 'Массаж', doctor: 'Анна', date: '2026-05-01', time: '12:00', recordId: 99, recordHash: 'abc');
     var cancelled = false;
     store.yclients = YClientsApi(
       client: _Scripted((request) async {
         cancelled = request.method == 'DELETE' && request.url.path.endsWith('/user/records/99/abc');
-        expect(request.headers['Authorization'], 'Bearer secret-partner, User secret-user');
+        expect(request.headers['Authorization'], startsWith('Bearer ${ClinicStore.partnerKey}, User'));
         return http.Response('{"success":true,"data":null}', 200);
       }),
     );

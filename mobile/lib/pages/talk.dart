@@ -5,8 +5,8 @@ import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import '../yclients.dart';
+import 'auth_page.dart';
 import 'cabinet.dart';
-import 'yclients_page.dart';
 
 class ChatPage extends StatelessWidget {
   const ChatPage({super.key});
@@ -332,8 +332,9 @@ class _BookingPageState extends State<BookingPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('YClients ещё не подключён. Визит останется только в приложении.'),
-                TextButton(onPressed: () => pushPage(context, const YClientsPage()), child: const Text('Подключить филиал')),
+                const Text('Онлайн-запись к филиалу временно недоступна. Визит сохранится в приложении.'),
+                if (!store.signedIn)
+                  TextButton(onPressed: () => pushPage(context, const AuthPage(allowSkip: false)), child: const Text('Войти по телефону')),
               ],
             ),
           ),
@@ -380,7 +381,14 @@ class _BookingPageState extends State<BookingPage> {
         children: [
           Text('Запись в филиал', style: cultHeadline(30)),
           const SizedBox(height: 8),
-          Text('Услуги и врачи из YClients, филиал ${store.companyId}, CULT, Сочи.'),
+          Text(store.signedIn
+              ? 'Запись в филиал CULT, Сочи. Контакт уже в базе клиники.'
+              : 'Услуги и врачи филиала CULT в Сочи. Войдите по телефону, чтобы мы сохранили вас в базе.'),
+          if (!store.signedIn)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(onPressed: () => pushPage(context, const AuthPage(allowSkip: false)), child: const Text('Войти по телефону')),
+            ),
           if (_staff.isNotEmpty && _staff.every((item) => !item.bookable))
             const Padding(
               padding: EdgeInsets.only(top: 8),
@@ -599,6 +607,9 @@ class _BookingPageState extends State<BookingPage> {
       _error = '';
     });
     try {
+      if (!store.signedIn) {
+        await store.registerWithPhone(name: _name.text.trim(), phone: phone, email: email);
+      }
       final booked = await store.yclients.book(
         partnerToken: store.partnerToken,
         companyId: companyId,

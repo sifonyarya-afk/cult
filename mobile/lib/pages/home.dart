@@ -17,7 +17,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
     final next = store.upcoming.isEmpty ? null : store.upcoming.first;
-    final first = store.profileName.trim().split(RegExp(r'\s+')).first;
+    final first = store.displayName.trim().split(RegExp(r'\s+')).first;
     final hello = first.isEmpty ? 'Добрый день' : first;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
