@@ -57,6 +57,31 @@ open ios/Runner.xcworkspace
 
 В Xcode: Product → Clean Build Folder, затем Run. В Build Settings у Runner должны быть User-Defined значения `FLUTTER_ROOT` (путь к Flutter SDK на Mac).
 
+### `Xcode has killed the LLDB RPC server`
+
+Отладчик Xcode отвалился (часто после нехватки места на диске или «зависшего» Run). Приложение CULT тут ни при чём.
+
+1. В Xcode: Stop (■).
+2. В Terminal завершите зависший процесс и очистите кэш отладки:
+
+```bash
+kill 7490 2>/dev/null
+killall lldb-rpc-server 2>/dev/null
+killall Runner 2>/dev/null
+rm -rf ~/Library/Developer/Xcode/DerivedData/*
+```
+
+3. Проверьте свободное место: `df -h /` (нужно ≥ 5–10 GB).
+4. Надёжнее запускать без Xcode-отладчика:
+
+```bash
+cd ~/Desktop/cult/cult/mobile
+flutter pub get
+flutter run
+```
+
+Или в Xcode: Product → Run без breakpoint’ов; если снова убьёт LLDB — используйте только `flutter run`.
+
 ### `No space left on device` / `database or disk is full`
 
 На Mac закончилось место на диске (часто из‑за `DerivedData` Xcode). Закройте Xcode и в Terminal:
