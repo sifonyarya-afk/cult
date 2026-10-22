@@ -376,6 +376,7 @@ class _BookingPageState extends State<BookingPage> {
   var _loading = false;
   var _sending = false;
   var _askCode = false;
+  var _datesLoaded = false;
   List<YcStaff> _staff = [];
   List<YcSlot> _slots = [];
   List<String> _openDates = [];
@@ -389,7 +390,9 @@ class _BookingPageState extends State<BookingPage> {
     _booted = true;
     final store = ClinicScope.of(context);
     _name.text = store.profileName;
-    _phone.text = store.profilePhone;
+    _phone.text = store.profilePhone.trim().isEmpty
+        ? '+7'
+        : formatRuPhone(store.profilePhone);
     _email.text = store.profileEmail;
     if (_service.isEmpty) {
       final catalog = store.catalogServices;
@@ -558,42 +561,60 @@ class _BookingPageState extends State<BookingPage> {
             ),
           ),
           const SizedBox(height: 12),
-          if (_done)
-            _doneCard()
-          else ...[
-            CultSelect(
-              label: 'Услуга',
-              value: _service,
-              onTap: () async {
-                final picked = await _pickText(options);
-                if (picked != null) setState(() => _service = picked);
-              },
-            ),
-            CultSelect(
-              label: 'Врач',
-              value: _doctor,
-              onTap: () async {
-                final picked = await _pickText(
-                  doctors.map((item) => item.name).toList(),
-                );
-                if (picked != null) setState(() => _doctor = picked);
-              },
-            ),
-            _dateTile(),
-            const _FieldLabel('Время'),
-            _timeChips(const ['09:00', '10:30', '12:00', '15:00', '17:30']),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _name,
-              decoration: const InputDecoration(labelText: 'Имя'),
-            ),
-            if (_error.isNotEmpty) _errorBanner(_error),
-            const SizedBox(height: 12),
-            CultButton(
-              label: 'Подтвердить запись',
-              onPressed: () => _submitLocal(store),
-            ),
-          ],
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 320),
+            child: _done
+                ? KeyedSubtree(
+                    key: const ValueKey('local-done'),
+                    child: _doneCard(),
+                  )
+                : Column(
+                    key: const ValueKey('local-form'),
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      CultSelect(
+                        label: 'Услуга',
+                        value: _service,
+                        onTap: () async {
+                          final picked = await _pickText(options);
+                          if (picked != null) setState(() => _service = picked);
+                        },
+                      ),
+                      CultSelect(
+                        label: 'Врач',
+                        value: _doctor,
+                        onTap: () async {
+                          final picked = await _pickText(
+                            doctors.map((item) => item.name).toList(),
+                          );
+                          if (picked != null) {
+                            setState(() => _doctor = picked);
+                          }
+                        },
+                      ),
+                      _dateTile(),
+                      const _FieldLabel('Время'),
+                      _timeChips(const [
+                        '09:00',
+                        '10:30',
+                        '12:00',
+                        '15:00',
+                        '17:30',
+                      ]),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _name,
+                        decoration: const InputDecoration(labelText: 'Имя'),
+                      ),
+                      if (_error.isNotEmpty) CultErrorBanner(message: _error),
+                      const SizedBox(height: 12),
+                      CultButton(
+                        label: 'Подтвердить запись',
+                        onPressed: () => _submitLocal(store),
+                      ),
+                    ],
+                  ),
+          ),
         ],
       ),
     );
@@ -625,129 +646,167 @@ class _BookingPageState extends State<BookingPage> {
             ),
           const SizedBox(height: 12),
           if (_loading) const CultLoading(label: 'Загружаем слоты филиала…'),
-          if (_done)
-            _doneCard()
-          else if (serviceItems.isEmpty && !_loading)
-            CultEmpty(
-              title: 'Услуги недоступны',
-              note: _error.isEmpty
-                  ? 'В филиале нет услуг для онлайн-записи.'
-                  : _error,
-              actionLabel: 'Повторить',
-              onAction: _loadCatalog,
-            )
-          else ...[
-            if (serviceItems.isNotEmpty)
-              CultSelect(
-                label: 'Услуга',
-                value: _serviceDetail(serviceItems),
-                hint: 'Найти в прайсе',
-                onTap: () async {
-                  final picked = await showModalBottomSheet<YcService>(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (context) => _ServiceSheet(
-                      items: serviceItems,
-                      selected: _serviceId,
-                    ),
-                  );
-                  if (picked == null) return;
-                  setState(() {
-                    _serviceId = picked.id;
-                    _service = picked.title;
-                    _date = null;
-                    _slots = [];
-                    _error = '';
-                  });
-                  await _loadStaff();
-                },
-              ),
-            if (_staff.isNotEmpty) ...[
-              const _FieldLabel('Врач'),
-              for (final item in _staff)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Material(
-                    color: item.id == _staffId ? Cult.gold : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(14),
-                      onTap: () async {
-                        setState(() {
-                          _staffId = item.id;
-                          _doctor = item.name;
-                          _slots = [];
-                          _date = null;
-                          _error = '';
-                        });
-                        await _loadDates();
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(item.name, style: cultHeadline(18)),
-                            if (item.specialization.isNotEmpty)
-                              Text(
-                                item.specialization,
-                                style: const TextStyle(color: Cult.muted),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 320),
+            child: _done
+                ? KeyedSubtree(key: const ValueKey('done'), child: _doneCard())
+                : serviceItems.isEmpty && !_loading
+                ? CultEmpty(
+                    key: const ValueKey('empty'),
+                    title: 'Услуги недоступны',
+                    note: _error.isEmpty
+                        ? 'В филиале нет услуг для онлайн-записи.'
+                        : _error,
+                    actionLabel: 'Повторить',
+                    onAction: _loadCatalog,
+                  )
+                : KeyedSubtree(
+                    key: const ValueKey('form'),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (serviceItems.isNotEmpty)
+                          CultSelect(
+                            label: 'Услуга',
+                            value: _serviceDetail(serviceItems),
+                            hint: 'Найти в прайсе',
+                            onTap: () async {
+                              final picked =
+                                  await showModalBottomSheet<YcService>(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    builder: (context) => _ServiceSheet(
+                                      items: serviceItems,
+                                      selected: _serviceId,
+                                    ),
+                                  );
+                              if (picked == null) return;
+                              setState(() {
+                                _serviceId = picked.id;
+                                _service = picked.title;
+                                _date = null;
+                                _slots = [];
+                                _error = '';
+                              });
+                              await _loadStaff();
+                            },
+                          ),
+                        if (_staff.isNotEmpty) ...[
+                          const _FieldLabel('Врач'),
+                          for (final item in _staff)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Material(
+                                color: item.id == _staffId
+                                    ? Cult.gold
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(14),
+                                  onTap: () async {
+                                    cultTapFeedback();
+                                    setState(() {
+                                      _staffId = item.id;
+                                      _doctor = item.name;
+                                      _slots = [];
+                                      _date = null;
+                                      _error = '';
+                                    });
+                                    await _loadDates();
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.name,
+                                          style: cultHeadline(18),
+                                        ),
+                                        if (item.specialization.isNotEmpty)
+                                          Text(
+                                            item.specialization,
+                                            style: const TextStyle(
+                                              color: Cult.muted,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
-                          ],
+                            ),
+                        ],
+                        if (_staffId != null &&
+                            _datesLoaded &&
+                            _openDates.isEmpty) ...[
+                          const SizedBox(height: 4),
+                          CultErrorBanner(
+                            message:
+                                'На ближайшие дни нет открытых дат. Выберите другого врача или позвоните в филиал.',
+                            onRetry: _loadDates,
+                            retryLabel: 'Обновить даты',
+                          ),
+                        ],
+                        _dateTile(restrict: _openDates),
+                        if (_slots.isNotEmpty) ...[
+                          const _FieldLabel('Свободное время'),
+                          _timeChips(_slots.map((item) => item.time).toList()),
+                        ],
+                        const SizedBox(height: 6),
+                        const _FieldLabel('Контакты'),
+                        TextField(
+                          controller: _name,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(labelText: 'Имя'),
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _phone,
+                          keyboardType: TextInputType.phone,
+                          inputFormatters: const [CultPhoneInputFormatter()],
+                          decoration: const InputDecoration(
+                            labelText: 'Телефон',
+                            hintText: '+7 (___) ___-__-__',
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _email,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: const InputDecoration(labelText: 'Почта'),
+                        ),
+                        if (_askCode) ...[
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _code,
+                            decoration: const InputDecoration(
+                              labelText: 'Код из СМС',
+                            ),
+                          ),
+                        ],
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            onPressed: () =>
+                                setState(() => _askCode = !_askCode),
+                            child: const Text('Есть код из СМС'),
+                          ),
+                        ),
+                        if (_error.isNotEmpty) CultErrorBanner(message: _error),
+                        const SizedBox(height: 8),
+                        CultButton(
+                          label: _sending ? 'Отправляем' : 'Подтвердить запись',
+                          onPressed: _sending ? null : () => _submitLive(store),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-            ],
-            _dateTile(restrict: _openDates),
-            if (_slots.isNotEmpty) ...[
-              const _FieldLabel('Свободное время'),
-              _timeChips(_slots.map((item) => item.time).toList()),
-            ],
-            const SizedBox(height: 6),
-            const _FieldLabel('Контакты'),
-            TextField(
-              controller: _name,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Имя'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _phone,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: 'Телефон'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _email,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'Почта'),
-            ),
-            if (_askCode) ...[
-              const SizedBox(height: 8),
-              TextField(
-                controller: _code,
-                decoration: const InputDecoration(labelText: 'Код из СМС'),
-              ),
-            ],
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: () => setState(() => _askCode = !_askCode),
-                child: const Text('Есть код из СМС'),
-              ),
-            ),
-            if (_error.isNotEmpty) _errorBanner(_error),
-            const SizedBox(height: 8),
-            CultButton(
-              label: _sending ? 'Отправляем' : 'Подтвердить запись',
-              onPressed: () => _submitLive(store),
-            ),
-          ],
+          ),
         ],
       ),
     );
@@ -835,23 +894,13 @@ class _BookingPageState extends State<BookingPage> {
             ChoiceChip(
               label: Text(time),
               selected: _time == time,
-              onSelected: (_) => setState(() => _time = time),
+              onSelected: (_) {
+                cultTapFeedback();
+                setState(() => _time = time);
+              },
             ),
         ],
       ),
-    );
-  }
-
-  Widget _errorBanner(String text) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8E8E6),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(text, style: const TextStyle(color: Cult.error)),
     );
   }
 

@@ -12,6 +12,10 @@ void main() {
     expect(normalizePhone('+7 (916) 150-22-39'), '79161502239');
     expect(normalizePhone('89161502239'), '79161502239');
     expect(normalizePhone('9161502239'), '79161502239');
+    expect(formatRuPhone('9161502239'), '+7 (916) 150-22-39');
+    expect(formatRuPhone('89161502239'), '+7 (916) 150-22-39');
+    expect(formatRuPhone(''), '+7');
+    expect(formatRuPhone('79'), '+7 (9');
     expect(
       bookingDatetime(1443513600, '2026-04-12', '12:00'),
       '2026-04-12 12:00:00',

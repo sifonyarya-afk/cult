@@ -20,6 +20,8 @@ void main() {
     expect(find.text('Магазин биохакинга'), findsOneWidget);
     expect(find.text('Чат с врачом'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Мои анализы'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Мои анализы'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Войдите по телефону'), findsOneWidget);

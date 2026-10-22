@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../data.dart';
 import '../theme.dart';
@@ -776,8 +777,10 @@ class FavoritesPage extends StatelessWidget {
                                 ),
                               ),
                               IconButton(
-                                onPressed: () =>
-                                    store.toggleFavorite(product.id),
+                                onPressed: () {
+                                  HapticFeedback.selectionClick();
+                                  store.toggleFavorite(product.id);
+                                },
                                 icon: const Icon(
                                   Icons.favorite,
                                   color: Cult.primary,
@@ -805,6 +808,7 @@ class LoyaltyPage extends StatefulWidget {
 class _LoyaltyPageState extends State<LoyaltyPage> {
   var _note = '';
   var _started = false;
+  var _loading = false;
 
   @override
   void didChangeDependencies() {
@@ -813,15 +817,17 @@ class _LoyaltyPageState extends State<LoyaltyPage> {
     final store = ClinicScope.of(context);
     if (!store.yclientsReady || store.userToken.isEmpty) return;
     _started = true;
+    _loading = true;
     store.refreshLoyalty().then((message) {
       if (!mounted) return;
-      setState(
-        () => _note =
+      setState(() {
+        _loading = false;
+        _note =
             message ??
             (store.loyaltyCards.isEmpty
                 ? 'Карт лояльности по этому телефону нет.'
-                : ''),
-      );
+                : '');
+      });
     });
   }
 
@@ -896,9 +902,17 @@ class _LoyaltyPageState extends State<LoyaltyPage> {
                   ),
                 ),
               ),
+          ] else if (_loading) ...[
+            const SizedBox(height: 14),
+            const CultLoading(label: 'Обновляем карты…'),
           ] else if (_note.isNotEmpty) ...[
             const SizedBox(height: 14),
-            Text(_note, style: const TextStyle(color: Cult.muted)),
+            CultEmpty(
+              title: 'Карт лояльности нет',
+              note: _note,
+              actionLabel: 'Записаться в филиал',
+              onAction: () => pushPage(context, const BookingPage()),
+            ),
           ],
           const SizedBox(height: 18),
           const CultSectionLabel('Правила'),

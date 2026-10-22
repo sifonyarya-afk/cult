@@ -32,8 +32,7 @@ class _AuthPageState extends State<AuthPage> {
     final store = ClinicScope.of(context);
     if (store.profileName.trim().isNotEmpty) _name.text = store.profileName;
     if (store.profilePhone.trim().isNotEmpty) {
-      final digits = normalizePhone(store.profilePhone);
-      _phone.text = digits.length >= 11 ? '+$digits' : store.profilePhone;
+      _phone.text = formatRuPhone(store.profilePhone);
     }
     if (store.profileEmail.trim().isNotEmpty) _email.text = store.profileEmail;
   }
@@ -201,9 +200,7 @@ class _FormCard extends StatelessWidget {
             controller: phone,
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.next,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s()-]')),
-            ],
+            inputFormatters: const [CultPhoneInputFormatter()],
             decoration: const InputDecoration(
               labelText: 'Номер телефона',
               hintText: '+7 (___) ___-__-__',
@@ -222,15 +219,7 @@ class _FormCard extends StatelessWidget {
           ),
           if (error.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8E8E6),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(error, style: const TextStyle(color: Cult.error)),
-            ),
+            CultErrorBanner(message: error),
           ],
           const SizedBox(height: 18),
           CultButton(

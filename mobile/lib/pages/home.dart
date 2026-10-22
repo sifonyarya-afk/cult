@@ -71,18 +71,19 @@ class HomePage extends StatelessWidget {
                       : 'Следующая процедура: ${formatVisitDate(next.date)} в ${next.time}.',
                   style: const TextStyle(color: Cult.muted, height: 1.4),
                 ),
-                if (next != null) ...[
-                  const SizedBox(height: 12),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      foregroundColor: Cult.primary,
-                      padding: EdgeInsets.zero,
-                      alignment: Alignment.centerLeft,
-                    ),
-                    onPressed: () => pushPage(context, const VisitsPage()),
-                    child: const Text('Мои записи →'),
+                const SizedBox(height: 12),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Cult.primary,
+                    padding: EdgeInsets.zero,
+                    alignment: Alignment.centerLeft,
                   ),
-                ],
+                  onPressed: () => pushPage(
+                    context,
+                    next == null ? const BookingPage() : const VisitsPage(),
+                  ),
+                  child: Text(next == null ? 'Записаться →' : 'Мои записи →'),
+                ),
               ],
             ),
           ),
@@ -339,28 +340,35 @@ class _Quick extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: filled ? Cult.gold : const Color(0xFFF3EFEA),
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: filled ? Cult.gold : const Color(0xFFF3EFEA),
         borderRadius: BorderRadius.circular(18),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: Cult.ink, size: 28),
-              const SizedBox(height: 10),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  height: 1.2,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () {
+            cultTapFeedback();
+            onTap();
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: Cult.ink, size: 28),
+                const SizedBox(height: 10),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    height: 1.2,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

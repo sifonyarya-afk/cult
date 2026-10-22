@@ -151,6 +151,30 @@ String normalizePhone(String raw) {
   return digits;
 }
 
+/// Pretty RU mobile mask for inputs: `+7 (916) 150-22-39`.
+String formatRuPhone(String raw) {
+  var digits = raw.replaceAll(RegExp(r'\D'), '');
+  if (digits.startsWith('8')) digits = '7${digits.substring(1)}';
+  if (digits.isEmpty || digits == '7') return '+7';
+  if (!digits.startsWith('7')) digits = '7$digits';
+  final body = digits.length > 1 ? digits.substring(1) : '';
+  final b = body.length > 10 ? body.substring(0, 10) : body;
+  final buf = StringBuffer('+7');
+  if (b.isEmpty) return buf.toString();
+  buf.write(' (');
+  buf.write(b.substring(0, min(3, b.length)));
+  if (b.length < 3) return buf.toString();
+  buf.write(') ');
+  buf.write(b.substring(3, min(6, b.length)));
+  if (b.length < 6) return buf.toString();
+  buf.write('-');
+  buf.write(b.substring(6, min(8, b.length)));
+  if (b.length < 8) return buf.toString();
+  buf.write('-');
+  buf.write(b.substring(8, min(10, b.length)));
+  return buf.toString();
+}
+
 String bookingDatetime(Object? raw, String date, String time) {
   if (raw is String && (raw.contains('-') || raw.contains('T'))) return raw;
   final clock = time.length == 5 ? '$time:00' : time;

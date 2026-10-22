@@ -1,9 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'data.dart';
 import 'store.dart';
 import 'theme.dart';
+import 'yclients.dart';
+
+void cultTapFeedback() => HapticFeedback.selectionClick();
+
+class CultPhoneInputFormatter extends TextInputFormatter {
+  const CultPhoneInputFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final formatted = formatRuPhone(newValue.text);
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
 
 class ClinicScope extends InheritedNotifier<ClinicStore> {
   const ClinicScope({
@@ -49,25 +69,34 @@ class CultButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton(
-        style: FilledButton.styleFrom(
-          backgroundColor: Cult.ink,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: Cult.ink.withValues(alpha: 0.45),
-          disabledForegroundColor: Colors.white70,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+    return Semantics(
+      button: true,
+      label: label,
+      child: SizedBox(
+        width: double.infinity,
+        child: FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: Cult.ink,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: Cult.ink.withValues(alpha: 0.45),
+            disabledForegroundColor: Colors.white70,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            textStyle: const TextStyle(
+              letterSpacing: 1.4,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          textStyle: const TextStyle(
-            letterSpacing: 1.4,
-            fontWeight: FontWeight.w600,
-          ),
+          onPressed: onPressed == null
+              ? null
+              : () {
+                  cultTapFeedback();
+                  onPressed!();
+                },
+          child: Text(label.toUpperCase()),
         ),
-        onPressed: onPressed,
-        child: Text(label.toUpperCase()),
       ),
     );
   }
@@ -92,37 +121,47 @@ class CultSelect extends StatelessWidget {
     final empty = value.trim().isEmpty;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
+      child: Semantics(
+        button: true,
+        label: empty ? '$label, $hint' : '$label, $value',
+        child: Material(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        label,
-                        style: const TextStyle(color: Cult.muted, fontSize: 12),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        empty ? hint : value,
-                        style: TextStyle(
-                          color: empty ? Cult.muted : Cult.ink,
-                          fontSize: 16,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () {
+              cultTapFeedback();
+              onTap();
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: const TextStyle(
+                            color: Cult.muted,
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          empty ? hint : value,
+                          style: TextStyle(
+                            color: empty ? Cult.muted : Cult.ink,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const Icon(Icons.expand_more, color: Cult.muted),
-              ],
+                  const Icon(Icons.expand_more, color: Cult.muted),
+                ],
+              ),
             ),
           ),
         ),

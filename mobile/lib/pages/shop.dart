@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../data.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import '../yclients.dart';
 
 class ShopPage extends StatefulWidget {
   const ShopPage({super.key, this.initialTab = 0});
@@ -316,7 +317,11 @@ class _CartPageState extends State<CartPage> {
     _filled = true;
     final store = ClinicScope.of(context);
     if (store.profileName.trim().isNotEmpty) _name.text = store.profileName;
-    if (store.profilePhone.trim().isNotEmpty) _phone.text = store.profilePhone;
+    if (store.profilePhone.trim().isNotEmpty) {
+      _phone.text = formatRuPhone(store.profilePhone);
+    } else {
+      _phone.text = '+7';
+    }
   }
 
   @override
@@ -448,7 +453,11 @@ class _CartPageState extends State<CartPage> {
             TextField(
               controller: _phone,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: 'Телефон'),
+              inputFormatters: const [CultPhoneInputFormatter()],
+              decoration: const InputDecoration(
+                labelText: 'Телефон',
+                hintText: '+7 (___) ___-__-__',
+              ),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
@@ -490,7 +499,7 @@ class _CartPageState extends State<CartPage> {
             CultButton(
               label: 'Оформить заказ',
               onPressed: () {
-                final digits = _phone.text.replaceAll(RegExp(r'\D'), '');
+                final digits = normalizePhone(_phone.text);
                 if (_name.text.trim().length < 2 || digits.length < 11) {
                   setState(
                     () => _error = 'Укажите имя и телефон в формате +7.',
