@@ -315,24 +315,27 @@ class ProductPage extends StatelessWidget {
             product.about,
             style: const TextStyle(color: Cult.muted, height: 1.4),
           ),
-          const SizedBox(height: 22),
-          CultButton(
-            label: 'В корзину',
-            onPressed: () {
-              store.addToCart(product.id, product.name, product.price);
-              showCultSnack(
-                context,
-                '${product.name} в корзине',
-                actionLabel: 'Оформить',
-                onAction: () => pushPage(context, const CartPage()),
-              );
-            },
-          ),
-          TextButton(
-            onPressed: () => pushPage(context, const CartPage()),
-            child: const Text('Перейти к оформлению'),
-          ),
+          if (store.cartCount > 0) ...[
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => pushPage(context, const CartPage()),
+              child: Text('В корзине ${store.cartCount} · оформить'),
+            ),
+          ],
         ],
+      ),
+      bottomNavigationBar: CultBookBar(
+        label: 'В корзину · ${rub(product.price)}',
+        onPressed: () {
+          HapticFeedback.mediumImpact();
+          store.addToCart(product.id, product.name, product.price);
+          showCultSnack(
+            context,
+            '${product.name} в корзине',
+            actionLabel: 'Оформить',
+            onAction: () => pushPage(context, const CartPage()),
+          );
+        },
       ),
     );
   }

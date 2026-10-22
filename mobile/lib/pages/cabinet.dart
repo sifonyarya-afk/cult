@@ -276,7 +276,36 @@ class CabinetPage extends StatelessWidget {
                 foregroundColor: Cult.error,
                 side: BorderSide(color: Cult.error.withValues(alpha: 0.35)),
               ),
-              onPressed: () => store.signOut(),
+              onPressed: () async {
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: const Text('Выйти из профиля?'),
+                    content: const Text(
+                      'Записи филиала скроются, пока снова не войдёте по телефону. Корзина и избранное останутся на устройстве.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        child: const Text('Остаться'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        child: const Text(
+                          'Выйти',
+                          style: TextStyle(color: Cult.error),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                if (ok == true) {
+                  store.signOut();
+                  if (context.mounted) {
+                    showCultSnack(context, 'Вы вышли из профиля');
+                  }
+                }
+              },
               child: const Text('ВЫЙТИ'),
             ),
           ),

@@ -62,7 +62,11 @@ class _HardwareCosmeticsPageState extends State<HardwareCosmeticsPage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Cult.ink,
         foregroundColor: Colors.white,
-        onPressed: () => pushPage(context, const BookingPage()),
+        tooltip: 'Запись',
+        onPressed: () {
+          cultTapFeedback();
+          pushPage(context, const BookingPage());
+        },
         child: const Icon(Icons.calendar_month_outlined),
       ),
       body: ListView(
@@ -293,7 +297,10 @@ class _InjectionCosmeticsPageState extends State<InjectionCosmeticsPage> {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Cult.primary,
         foregroundColor: Colors.white,
-        onPressed: () => pushPage(context, const BookingPage()),
+        onPressed: () {
+          cultTapFeedback();
+          pushPage(context, const BookingPage());
+        },
         icon: const Icon(Icons.calendar_month_outlined),
         label: const Text('Записаться'),
       ),

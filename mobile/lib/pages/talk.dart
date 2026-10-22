@@ -33,61 +33,67 @@ class ChatPage extends StatelessWidget {
         for (final contact in contacts)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () {
-                cultTapFeedback();
-                pushPage(context, ChatThreadPage(contactId: contact.id));
-              },
-              child: CultCard(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3EFEA),
-                        borderRadius: BorderRadius.circular(14),
+            child: Semantics(
+              button: true,
+              label: '${contact.name}, ${contact.role}',
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () {
+                  cultTapFeedback();
+                  pushPage(context, ChatThreadPage(contactId: contact.id));
+                },
+                child: CultCard(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3EFEA),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(_iconFor(contact.id), color: Cult.ink),
                       ),
-                      child: Icon(_iconFor(contact.id), color: Cult.ink),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(contact.name, style: cultHeadline(20)),
-                          Text(
-                            contact.role,
-                            style: const TextStyle(
-                              color: Cult.muted,
-                              fontSize: 13,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(contact.name, style: cultHeadline(20)),
+                            Text(
+                              contact.role,
+                              style: const TextStyle(
+                                color: Cult.muted,
+                                fontSize: 13,
+                              ),
                             ),
-                          ),
-                          Builder(
-                            builder: (_) {
-                              final thread = store.threads[contact.id] ?? [];
-                              final last = thread.isEmpty ? null : thread.last;
-                              final preview = last?.text ?? contact.seed;
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  preview,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: Cult.muted.withValues(alpha: 0.95),
-                                    fontSize: 13,
+                            Builder(
+                              builder: (_) {
+                                final thread = store.threads[contact.id] ?? [];
+                                final last = thread.isEmpty
+                                    ? null
+                                    : thread.last;
+                                final preview = last?.text ?? contact.seed;
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    preview,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Cult.muted.withValues(alpha: 0.95),
+                                      fontSize: 13,
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
+                                );
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const Icon(Icons.chevron_right, color: Cult.muted),
-                  ],
+                      const Icon(Icons.chevron_right, color: Cult.muted),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -661,7 +667,18 @@ class _BookingPageState extends State<BookingPage> {
                       const SizedBox(height: 8),
                       TextField(
                         controller: _name,
+                        textCapitalization: TextCapitalization.words,
                         decoration: const InputDecoration(labelText: 'Имя'),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _phone,
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: const [CultPhoneInputFormatter()],
+                        decoration: const InputDecoration(
+                          labelText: 'Телефон',
+                          hintText: '+7 (___) ___-__-__',
+                        ),
                       ),
                       if (_error.isNotEmpty) CultErrorBanner(message: _error),
                       const SizedBox(height: 12),
@@ -989,15 +1006,16 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   void _submitLocal(ClinicStore store) {
-    if (_date == null || _name.text.trim().length < 2) {
-      setState(() => _error = 'Укажите дату и имя.');
+    final phone = normalizePhone(_phone.text);
+    if (_date == null || _name.text.trim().length < 2 || phone.length < 11) {
+      setState(() => _error = 'Укажите дату, имя и телефон в формате +7.');
       return;
     }
     final iso = _iso(_date!);
     store.bookVisit(service: _service, doctor: _doctor, date: iso, time: _time);
     store.sendMessage(
       'admin',
-      'Запись: $_service, $_doctor, $iso в $_time, ${_name.text}.',
+      'Запись: $_service, $_doctor, $iso в $_time, ${_name.text}, +$phone.',
     );
     HapticFeedback.mediumImpact();
     setState(() {

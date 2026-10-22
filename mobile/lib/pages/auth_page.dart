@@ -272,19 +272,7 @@ class _SuccessCard extends StatelessWidget {
             style: TextStyle(color: Cult.muted, height: 1.4),
           ),
           const SizedBox(height: 20),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Cult.ink,
-              side: const BorderSide(color: Cult.ink),
-              minimumSize: const Size(double.infinity, 52),
-              textStyle: const TextStyle(
-                letterSpacing: 1.6,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            onPressed: onContinue,
-            child: const Text('ПЕРЕЙТИ В ЛИЧНЫЙ КАБИНЕТ'),
-          ),
+          CultButton(label: 'Перейти в личный кабинет', onPressed: onContinue),
         ],
       ),
     );

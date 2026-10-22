@@ -1,6 +1,7 @@
 import 'package:cult_clinic/data.dart';
 import 'package:cult_clinic/main.dart';
 import 'package:cult_clinic/pages/browse.dart';
+import 'package:cult_clinic/pages/shop.dart';
 import 'package:cult_clinic/pages/talk.dart';
 import 'package:cult_clinic/store.dart';
 import 'package:cult_clinic/theme.dart';
@@ -218,5 +219,20 @@ void main() {
   test('formatVisitDate понимает дату со временем', () {
     expect(formatVisitDate('2026-04-12T10:30:00'), '12 апреля');
     expect(formatVisitDate('2026-04-12 10:30:00'), '12 апреля');
+  });
+
+  testWidgets('Товар держит кнопку «В корзину» внизу', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    await tester.pumpWidget(
+      ClinicScope(
+        store: store,
+        child: MaterialApp(home: ProductPage(product: products.first)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(CultBookBar), findsOneWidget);
+    expect(find.textContaining('В КОРЗИНУ'), findsOneWidget);
   });
 }
