@@ -634,8 +634,25 @@ class ArticlePage extends StatelessWidget {
           for (final paragraph in article.body)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Text(paragraph, style: const TextStyle(height: 1.45)),
+              child: GestureDetector(
+                onLongPress: () {
+                  Clipboard.setData(ClipboardData(text: paragraph));
+                  cultTapFeedback();
+                  showCultSnack(context, 'Абзац скопирован');
+                },
+                child: Text(paragraph, style: const TextStyle(height: 1.45)),
+              ),
             ),
+          TextButton(
+            onPressed: () {
+              final text =
+                  '${article.title}\n${article.author}\n\n${article.body.join('\n\n')}';
+              Clipboard.setData(ClipboardData(text: text));
+              cultTapFeedback();
+              showCultSnack(context, 'Материал скопирован');
+            },
+            child: const Text('Скопировать текст'),
+          ),
           CultButton(
             label: 'Смотреть на YouTube',
             onPressed: () => openExternal(
@@ -651,9 +668,9 @@ class ArticlePage extends StatelessWidget {
                 'Вопрос после материала «${article.title}».',
               );
               cultTapFeedback();
-              showCultSnack(
+              pushPage(
                 context,
-                'Сообщение врачу отправлено — откройте Чат',
+                const ChatThreadPage(contactId: 'specialist'),
               );
             },
             child: const Text('Спросить врача по теме'),
@@ -833,12 +850,25 @@ class CasePage extends StatelessWidget {
                 'Вопрос по кейсу «${item.title}» (${item.procedure}).',
               );
               cultTapFeedback();
-              showCultSnack(
+              pushPage(
                 context,
-                'Сообщение врачу отправлено — откройте Чат',
+                const ChatThreadPage(contactId: 'specialist'),
               );
             },
             child: const Text('Спросить врача о результате'),
+          ),
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(
+                ClipboardData(
+                  text:
+                      '${item.title}\n${item.procedure} · ${item.doctor}\n\n${item.text}',
+                ),
+              );
+              cultTapFeedback();
+              showCultSnack(context, 'Кейс скопирован');
+            },
+            child: const Text('Скопировать кейс'),
           ),
           const SizedBox(height: 8),
           const CultSectionLabel('До'),
@@ -849,9 +879,16 @@ class CasePage extends StatelessWidget {
           const SizedBox(height: 8),
           CultImage(item.image, aspect: 4 / 3, radius: 16),
           const SizedBox(height: 16),
-          Text(
-            item.text,
-            style: const TextStyle(height: 1.4, color: Cult.muted),
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: item.text));
+              cultTapFeedback();
+              showCultSnack(context, 'Описание скопировано');
+            },
+            child: Text(
+              item.text,
+              style: const TextStyle(height: 1.4, color: Cult.muted),
+            ),
           ),
         ],
       ),

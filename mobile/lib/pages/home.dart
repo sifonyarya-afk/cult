@@ -408,6 +408,15 @@ class HomePage extends StatelessWidget {
                         cultTapFeedback();
                         pushPage(context, ArticlePage(article: article));
                       },
+                      onLongPress: () {
+                        Clipboard.setData(
+                          ClipboardData(
+                            text: '${article.title} — ${article.author}',
+                          ),
+                        );
+                        cultTapFeedback();
+                        showCultSnack(context, 'Материал скопирован');
+                      },
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

@@ -50,11 +50,19 @@ class ChatPage extends StatelessWidget {
             child: Semantics(
               button: true,
               label: '${contact.name}, ${contact.role}',
+              hint: 'Удерживайте, чтобы скопировать',
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
                 onTap: () {
                   cultTapFeedback();
                   pushPage(context, ChatThreadPage(contactId: contact.id));
+                },
+                onLongPress: () {
+                  Clipboard.setData(
+                    ClipboardData(text: '${contact.name} · ${contact.role}'),
+                  );
+                  cultTapFeedback();
+                  showCultSnack(context, 'Контакт скопирован');
                 },
                 child: CultCard(
                   child: Row(
@@ -144,6 +152,14 @@ class ChatPage extends StatelessWidget {
                 title: 'Экстренные протоколы',
                 onTap: () =>
                     pushPage(context, const ChatThreadPage(contactId: 'admin')),
+              ),
+              const Divider(height: 1, indent: 16, endIndent: 16),
+              _SupportLink(
+                title: 'Позвонить в клинику',
+                onTap: () => openExternal(
+                  'tel:+74950000007',
+                  context: context,
+                ),
               ),
             ],
           ),
@@ -237,6 +253,8 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Что надеть',
     'Предоплата',
     'Активировать сертификат',
+    'Блог CULT TV',
+    'Кейсы',
   ];
 
   static const _followUp = <String>[

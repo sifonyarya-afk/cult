@@ -568,6 +568,16 @@ void main() {
     expect(store.threads['admin']!.last.text.toLowerCase(), contains('код'));
   });
 
+  test('Бот отвечает про блог и кейсы', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Где блог CULT TV?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('блог'));
+    store.sendMessage('bot', 'Покажите кейсы до и после');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('кейс'));
+  });
+
   test('Бот и админ отвечают про отмену записи', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
