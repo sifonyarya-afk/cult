@@ -21,6 +21,24 @@ class CabinetPage extends StatelessWidget {
         const SizedBox(height: 8),
         Center(child: Text(store.profileName, style: cultHeadline(26))),
         const Center(child: Text('ПЛАТИНОВЫЙ СТАТУС', style: TextStyle(letterSpacing: 1.2, color: Cult.muted))),
+        if (next != null) ...[
+          const SizedBox(height: 16),
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => pushPage(context, const VisitsPage()),
+            child: CultCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('СЛЕДУЮЩИЙ ВИЗИТ', style: TextStyle(color: Cult.secondary, letterSpacing: 1.2, fontSize: 12)),
+                  const SizedBox(height: 6),
+                  Text(next.service, style: cultHeadline(22)),
+                  Text('${formatVisitDate(next.date)} · ${next.time} · ${next.doctor}', style: const TextStyle(color: Cult.muted)),
+                ],
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(20),
@@ -64,10 +82,11 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(title),
-      subtitle: Text(note),
-      trailing: const Icon(Icons.chevron_right),
+      contentPadding: const EdgeInsets.symmetric(vertical: 2),
+      minVerticalPadding: 12,
+      title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      subtitle: Text(note, style: const TextStyle(color: Cult.muted)),
+      trailing: const Icon(Icons.chevron_right, color: Cult.muted),
       onTap: onTap,
     );
   }
@@ -89,22 +108,28 @@ class VisitsPage extends StatelessWidget {
             const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Text('Предстоящих визитов нет.'))
           else
             for (final visit in store.upcoming)
-              CultCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('${formatVisitDate(visit.date)} · ${visit.time}', style: const TextStyle(color: Cult.muted)),
-                    Text(visit.service, style: cultHeadline(20)),
-                    Text(visit.doctor),
-                    TextButton(
-                      onPressed: () async {
-                        final message = await store.cancelVisit(visit.id);
-                        if (!context.mounted || message == null) return;
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-                      },
-                      child: const Text('Отменить', style: TextStyle(color: Cult.error)),
-                    ),
-                  ],
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: CultCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${formatVisitDate(visit.date)} · ${visit.time}', style: const TextStyle(color: Cult.muted)),
+                      Text(visit.service, style: cultHeadline(20)),
+                      Text(visit.doctor),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: () async {
+                            final message = await store.cancelVisit(visit.id);
+                            if (!context.mounted || message == null) return;
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+                          },
+                          child: const Text('Отменить', style: TextStyle(color: Cult.error)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
           const SizedBox(height: 8),
@@ -418,21 +443,42 @@ class _CertificatesPageState extends State<CertificatesPage> {
   }
 }
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  late final TextEditingController _name;
+  var _ready = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_ready) return;
+    _ready = true;
+    _name = TextEditingController(text: ClinicScope.of(context).profileName);
+  }
+
+  @override
+  void dispose() {
+    if (_ready) _name.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
-    final name = TextEditingController(text: store.profileName);
     return Scaffold(
       appBar: AppBar(title: const Text('Уведомления')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          TextField(controller: name, decoration: const InputDecoration(labelText: 'Имя в кабинете')),
-          const SizedBox(height: 8),
-          CultButton(label: 'Сохранить имя', onPressed: () => store.setProfileName(name.text)),
+          TextField(controller: _name, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Имя в кабинете')),
+          const SizedBox(height: 12),
+          CultButton(label: 'Сохранить имя', onPressed: () => store.setProfileName(_name.text)),
           SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Визиты'), value: store.notices['visits'] ?? true, onChanged: (value) => store.setNotice('visits', value)),
           SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Анализы'), value: store.notices['analyses'] ?? true, onChanged: (value) => store.setNotice('analyses', value)),
           SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Аптечка'), value: store.notices['pharmacy'] ?? true, onChanged: (value) => store.setNotice('pharmacy', value)),

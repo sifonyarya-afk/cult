@@ -62,6 +62,49 @@ class CultButton extends StatelessWidget {
   }
 }
 
+class CultSelect extends StatelessWidget {
+  const CultSelect({super.key, required this.label, required this.value, required this.onTap, this.hint = 'Выбрать'});
+
+  final String label;
+  final String value;
+  final String hint;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final empty = value.trim().isEmpty;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(label, style: const TextStyle(color: Cult.muted, fontSize: 12)),
+                      const SizedBox(height: 2),
+                      Text(empty ? hint : value, style: TextStyle(color: empty ? Cult.muted : Cult.ink, fontSize: 16)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.expand_more, color: Cult.muted),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class CultCard extends StatelessWidget {
   const CultCard({super.key, required this.child, this.padding = const EdgeInsets.all(16)});
 

@@ -80,8 +80,12 @@ class _BootState extends State<Boot> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('CULT', style: TextStyle(fontFamily: 'serif', fontSize: 56, letterSpacing: 6)),
-              SizedBox(height: 8),
+              SizedBox(height: 12),
+              SizedBox(width: 48, height: 2, child: ColoredBox(color: Cult.gold)),
+              SizedBox(height: 12),
               Text('CLINIC', style: TextStyle(letterSpacing: 4, color: Cult.muted)),
+              SizedBox(height: 8),
+              Text('Сочи', style: TextStyle(color: Cult.muted)),
             ],
           ),
         ),
@@ -117,7 +121,10 @@ class _ShellState extends State<Shell> {
       const ChatPage(),
       const CabinetPage(),
     ];
-    return Scaffold(
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Scaffold(
       appBar: AppBar(
         title: const Text('CULT'),
         actions: [
@@ -141,6 +148,8 @@ class _ShellState extends State<Shell> {
           NavigationDestination(icon: Icon(Icons.person_outline), label: 'Кабинет'),
         ],
       ),
+        ),
+      ),
     );
   }
 
@@ -150,17 +159,22 @@ class _ShellState extends State<Shell> {
       builder: (context) => SafeArea(
         child: ListView(
           shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           children: [
+            Padding(padding: const EdgeInsets.fromLTRB(8, 0, 8, 8), child: Text('Меню', style: cultHeadline(28))),
+            const _MenuLabel('Клиника'),
+            ListTile(title: const Text('Запись'), subtitle: const Text('Услуга, врач, время'), onTap: () => _go(context, const BookingPage())),
+            ListTile(title: const Text('Прайс'), subtitle: const Text('Цены филиала'), onTap: () => _go(context, const PricesPage())),
             ListTile(title: const Text('Врачи'), onTap: () => _go(context, const DoctorsPage())),
-            ListTile(title: const Text('Прайс'), onTap: () => _go(context, const PricesPage())),
-            ListTile(title: const Text('Запись'), onTap: () => _go(context, const BookingPage())),
-            ListTile(title: const Text('YClients'), onTap: () => _go(context, const YClientsPage())),
             ListTile(title: const Text('Оборудование'), onTap: () => _go(context, const EquipmentPage())),
+            const _MenuLabel('Журнал'),
             ListTile(title: const Text('Кейсы'), onTap: () => _go(context, const CasesPage())),
             ListTile(title: const Text('Блог'), onTap: () => _go(context, const BlogPage())),
             ListTile(title: const Text('О клинике'), onTap: () => _go(context, const AboutPage())),
+            const _MenuLabel('Ещё'),
             ListTile(title: const Text('Трансфер'), onTap: () => _go(context, const TransferPage())),
             ListTile(title: const Text('Сертификаты'), onTap: () => _go(context, const CertificatesPage())),
+            ListTile(title: const Text('YClients'), subtitle: const Text('Филиал и ключи'), onTap: () => _go(context, const YClientsPage())),
           ],
         ),
       ),
@@ -170,5 +184,19 @@ class _ShellState extends State<Shell> {
   void _go(BuildContext sheetContext, Widget page) {
     Navigator.pop(sheetContext);
     pushPage(context, page);
+  }
+}
+
+class _MenuLabel extends StatelessWidget {
+  const _MenuLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Text(text.toUpperCase(), style: const TextStyle(color: Cult.muted, fontSize: 12, letterSpacing: 1.2)),
+    );
   }
 }

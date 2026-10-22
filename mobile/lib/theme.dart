@@ -13,7 +13,12 @@ class Cult {
 }
 
 ThemeData cultTheme() {
-  final base = ThemeData(
+  const radius = 14.0;
+  final border = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(radius),
+    borderSide: const BorderSide(color: Cult.line),
+  );
+  return ThemeData(
     useMaterial3: true,
     scaffoldBackgroundColor: Cult.bg,
     colorScheme: const ColorScheme.light(
@@ -26,25 +31,54 @@ ThemeData cultTheme() {
       error: Cult.error,
     ),
     dividerColor: Cult.line,
+    splashColor: Cult.sand.withValues(alpha: 0.35),
+    textTheme: const TextTheme(
+      bodyMedium: TextStyle(color: Cult.ink, height: 1.35),
+      bodyLarge: TextStyle(color: Cult.ink, height: 1.35),
+    ),
     appBarTheme: const AppBarTheme(
       backgroundColor: Cult.bg,
       foregroundColor: Cult.ink,
       elevation: 0,
+      scrolledUnderElevation: 0,
       centerTitle: true,
-      titleTextStyle: TextStyle(fontFamily: 'serif', fontSize: 22, color: Cult.ink),
+      titleTextStyle: TextStyle(fontFamily: 'serif', fontSize: 22, letterSpacing: 3, color: Cult.ink),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      labelStyle: const TextStyle(color: Cult.muted),
+      hintStyle: const TextStyle(color: Cult.muted),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: border.copyWith(borderSide: const BorderSide(color: Cult.primary, width: 1.4)),
+    ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: Cult.bg,
+      showDragHandle: true,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: Colors.white,
+      selectedColor: Cult.gold,
+      side: const BorderSide(color: Cult.line),
+      labelStyle: const TextStyle(color: Cult.ink),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: Colors.white,
+      height: 68,
       indicatorColor: Cult.sand,
       labelTextStyle: WidgetStateProperty.resolveWith(
         (states) => TextStyle(
           fontSize: 11,
+          fontWeight: states.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w400,
           color: states.contains(WidgetState.selected) ? Cult.primary : Cult.muted,
         ),
       ),
     ),
   );
-  return base;
 }
 
 TextStyle cultHeadline(double size) => TextStyle(

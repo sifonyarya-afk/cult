@@ -15,19 +15,29 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final store = ClinicScope.of(context);
+    final next = store.upcoming.isEmpty ? null : store.upcoming.first;
+    final first = store.profileName.trim().split(RegExp(r'\s+')).first;
+    final hello = first.isEmpty ? 'Добрый день' : first;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
       children: [
-        CultCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('ВАШ СТАТУС: PLATINUM', style: TextStyle(color: Cult.secondary, letterSpacing: 1.2, fontSize: 12)),
-              const SizedBox(height: 8),
-              Text('Юлия, доброго дня!', style: cultHeadline(28)),
-              const SizedBox(height: 8),
-              const Text('Рады видеть вас снова в CULT Clinic. Следующая процедура уже в кабинете.'),
-            ],
+        Text('Сочи · Черноморская, 6', style: const TextStyle(color: Cult.muted, letterSpacing: 0.3)),
+        const SizedBox(height: 10),
+        InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => pushPage(context, const VisitsPage()),
+          child: CultCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('ПЛАТИНОВЫЙ СТАТУС', style: TextStyle(color: Cult.secondary, letterSpacing: 1.2, fontSize: 12)),
+                const SizedBox(height: 8),
+                Text(hello, style: cultHeadline(28)),
+                const SizedBox(height: 8),
+                Text(next == null ? 'Ближайшей записи нет. Можно выбрать услугу и врача.' : 'Дальше: ${next.service}, ${formatVisitDate(next.date)} в ${next.time}.'),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 16),

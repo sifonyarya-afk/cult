@@ -51,7 +51,7 @@ class _PricesPageState extends State<PricesPage> {
       (group: 'Инфузии', name: 'Beauty & Glow', meta: '60 мин', price: '18 000 ₽'),
     ].where((row) {
       final groupOk = _chip == 'Все' || row.group == _chip;
-      final textOk = needle.isEmpty || row.name.toLowerCase().contains(needle);
+      final textOk = needle.isEmpty || row.name.toLowerCase().contains(needle) || row.group.toLowerCase().contains(needle);
       return groupOk && textOk;
     }).toList();
     final liveGroups = <String>[];
@@ -65,29 +65,50 @@ class _PricesPageState extends State<PricesPage> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text(store.yclientsReady ? 'Сверху цены филиала YClients. Ниже — прайс приложения.' : 'Интерактивный список. Точная сумма подтверждается на консультации.'),
-          if (store.liveError.isNotEmpty) Text(store.liveError, style: const TextStyle(color: Cult.error)),
+          Text(store.yclientsReady ? 'Цены филиала CULT в Сочи. Поиск ищет и по категориям.' : 'Точная сумма подтверждается на консультации.'),
+          if (store.liveError.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(store.liveError, style: const TextStyle(color: Cult.error)),
+            TextButton(onPressed: store.refreshCatalog, child: const Text('Повторить')),
+          ],
+          if (store.yclientsReady && store.liveServices.isEmpty && store.liveError.isEmpty)
+            const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: LinearProgressIndicator()),
+          const SizedBox(height: 8),
           TextField(
             controller: _query,
-            decoration: const InputDecoration(labelText: 'Найти услугу'),
+            decoration: const InputDecoration(hintText: 'Найти услугу', prefixIcon: Icon(Icons.search)),
             onChanged: (_) => setState(() {}),
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final chip in chips)
-                ChoiceChip(label: Text(chip), selected: _chip == chip, onSelected: (_) => setState(() => _chip = chip)),
-            ],
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: chips.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final chip = chips[index];
+                return ChoiceChip(label: Text(chip), selected: _chip == chip, onSelected: (_) => setState(() => _chip = chip));
+              },
+            ),
           ),
           const SizedBox(height: 12),
-          if (rows.isEmpty) const Text('Ничего не найдено.') else
+          if (rows.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Text('Ничего не найдено. Смените категорию или короче запрос.'),
+            )
+          else
             for (final row in rows)
               ListTile(
                 contentPadding: EdgeInsets.zero,
+                minVerticalPadding: 10,
                 title: Text(row.name),
                 subtitle: Text('${row.group} · ${row.meta}'),
-                trailing: Text(row.price),
+                trailing: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 108),
+                  child: Text(row.price, textAlign: TextAlign.end),
+                ),
               ),
         ],
       ),
@@ -111,12 +132,12 @@ class AboutPage extends StatelessWidget {
           const SizedBox(height: 8),
           const Text('CULT — клиническое святилище: диагностика, аппараты, инъекции и инфузии в одном протоколе.'),
           const SizedBox(height: 12),
-          const Text('Адрес: Клинический переулок, 7'),
+          const Text('Адрес: Сочи, Черноморская, 6'),
           const Text('Часы: ежедневно 9:00–21:00'),
           const Text('Телефон: +7 495 000-00-07'),
           const SizedBox(height: 12),
           Text('Как добраться', style: cultHeadline(22)),
-          const Text('От метро «Кропоткинская» семь минут пешком. Парковка для гостей у ресепшен.'),
+          const Text('Клиника на Черноморской, 6. Парковка для гостей у входа.'),
           const SizedBox(height: 12),
           Text('Документы', style: cultHeadline(22)),
           const Text('Публичная оферта, согласие на процедуры и политика данных. В приложении имя, визиты и заказы хранятся только на телефоне.'),
@@ -262,6 +283,7 @@ class TransferPage extends StatefulWidget {
 class _TransferPageState extends State<TransferPage> {
   final _from = TextEditingController();
   var _done = false;
+  var _error = '';
 
   @override
   void dispose() {
@@ -278,16 +300,20 @@ class _TransferPageState extends State<TransferPage> {
         children: [
           Text('VIP-такси до клиники', style: cultHeadline(28)),
           const SizedBox(height: 8),
-          const Text('Адрес клиники: Клинический переулок, 7. Машина подаётся к указанному адресу.'),
+          const Text('Адрес клиники: Сочи, Черноморская, 6. Машина подаётся к указанному адресу.'),
           if (_done)
             const Padding(padding: EdgeInsets.only(top: 16), child: Text('Заявка у консьержа. Водитель напишет в чат администратора.'))
           else ...[
-            TextField(controller: _from, decoration: const InputDecoration(labelText: 'Откуда забрать')),
+            TextField(controller: _from, textCapitalization: TextCapitalization.sentences, decoration: const InputDecoration(labelText: 'Откуда забрать')),
+            if (_error.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error, style: const TextStyle(color: Cult.error))),
             const SizedBox(height: 12),
             CultButton(
               label: 'Заказать',
               onPressed: () {
-                if (_from.text.trim().length < 5) return;
+                if (_from.text.trim().length < 5) {
+                  setState(() => _error = 'Укажите адрес, откуда забрать.');
+                  return;
+                }
                 setState(() => _done = true);
               },
             ),

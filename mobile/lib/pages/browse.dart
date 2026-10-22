@@ -159,8 +159,9 @@ class DoctorPage extends StatelessWidget {
           const SizedBox(height: 12),
           Text('Отзывы', style: cultHeadline(22)),
           for (final review in doctor.reviews) Padding(padding: const EdgeInsets.only(top: 8), child: Text('«$review»')),
-          const SizedBox(height: 16),
-          CultButton(label: 'Чат с доктором', onPressed: () => pushPage(context, const ChatThreadPage(contactId: 'specialist'))),
+          const SizedBox(height: 20),
+          CultButton(label: 'Записаться', onPressed: () => pushPage(context, const BookingPage())),
+          TextButton(onPressed: () => pushPage(context, const ChatThreadPage(contactId: 'specialist')), child: const Text('Чат с доктором')),
         ],
       ),
     );
@@ -182,15 +183,21 @@ class EquipmentPage extends StatelessWidget {
           for (final device in devices)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: CultCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(device.title, style: cultHeadline(22)),
-                    Text('${device.meta} · ${device.price}', style: const TextStyle(color: Cult.primary)),
-                    const SizedBox(height: 6),
-                    Text(device.text),
-                  ],
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => pushPage(context, BookingPage(initialService: device.title)),
+                child: CultCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(device.title, style: cultHeadline(22)),
+                      Text('${device.meta} · ${device.price}', style: const TextStyle(color: Cult.primary)),
+                      const SizedBox(height: 6),
+                      Text(device.text),
+                      const SizedBox(height: 8),
+                      const Text('Записаться', style: TextStyle(color: Cult.primary, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
                 ),
               ),
             ),
