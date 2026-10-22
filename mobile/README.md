@@ -6,35 +6,47 @@
 
 ## Запуск на iPhone
 
-Из папки `mobile`:
+Сначала зайдите в папку приложения (не в `ios`):
+
+```bash
+cd ~/Desktop/cult/cult/mobile
+```
+
+Проверьте приглашение терминала: путь должен заканчиваться на `mobile`, не на `ios`.
+
+Затем:
 
 ```bash
 flutter pub get
-cd ios
-pod install
-cd ..
+rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
+(cd ios && pod install)
 open ios/Runner.xcworkspace
 ```
 
 Открывайте именно **`Runner.xcworkspace`**, не `Runner.xcodeproj`.
 
-Если Xcode пишет `Missing package product 'FlutterGeneratedPluginSwiftPackage'` — вы открыли `.xcodeproj` до `flutter pub get`, либо старый кэш SPM. В этом репозитории Swift Package Manager для плагинов выключен (CocoaPods). Закройте Xcode и выполните:
+### Если снова чистите проект
+
+Все команды ниже тоже только из `mobile`:
 
 ```bash
+cd ~/Desktop/cult/cult/mobile
 flutter clean
 flutter pub get
-cd ios
-rm -rf Pods Podfile.lock .symlinks
-pod install
-cd ..
+rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
+(cd ios && pod install)
 open ios/Runner.xcworkspace
 ```
+
+Не делайте `cd ios` перед этим блоком. Сообщение Flutter `Changing current working directory to: .../mobile` меняет каталог только внутри Flutter, не в вашем терминале — если вы уже были в `ios`, следующий `cd ios` ищет несуществующий `ios/ios`.
+
+Предупреждение CocoaPods про `platform iOS 15.0` можно игнорировать, если в конце есть `Pod installation complete!`.
 
 В Xcode: цель Runner → Signing & Capabilities → Team. Выберите свой Apple ID (Personal Team). Без команды подписи сборка на iPhone не запускается.
 
 Если CocoaPods не установлен: `brew install cocoapods`.
 
-Либо без Xcode:
+Либо без Xcode, из `mobile`:
 
 ```bash
 flutter pub get
