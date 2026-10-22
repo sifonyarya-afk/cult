@@ -273,8 +273,20 @@ class _ShellState extends State<Shell> {
             ),
             title: const Text('CULT'),
             actions: [
+              if (store.syncing)
+                const Padding(
+                  padding: EdgeInsets.only(right: 4),
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Cult.primary,
+                    ),
+                  ),
+                ),
               IconButton(
-                tooltip: 'Уведомления',
+                tooltip: 'Настройки',
                 onPressed: () => pushPage(context, const SettingsPage()),
                 icon: const Icon(Icons.notifications_none),
               ),
@@ -368,62 +380,77 @@ class _ShellState extends State<Shell> {
             ),
             const _MenuLabel('Клиника'),
             ListTile(
+              leading: const Icon(Icons.event_available_outlined),
               title: const Text('Запись'),
               subtitle: const Text('Услуга, врач, время'),
               onTap: () => _go(sheetContext, const BookingPage()),
             ),
             ListTile(
+              leading: const Icon(Icons.payments_outlined),
               title: const Text('Прайс'),
               subtitle: const Text('Цены филиала'),
               onTap: () => _go(sheetContext, const PricesPage()),
             ),
             ListTile(
+              leading: const Icon(Icons.medical_services_outlined),
               title: const Text('Врачи'),
               onTap: () => _go(sheetContext, const DoctorsPage()),
             ),
             ListTile(
+              leading: const Icon(Icons.devices_outlined),
               title: const Text('Аппаратная'),
               onTap: () =>
                   _go(sheetContext, const CategoryHubPage(slug: 'hardware')),
             ),
             ListTile(
+              leading: const Icon(Icons.vaccines_outlined),
               title: const Text('Инъекции'),
               onTap: () =>
                   _go(sheetContext, const CategoryHubPage(slug: 'injections')),
             ),
             ListTile(
+              leading: const Icon(Icons.water_drop_outlined),
               title: const Text('Инфузии'),
               onTap: () =>
                   _go(sheetContext, const CategoryHubPage(slug: 'infusions')),
             ),
             ListTile(
+              leading: const Icon(Icons.biotech_outlined),
               title: const Text('Наука'),
               onTap: () =>
                   _go(sheetContext, const CategoryHubPage(slug: 'science')),
             ),
             const _MenuLabel('Журнал'),
             ListTile(
+              leading: const Icon(Icons.auto_awesome_outlined),
               title: const Text('Кейсы'),
               onTap: () => _go(sheetContext, const CasesPage()),
             ),
             ListTile(
+              leading: const Icon(Icons.article_outlined),
               title: const Text('Блог'),
               onTap: () => _go(sheetContext, const BlogPage()),
             ),
             ListTile(
+              leading: const Icon(Icons.apartment_outlined),
               title: const Text('О клинике'),
               onTap: () => _go(sheetContext, const AboutPage()),
             ),
             const _MenuLabel('Ещё'),
             ListTile(
+              leading: const Icon(Icons.directions_car_outlined),
               title: const Text('Трансфер'),
               onTap: () => _go(sheetContext, const TransferPage()),
             ),
             ListTile(
+              leading: const Icon(Icons.card_giftcard_outlined),
               title: const Text('Сертификаты'),
               onTap: () => _go(sheetContext, const CertificatesPage()),
             ),
             ListTile(
+              leading: Icon(
+                store.signedIn ? Icons.person_outline : Icons.login,
+              ),
               title: Text(store.signedIn ? 'Профиль' : 'Войти по телефону'),
               subtitle: Text(
                 store.signedIn ? store.profilePhone : 'Сохраним вас в филиале',

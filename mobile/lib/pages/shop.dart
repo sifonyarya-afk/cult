@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../data.dart';
 import '../theme.dart';
@@ -484,17 +485,7 @@ class _CartPageState extends State<CartPage> {
                 ],
               ),
             ),
-            if (_error.isNotEmpty)
-              Container(
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8E8E6),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(_error, style: const TextStyle(color: Cult.error)),
-              ),
+            if (_error.isNotEmpty) CultErrorBanner(message: _error),
             const SizedBox(height: 8),
             CultButton(
               label: 'Оформить заказ',
@@ -531,6 +522,7 @@ class _CartPageState extends State<CartPage> {
                       ? 'Бонусы'
                       : 'Карта и бонусы',
                 );
+                HapticFeedback.mediumImpact();
                 setState(() {
                   _error = '';
                   _due = due;

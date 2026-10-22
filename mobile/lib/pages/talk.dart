@@ -11,8 +11,15 @@ import 'cabinet.dart';
 class ChatPage extends StatelessWidget {
   const ChatPage({super.key});
 
+  IconData _iconFor(String id) => switch (id) {
+    'specialist' => Icons.medical_services_outlined,
+    'bot' => Icons.smart_toy_outlined,
+    _ => Icons.support_agent_outlined,
+  };
+
   @override
   Widget build(BuildContext context) {
+    final store = ClinicScope.of(context);
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
@@ -40,14 +47,7 @@ class ChatPage extends StatelessWidget {
                         color: const Color(0xFFF3EFEA),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Icon(
-                        contact.id == 'specialist'
-                            ? Icons.medical_services_outlined
-                            : contact.id == 'bot'
-                            ? Icons.smart_toy_outlined
-                            : Icons.support_agent_outlined,
-                        color: Cult.ink,
-                      ),
+                      child: Icon(_iconFor(contact.id), color: Cult.ink),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -62,6 +62,25 @@ class ChatPage extends StatelessWidget {
                               fontSize: 13,
                             ),
                           ),
+                          Builder(
+                            builder: (_) {
+                              final thread = store.threads[contact.id] ?? [];
+                              final last = thread.isEmpty ? null : thread.last;
+                              final preview = last?.text ?? contact.seed;
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  preview,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Cult.muted.withValues(alpha: 0.95),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -72,7 +91,7 @@ class ChatPage extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 12),
-        Text('Альтернативная поддержка', style: cultHeadline(20)),
+        const CultSectionLabel('Альтернативная поддержка'),
         const SizedBox(height: 8),
         CultCard(
           padding: EdgeInsets.zero,

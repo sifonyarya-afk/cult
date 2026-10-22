@@ -95,4 +95,19 @@ void main() {
     expect(thread.last.from, 'them');
     expect(thread.last.text.toLowerCase(), contains('запись'));
   });
+
+  test('Корзина оформляет заказ и очищается', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.addToCart('p1', 'Serum CULT', 4500);
+    store.addToCart('p1', 'Serum CULT', 4500);
+    expect(store.cartCount, 2);
+    expect(store.cartTotal, 9000);
+    store.placeOrder(title: 'Serum CULT', total: 9000, pay: 'Карта');
+    expect(store.cart, isEmpty);
+    expect(store.orders, isNotEmpty);
+    expect(store.orders.first.title, 'Serum CULT');
+    expect(store.orders.first.total, 9000);
+  });
 }
