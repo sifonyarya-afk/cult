@@ -578,6 +578,21 @@ class _TransferPageState extends State<TransferPage> {
             'Адрес клиники: Сочи, Черноморская, 6. Машина подаётся к указанному адресу.',
             style: TextStyle(color: Cult.muted, height: 1.4),
           ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ActionChip(
+              avatar: const Icon(Icons.copy_outlined, size: 18),
+              label: const Text('Скопировать адрес клиники'),
+              onPressed: () {
+                Clipboard.setData(
+                  const ClipboardData(text: 'Сочи, Черноморская, 6'),
+                );
+                cultTapFeedback();
+                showCultSnack(context, 'Адрес скопирован');
+              },
+            ),
+          ),
           const SizedBox(height: 16),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),

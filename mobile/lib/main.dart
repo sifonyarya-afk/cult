@@ -357,28 +357,38 @@ class _ShellState extends State<Shell> {
               }
               setState(() => _index = value);
             },
-            destinations: const [
-              NavigationDestination(
+            destinations: [
+              const NavigationDestination(
                 icon: Icon(Icons.home_outlined),
                 selectedIcon: Icon(Icons.home),
                 label: 'Главная',
               ),
-              NavigationDestination(
+              const NavigationDestination(
                 icon: Icon(Icons.spa_outlined),
                 selectedIcon: Icon(Icons.spa),
                 label: 'Услуги',
               ),
-              NavigationDestination(
+              const NavigationDestination(
                 icon: Icon(Icons.shopping_bag_outlined),
                 selectedIcon: Icon(Icons.shopping_bag),
                 label: 'Магазин',
               ),
               NavigationDestination(
-                icon: Icon(Icons.chat_bubble_outline),
-                selectedIcon: Icon(Icons.chat_bubble),
+                icon: Badge(
+                  isLabelVisible: store.hasUnreadChat,
+                  smallSize: 8,
+                  backgroundColor: Cult.gold,
+                  child: const Icon(Icons.chat_bubble_outline),
+                ),
+                selectedIcon: Badge(
+                  isLabelVisible: store.hasUnreadChat,
+                  smallSize: 8,
+                  backgroundColor: Cult.gold,
+                  child: const Icon(Icons.chat_bubble),
+                ),
                 label: 'Чат',
               ),
-              NavigationDestination(
+              const NavigationDestination(
                 icon: Icon(Icons.person_outline),
                 selectedIcon: Icon(Icons.person),
                 label: 'Профиль',

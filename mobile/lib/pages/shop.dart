@@ -431,7 +431,16 @@ class _CartPageState extends State<CartPage> {
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Корзина')),
+      appBar: AppBar(
+        title: const Text('Корзина'),
+        actions: [
+          if (!_done && store.cart.isNotEmpty)
+            TextButton(
+              onPressed: () => _confirmClear(store),
+              child: const Text('Очистить'),
+            ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -664,5 +673,29 @@ class _CartPageState extends State<CartPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmClear(ClinicStore store) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Очистить корзину?'),
+        content: const Text('Все формулы будут удалены из заказа.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Оставить'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Очистить', style: TextStyle(color: Cult.error)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    store.clearCart();
+    HapticFeedback.mediumImpact();
+    showCultSnack(context, 'Корзина очищена');
   }
 }

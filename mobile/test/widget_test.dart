@@ -233,6 +233,21 @@ void main() {
     );
   });
 
+  test('Бот отвечает про скидки, корзина очищается', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Какие скидки?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('бонус'));
+    store.addToCart('p1', 'Serum CULT', 4500);
+    store.addToCart('p2', 'Kit', 9000);
+    expect(store.cartCount, 2);
+    expect(store.hasUnreadChat, isTrue);
+    store.clearCart();
+    expect(store.cart, isEmpty);
+    expect(store.cartCount, 0);
+  });
+
   test('Корзина сохраняет контакт при оформлении', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();

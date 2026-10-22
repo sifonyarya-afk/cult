@@ -374,6 +374,19 @@ class ClinicStore extends ChangeNotifier {
     _save();
   }
 
+  void clearCart() {
+    if (cart.isEmpty) return;
+    cart = [];
+    _save();
+  }
+
+  bool get hasUnreadChat {
+    for (final thread in threads.values) {
+      if (thread.isNotEmpty && thread.last.from == 'them') return true;
+    }
+    return false;
+  }
+
   void toggleFavorite(String id) {
     if (favorites.contains(id)) {
       favorites.remove(id);
@@ -779,6 +792,9 @@ class ClinicStore extends ChangeNotifier {
       }
       if (q.contains('wifi') || q.contains('wi-fi') || q.contains('вайф')) {
         return 'Wi‑Fi для гостей на ресепшен: сеть CULT Guest. Пароль выдаст администратор.';
+      }
+      if (q.contains('скидк') || q.contains('акци') || q.contains('промо')) {
+        return 'Актуальные предложения — на главной. Новым клиентам welcome-бонус 3 000 ₽ после входа по телефону.';
       }
       return 'Клиника открыта ежедневно с 9:00 до 21:00. Запись — в разделе «Запись» или через «+» на главной.';
     }

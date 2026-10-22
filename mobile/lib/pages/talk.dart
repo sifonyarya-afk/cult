@@ -205,6 +205,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Трансфер',
     'Парковка',
     'Анализы',
+    'Скидки',
   ];
 
   @override
@@ -650,23 +651,30 @@ class _BookingPageState extends State<BookingPage> {
     if (!options.contains(_service)) options.insert(0, _service);
     return Scaffold(
       appBar: AppBar(title: const Text('Запись')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text('Запись на услугу', style: cultHeadline(30)),
-          const SizedBox(height: 8),
-          const Text(
-            'Сначала услуга, затем врач и время. Запись сохраняется в кабинете.',
-          ),
-          const SizedBox(height: 12),
-          const CultCard(
-            child: Text(
-              'Онлайн-запись к филиалу сейчас недоступна. Визит сохранится в приложении.',
-              style: TextStyle(color: Cult.muted, height: 1.4),
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollStartNotification) {
+            FocusManager.instance.primaryFocus?.unfocus();
+          }
+          return false;
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text('Запись на услугу', style: cultHeadline(30)),
+            const SizedBox(height: 8),
+            const Text(
+              'Сначала услуга, затем врач и время. Запись сохраняется в кабинете.',
             ),
-          ),
-          const SizedBox(height: 12),
-          AnimatedSwitcher(
+            const SizedBox(height: 12),
+            const CultCard(
+              child: Text(
+                'Онлайн-запись к филиалу сейчас недоступна. Визит сохранится в приложении.',
+                style: TextStyle(color: Cult.muted, height: 1.4),
+              ),
+            ),
+            const SizedBox(height: 12),
+            AnimatedSwitcher(
             duration: const Duration(milliseconds: 320),
             child: _done
                 ? KeyedSubtree(
@@ -730,8 +738,9 @@ class _BookingPageState extends State<BookingPage> {
                       ),
                     ],
                   ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

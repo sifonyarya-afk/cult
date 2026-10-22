@@ -421,7 +421,12 @@ class _VisitsPageState extends State<VisitsPage> {
         actions: [
           IconButton(
             tooltip: 'Обновить',
-            onPressed: store.signedIn ? () => store.refreshVisits() : null,
+            onPressed: store.signedIn
+                ? () {
+                    cultTapFeedback();
+                    store.refreshVisits();
+                  }
+                : null,
             icon: const Icon(Icons.refresh),
           ),
         ],
@@ -467,41 +472,48 @@ class _VisitsPageState extends State<VisitsPage> {
                 for (final visit in store.upcoming)
                   Padding(
                     padding: const EdgeInsets.only(top: 12),
-                    child: CultCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${formatVisitDate(visit.date)} · ${visit.time}',
-                            style: const TextStyle(
-                              color: Cult.secondary,
-                              letterSpacing: 0.6,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(visit.service, style: cultHeadline(20)),
-                          Text(
-                            visit.doctor,
-                            style: const TextStyle(color: Cult.muted),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'CULT · Сочи',
-                            style: TextStyle(color: Cult.muted, fontSize: 12),
-                          ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () => _confirmCancel(store, visit.id),
-                              child: const Text(
-                                'Отменить',
-                                style: TextStyle(color: Cult.error),
+                    child: GestureDetector(
+                      onLongPress: () => _copyVisit(visit),
+                      child: CultCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${formatVisitDate(visit.date)} · ${visit.time}',
+                              style: const TextStyle(
+                                color: Cult.secondary,
+                                letterSpacing: 0.6,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 6),
+                            Text(visit.service, style: cultHeadline(20)),
+                            Text(
+                              visit.doctor,
+                              style: const TextStyle(color: Cult.muted),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'CULT · Сочи',
+                              style: TextStyle(
+                                color: Cult.muted,
+                                fontSize: 12,
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () =>
+                                    _confirmCancel(store, visit.id),
+                                child: const Text(
+                                  'Отменить',
+                                  style: TextStyle(color: Cult.error),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -526,34 +538,43 @@ class _VisitsPageState extends State<VisitsPage> {
                 for (final visit in store.past)
                   Padding(
                     padding: const EdgeInsets.only(top: 10),
-                    child: CultCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(visit.service, style: cultHeadline(18)),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${formatVisitDate(visit.date)} · ${visit.time}',
-                            style: const TextStyle(color: Cult.muted),
-                          ),
-                          Text(
-                            '${visit.doctor} · CULT Сочи',
-                            style: const TextStyle(
-                              color: Cult.muted,
-                              fontSize: 13,
+                    child: GestureDetector(
+                      onLongPress: () => _copyVisit(visit),
+                      child: CultCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(visit.service, style: cultHeadline(18)),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${formatVisitDate(visit.date)} · ${visit.time}',
+                              style: const TextStyle(color: Cult.muted),
                             ),
-                          ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () => pushPage(
-                                context,
-                                BookingPage(initialService: visit.service),
+                            Text(
+                              '${visit.doctor} · CULT Сочи',
+                              style: const TextStyle(
+                                color: Cult.muted,
+                                fontSize: 13,
                               ),
-                              child: const Text('Повторить запись'),
                             ),
-                          ),
-                        ],
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () {
+                                  cultTapFeedback();
+                                  pushPage(
+                                    context,
+                                    BookingPage(
+                                      initialService: visit.service,
+                                      initialDoctor: visit.doctor,
+                                    ),
+                                  );
+                                },
+                                child: const Text('Повторить запись'),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -562,6 +583,14 @@ class _VisitsPageState extends State<VisitsPage> {
         ),
       ),
     );
+  }
+
+  void _copyVisit(Appointment visit) {
+    final summary =
+        '${visit.service} · ${visit.doctor}, ${formatVisitDate(visit.date)} в ${visit.time}';
+    Clipboard.setData(ClipboardData(text: summary));
+    cultTapFeedback();
+    showCultSnack(context, 'Детали визита скопированы');
   }
 
   Future<void> _confirmCancel(ClinicStore store, String visitId) async {
@@ -587,6 +616,7 @@ class _VisitsPageState extends State<VisitsPage> {
     if (ok != true || !mounted) return;
     final message = await store.cancelVisit(visitId);
     if (!mounted) return;
+    HapticFeedback.mediumImpact();
     showCultSnack(context, message ?? 'Запись отменена');
   }
 }
@@ -849,8 +879,10 @@ class FavoritesPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),
-                        onTap: () =>
-                            pushPage(context, ProductPage(product: product)),
+                        onTap: () {
+                          cultTapFeedback();
+                          pushPage(context, ProductPage(product: product));
+                        },
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
                           child: Row(
@@ -885,7 +917,7 @@ class FavoritesPage extends StatelessWidget {
                               IconButton(
                                 tooltip: 'В корзину',
                                 onPressed: () {
-                                  cultTapFeedback();
+                                  HapticFeedback.mediumImpact();
                                   store.addToCart(
                                     product.id,
                                     product.name,
@@ -904,9 +936,14 @@ class FavoritesPage extends StatelessWidget {
                                 ),
                               ),
                               IconButton(
+                                tooltip: 'Убрать из избранного',
                                 onPressed: () {
                                   HapticFeedback.selectionClick();
                                   store.toggleFavorite(product.id);
+                                  showCultSnack(
+                                    context,
+                                    'Убрали из избранного',
+                                  );
                                 },
                                 icon: const Icon(
                                   Icons.favorite,
@@ -1334,6 +1371,7 @@ class _SettingsPageState extends State<SettingsPage> {
             label: 'Сохранить имя',
             onPressed: () {
               store.setProfileName(_name.text);
+              HapticFeedback.mediumImpact();
               showCultSnack(context, 'Имя сохранено');
             },
           ),
@@ -1363,19 +1401,31 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           if (store.signedIn) ...[
             const SizedBox(height: 8),
-            Text(
-              'Телефон ${_phoneLabel(store.profilePhone)}',
-              style: const TextStyle(color: Cult.muted),
+            InkWell(
+              onLongPress: () {
+                final label = _phoneLabel(store.profilePhone);
+                Clipboard.setData(ClipboardData(text: label));
+                cultTapFeedback();
+                showCultSnack(context, 'Телефон скопирован');
+              },
+              child: Text(
+                'Телефон ${_phoneLabel(store.profilePhone)}',
+                style: const TextStyle(color: Cult.muted),
+              ),
             ),
             TextButton(
-              onPressed: () =>
-                  pushPage(context, const AuthPage(allowSkip: false)),
+              onPressed: () {
+                cultTapFeedback();
+                pushPage(context, const AuthPage(allowSkip: false));
+              },
               child: const Text('Сменить номер'),
             ),
           ] else
             TextButton(
-              onPressed: () =>
-                  pushPage(context, const AuthPage(allowSkip: false)),
+              onPressed: () {
+                cultTapFeedback();
+                pushPage(context, const AuthPage(allowSkip: false));
+              },
               child: const Text('Войти по телефону'),
             ),
           const SizedBox(height: 12),
