@@ -196,8 +196,20 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('ЗАПИСАТЬСЯ'), findsOneWidget);
+    expect(find.textContaining('ЗАПИСАТЬСЯ'), findsOneWidget);
     expect(find.byType(CultBookBar), findsOneWidget);
+    expect(find.textContaining(services.first.priceLabel), findsWidgets);
+  });
+
+  test('Бот отвечает про выходные', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Работаете в воскресенье?');
+    expect(
+      store.threads['bot']!.last.text.toLowerCase(),
+      contains('выходн'),
+    );
   });
 
   test('Бот отвечает про сертификат и трансфер', () async {

@@ -805,6 +805,9 @@ class DevicePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('CULT')),
       bottomNavigationBar: CultBookBar(
+        label: device.price.isEmpty
+            ? 'Записаться'
+            : 'Записаться · ${device.price}',
         onPressed: () =>
             pushPage(context, BookingPage(initialService: device.title)),
       ),

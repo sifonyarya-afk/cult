@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../data.dart';
 import '../theme.dart';
@@ -387,9 +388,15 @@ class LiveServicePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final summary =
+        '${service.title} · ${service.priceLabel}'
+        '${service.durationLabel.isEmpty ? '' : ' · ${service.durationLabel}'}';
     return Scaffold(
       appBar: AppBar(title: const Text('CULT')),
       bottomNavigationBar: CultBookBar(
+        label: service.priceLabel.isEmpty
+            ? 'Записаться'
+            : 'Записаться · ${service.priceLabel}',
         onPressed: () =>
             pushPage(context, BookingPage(initialService: service.title)),
       ),
@@ -402,7 +409,14 @@ class LiveServicePage extends StatelessWidget {
             style: const TextStyle(color: Cult.primary, letterSpacing: 1.2),
           ),
           const SizedBox(height: 6),
-          Text(service.title, style: cultHeadline(30)),
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: summary));
+              cultTapFeedback();
+              showCultSnack(context, 'Услуга скопирована');
+            },
+            child: Text(service.title, style: cultHeadline(30)),
+          ),
           if (service.durationLabel.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
@@ -420,6 +434,17 @@ class LiveServicePage extends StatelessWidget {
             ),
           const SizedBox(height: 16),
           Text(service.priceLabel, style: cultHeadline(24)),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () {
+              cultTapFeedback();
+              pushPage(
+                context,
+                const ChatThreadPage(contactId: 'specialist'),
+              );
+            },
+            child: const Text('Спросить врача'),
+          ),
         ],
       ),
     );
@@ -479,9 +504,21 @@ class ServicePage extends StatelessWidget {
             service.priceLabel,
             style: cultHeadline(28).copyWith(color: Cult.primary),
           ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () {
+              cultTapFeedback();
+              pushPage(
+                context,
+                const ChatThreadPage(contactId: 'specialist'),
+              );
+            },
+            child: const Text('Спросить врача'),
+          ),
         ],
       ),
       bottomNavigationBar: CultBookBar(
+        label: 'Записаться · ${service.priceLabel}',
         onPressed: () =>
             pushPage(context, BookingPage(initialService: service.title)),
       ),

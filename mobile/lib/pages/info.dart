@@ -518,58 +518,103 @@ class ArticlePage extends StatelessWidget {
   }
 }
 
-class CasesPage extends StatelessWidget {
+class CasesPage extends StatefulWidget {
   const CasesPage({super.key});
 
   @override
+  State<CasesPage> createState() => _CasesPageState();
+}
+
+class _CasesPageState extends State<CasesPage> {
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final needle = _query.text.trim().toLowerCase();
+    final list = cases.where((item) {
+      if (needle.isEmpty) return true;
+      return item.title.toLowerCase().contains(needle) ||
+          item.procedure.toLowerCase().contains(needle) ||
+          item.doctor.toLowerCase().contains(needle);
+    }).toList();
     return Scaffold(
       appBar: AppBar(title: const Text('Кейсы')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        children: [
-          Text('Клинические кейсы', style: cultHeadline(28)),
-          const SizedBox(height: 6),
-          const Text(
-            'Результаты протоколов CULT в филиале Сочи.',
-            style: TextStyle(color: Cult.muted),
-          ),
-          const SizedBox(height: 16),
-          for (final item in cases)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  cultTapFeedback();
-                  pushPage(context, CasePage(item: item));
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollStartNotification) {
+            FocusManager.instance.primaryFocus?.unfocus();
+          }
+          return false;
+        },
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          children: [
+            Text('Клинические кейсы', style: cultHeadline(28)),
+            const SizedBox(height: 6),
+            const Text(
+              'Результаты протоколов CULT в филиале Сочи.',
+              style: TextStyle(color: Cult.muted),
+            ),
+            const SizedBox(height: 14),
+            CultSearchField(
+              controller: _query,
+              hint: 'Процедура или врач',
+              onChanged: () => setState(() {}),
+            ),
+            const SizedBox(height: 16),
+            if (list.isEmpty)
+              CultEmpty(
+                title: 'Ничего не найдено',
+                note: 'Смягчите запрос или сбросьте поиск.',
+                actionLabel: 'Сбросить',
+                onAction: () {
+                  _query.clear();
+                  setState(() {});
                 },
-                child: CultCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CultImage(item.image, aspect: 4 / 3, radius: 16),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(item.title, style: cultHeadline(22)),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${item.procedure} · ${item.doctor}',
-                              style: const TextStyle(color: Cult.muted),
+              )
+            else
+              for (final item in list)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      cultTapFeedback();
+                      pushPage(context, CasePage(item: item));
+                    },
+                    child: CultCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CultImage(item.image, aspect: 4 / 3, radius: 16),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item.title, style: cultHeadline(22)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${item.procedure} · ${item.doctor}',
+                                  style: const TextStyle(color: Cult.muted),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -296,12 +296,9 @@ class HomePage extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   cultTapFeedback();
-                  openExternal(
-                    'https://www.youtube.com/results?search_query=CULT+Clinic',
-                    context: context,
-                  );
+                  pushPage(context, const BlogPage());
                 },
-                child: const Text('Смотреть канал'),
+                child: const Text('Все материалы'),
               ),
             ],
           ),
@@ -316,53 +313,57 @@ class HomePage extends StatelessWidget {
                 final article = articles[index];
                 return SizedBox(
                   width: 260,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(14),
-                    onTap: () {
-                      cultTapFeedback();
-                      pushPage(context, ArticlePage(article: article));
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            CultImage(
-                              article.image,
-                              aspect: 16 / 9,
-                              radius: 12,
-                            ),
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.22),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white54),
+                  child: Semantics(
+                    button: true,
+                    label: article.title,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () {
+                        cultTapFeedback();
+                        pushPage(context, ArticlePage(article: article));
+                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CultImage(
+                                article.image,
+                                aspect: 16 / 9,
+                                radius: 12,
                               ),
-                              child: const Icon(
-                                Icons.play_arrow,
-                                color: Colors.white,
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.22),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white54),
+                                ),
+                                child: const Icon(
+                                  Icons.play_arrow,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          article.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        Text(
-                          article.author,
-                          style: const TextStyle(
-                            color: Cult.muted,
-                            fontSize: 12,
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          Text(
+                            article.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            article.author,
+                            style: const TextStyle(
+                              color: Cult.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
