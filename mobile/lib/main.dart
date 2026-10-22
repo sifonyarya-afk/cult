@@ -287,6 +287,14 @@ class _ShellState extends State<Shell> {
                 FocusManager.instance.primaryFocus?.unfocus();
                 Navigator.of(context).popUntil((route) => route.isFirst);
                 setState(() => _index = 0);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!_homeScroll.hasClients) return;
+                  _homeScroll.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 320),
+                    curve: Curves.easeOutCubic,
+                  );
+                });
               },
               child: const Text('CULT'),
             ),

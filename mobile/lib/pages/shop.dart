@@ -521,57 +521,81 @@ class _CartPageState extends State<CartPage> {
               onAction: () => Navigator.pop(context),
             ),
           ] else ...[
+            const Text(
+              'Смахните позицию влево, чтобы удалить.',
+              style: TextStyle(color: Cult.muted, fontSize: 12),
+            ),
+            const SizedBox(height: 10),
             for (final item in store.cart)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: CultCard(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(item.name, style: cultHeadline(18)),
-                            const SizedBox(height: 4),
-                            Text(
-                              rub(item.price),
-                              style: const TextStyle(
-                                color: Cult.primary,
-                                fontWeight: FontWeight.w600,
+              Dismissible(
+                key: ValueKey('cart-${item.id}'),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: Cult.error.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(Icons.delete_outline, color: Cult.error),
+                ),
+                onDismissed: (_) {
+                  store.setQty(item.id, 0);
+                  HapticFeedback.mediumImpact();
+                  showCultSnack(context, '${item.name} удалено');
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: CultCard(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(item.name, style: cultHeadline(18)),
+                              const SizedBox(height: 4),
+                              Text(
+                                rub(item.price),
+                                style: const TextStyle(
+                                  color: Cult.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        tooltip: 'Меньше',
-                        onPressed: () {
-                          cultTapFeedback();
-                          store.setQty(item.id, item.qty - 1);
-                        },
-                        icon: const Icon(Icons.remove_circle_outline),
-                        constraints: const BoxConstraints(
-                          minWidth: 44,
-                          minHeight: 44,
+                        IconButton(
+                          tooltip: 'Меньше',
+                          onPressed: () {
+                            cultTapFeedback();
+                            store.setQty(item.id, item.qty - 1);
+                          },
+                          icon: const Icon(Icons.remove_circle_outline),
+                          constraints: const BoxConstraints(
+                            minWidth: 44,
+                            minHeight: 44,
+                          ),
                         ),
-                      ),
-                      Text(
-                        '${item.qty}',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      IconButton(
-                        tooltip: 'Больше',
-                        onPressed: () {
-                          cultTapFeedback();
-                          store.setQty(item.id, item.qty + 1);
-                        },
-                        icon: const Icon(Icons.add_circle_outline),
-                        constraints: const BoxConstraints(
-                          minWidth: 44,
-                          minHeight: 44,
+                        Text(
+                          '${item.qty}',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
-                      ),
-                    ],
+                        IconButton(
+                          tooltip: 'Больше',
+                          onPressed: () {
+                            cultTapFeedback();
+                            store.setQty(item.id, item.qty + 1);
+                          },
+                          icon: const Icon(Icons.add_circle_outline),
+                          constraints: const BoxConstraints(
+                            minWidth: 44,
+                            minHeight: 44,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

@@ -318,6 +318,20 @@ void main() {
     await store.load();
     store.sendMessage('bot', 'Хочу капельницу');
     expect(store.threads['bot']!.last.text.toLowerCase(), contains('инфуз'));
+    store.sendMessage('bot', 'Интересует NAD+');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('nad'));
+  });
+
+  test('Позицию корзины можно обнулить', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.addToCart('p1', 'Serum CULT', 4500);
+    store.addToCart('p2', 'Kit', 9000);
+    expect(store.cartCount, 2);
+    store.setQty('p1', 0);
+    expect(store.cart.where((item) => item.id == 'p1'), isEmpty);
+    expect(store.cartCount, 1);
   });
 
   testWidgets('Товар держит кнопку «В корзину» внизу', (tester) async {

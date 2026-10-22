@@ -836,6 +836,11 @@ class ClinicStore extends ChangeNotifier {
       if (q.contains('инфуз') || q.contains('капель')) {
         return 'Инфузии — в меню «Инфузии»: NAD+, Immunity и Beauty & Glow. Запись через «+» на главной.';
       }
+      if (q.contains('nad') ||
+          q.contains('longevity') ||
+          q.contains('долголет')) {
+        return 'NAD+ и longevity-протоколы — в разделе «Инфузии». Курс подберём на консультации.';
+      }
       return 'Клиника открыта ежедневно с 9:00 до 21:00. Запись — в разделе «Запись» или через «+» на главной.';
     }
     if (contactId == 'specialist') {

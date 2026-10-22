@@ -992,6 +992,16 @@ class _BookingPageState extends State<BookingPage> {
           ),
           TextButton(
             onPressed: () {
+              cultTapFeedback();
+              pushPage(
+                context,
+                const ChatThreadPage(contactId: 'admin'),
+              );
+            },
+            child: const Text('Написать администратору'),
+          ),
+          TextButton(
+            onPressed: () {
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
             child: const Text('На главную'),

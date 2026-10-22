@@ -86,6 +86,23 @@ class CabinetPage extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
+        if (store.signedIn && store.profilePhone.trim().isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Center(
+            child: InkWell(
+              onLongPress: () {
+                final label = _phoneLabel(store.profilePhone);
+                Clipboard.setData(ClipboardData(text: label));
+                cultTapFeedback();
+                showCultSnack(context, 'Телефон скопирован');
+              },
+              child: Text(
+                _phoneLabel(store.profilePhone),
+                style: const TextStyle(color: Cult.muted, fontSize: 13),
+              ),
+            ),
+          ),
+        ],
         if (!store.signedIn) ...[
           const SizedBox(height: 16),
           CultCard(
@@ -1329,6 +1346,16 @@ class _CertificatesPageState extends State<CertificatesPage> {
                             showCultSnack(context, 'Код скопирован');
                           },
                           child: const Text('Скопировать код'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            cultTapFeedback();
+                            pushPage(
+                              context,
+                              const ChatThreadPage(contactId: 'admin'),
+                            );
+                          },
+                          child: const Text('Написать администратору'),
                         ),
                       ],
                     ),
