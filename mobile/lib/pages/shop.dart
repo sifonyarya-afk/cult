@@ -658,9 +658,12 @@ class _CartPageState extends State<CartPage> {
                             minHeight: 44,
                           ),
                         ),
-                        Text(
-                          '${item.qty}',
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        Semantics(
+                          label: 'Количество ${item.qty}',
+                          child: Text(
+                            '${item.qty}',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
                         ),
                         IconButton(
                           tooltip: 'Больше',

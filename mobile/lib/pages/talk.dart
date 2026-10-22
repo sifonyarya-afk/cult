@@ -1157,9 +1157,13 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   Widget _dateTile({List<String> restrict = const []}) {
+    final iso = _date == null ? '' : _iso(_date!);
+    final weekday = iso.isEmpty ? '' : formatVisitWeekday(iso);
     return CultSelect(
       label: 'Дата',
-      value: _date == null ? '' : formatVisitDate(_iso(_date!)),
+      value: _date == null
+          ? ''
+          : '${formatVisitDate(iso)}${weekday.isEmpty ? '' : ', $weekday'}',
       hint: 'Выберите день',
       onTap: () async {
         final now = DateTime.now();

@@ -484,6 +484,16 @@ void main() {
     );
   });
 
+  test('Бот и админ отвечают про отмену записи', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Как отменить запись?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('отмен'));
+    store.sendMessage('admin', 'Нужно перенести визит');
+    expect(store.threads['admin']!.last.text.toLowerCase(), contains('перенос'));
+  });
+
   test('Бот отвечает про реабилитацию и анестезию', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();

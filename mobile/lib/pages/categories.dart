@@ -161,88 +161,106 @@ class _HardwareCosmeticsPageState extends State<HardwareCosmeticsPage> {
             )
           else
             for (final device in filtered) ...[
-              InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  cultTapFeedback();
-                  pushPage(context, DevicePage(device: device));
-                },
-                child: CultCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Stack(
-                        children: [
-                          CultImage(device.image, aspect: 16 / 10, radius: 16),
-                          if (device.badge.isNotEmpty)
-                            Positioned(
-                              left: 12,
-                              top: 12,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Cult.primary,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  device.badge.toUpperCase(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
+              Semantics(
+                button: true,
+                label: '${device.title}, ${device.price}',
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    cultTapFeedback();
+                    pushPage(context, DevicePage(device: device));
+                  },
+                  onLongPress: () {
+                    Clipboard.setData(
+                      ClipboardData(
+                        text:
+                            '${device.title} · ${device.price} · ${device.meta}',
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    );
+                    cultTapFeedback();
+                    showCultSnack(context, 'Процедура скопирована');
+                  },
+                  child: CultCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Stack(
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    device.title,
-                                    style: cultHeadline(22),
+                            CultImage(
+                              device.image,
+                              aspect: 16 / 10,
+                              radius: 16,
+                            ),
+                            if (device.badge.isNotEmpty)
+                              Positioned(
+                                left: 12,
+                                top: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
                                   ),
-                                ),
-                                Text(
-                                  device.price,
-                                  style: const TextStyle(
+                                  decoration: BoxDecoration(
                                     color: Cult.primary,
-                                    fontWeight: FontWeight.w600,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    device.badge.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      letterSpacing: 1,
+                                    ),
                                   ),
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              device.text,
-                              style: const TextStyle(
-                                color: Cult.muted,
-                                height: 1.35,
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              '${device.meta} · ${device.tag}',
-                              style: const TextStyle(
-                                color: Cult.muted,
-                                fontSize: 12,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
                           ],
                         ),
-                      ),
-                    ],
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      device.title,
+                                      style: cultHeadline(22),
+                                    ),
+                                  ),
+                                  Text(
+                                    device.price,
+                                    style: const TextStyle(
+                                      color: Cult.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                device.text,
+                                style: const TextStyle(
+                                  color: Cult.muted,
+                                  height: 1.35,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                '${device.meta} · ${device.tag}',
+                                style: const TextStyle(
+                                  color: Cult.muted,
+                                  fontSize: 12,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
