@@ -680,7 +680,32 @@ class _DoctorsPageState extends State<DoctorsPage> {
                 hint: 'Имя или специализация',
                 onChanged: () => setState(() {}),
               ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            if (live.isNotEmpty || local.isNotEmpty)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () {
+                    final lines = live.isNotEmpty
+                        ? live.map(
+                            (d) =>
+                                '· ${d.name} — ${d.specialization.isEmpty ? 'врач филиала' : d.specialization}',
+                          )
+                        : local.map((d) => '· ${d.name} — ${d.role}');
+                    Clipboard.setData(
+                      ClipboardData(
+                        text: 'Команда CULT Сочи\n${lines.join('\n')}',
+                      ),
+                    );
+                    cultTapFeedback();
+                    showCultSnack(context, 'Список скопирован');
+                  },
+                  child: Text(
+                    'Скопировать список · ${live.isNotEmpty ? live.length : local.length}',
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
             if (store.liveStaff.isEmpty && store.yclientsReady)
               const CultLoading(label: 'Загружаем специалистов…'),
             if (live.isNotEmpty)
@@ -885,6 +910,10 @@ class LiveDoctorPage extends StatelessWidget {
             ),
             onPressed: () {
               cultTapFeedback();
+              ClinicScope.of(context).sendMessage(
+                'specialist',
+                'Здравствуйте, вопрос к ${doctor.name} ($role).',
+              );
               pushPage(
                 context,
                 const ChatThreadPage(contactId: 'specialist'),
@@ -897,13 +926,23 @@ class LiveDoctorPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Text(
-            doctor.about.isEmpty
-                ? 'Врач филиала CULT. Запись и консультации — в приложении.'
-                : doctor.about,
-            maxLines: 5,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Cult.muted, height: 1.4),
+          GestureDetector(
+            onLongPress: () {
+              final about = doctor.about.isEmpty
+                  ? 'Врач филиала CULT. Запись и консультации — в приложении.'
+                  : doctor.about;
+              Clipboard.setData(ClipboardData(text: about));
+              cultTapFeedback();
+              showCultSnack(context, 'Описание скопировано');
+            },
+            child: Text(
+              doctor.about.isEmpty
+                  ? 'Врач филиала CULT. Запись и консультации — в приложении.'
+                  : doctor.about,
+              maxLines: 5,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Cult.muted, height: 1.4),
+            ),
           ),
         ],
       ),
@@ -986,6 +1025,10 @@ class DoctorPage extends StatelessWidget {
             ),
             onPressed: () {
               cultTapFeedback();
+              ClinicScope.of(context).sendMessage(
+                'specialist',
+                'Здравствуйте, вопрос к ${doctor.name} (${doctor.role}).',
+              );
               pushPage(
                 context,
                 const ChatThreadPage(contactId: 'specialist'),
@@ -1049,13 +1092,27 @@ class DoctorPage extends StatelessWidget {
           const SizedBox(height: 18),
           const CultSectionLabel('Образование'),
           const SizedBox(height: 8),
-          Text(doctor.education, style: const TextStyle(height: 1.4)),
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: doctor.education));
+              cultTapFeedback();
+              showCultSnack(context, 'Образование скопировано');
+            },
+            child: Text(doctor.education, style: const TextStyle(height: 1.4)),
+          ),
           const SizedBox(height: 16),
           const CultSectionLabel('О специалисте'),
           const SizedBox(height: 8),
-          Text(
-            doctor.about,
-            style: const TextStyle(color: Cult.muted, height: 1.4),
+          GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: doctor.about));
+              cultTapFeedback();
+              showCultSnack(context, 'Описание скопировано');
+            },
+            child: Text(
+              doctor.about,
+              style: const TextStyle(color: Cult.muted, height: 1.4),
+            ),
           ),
           const SizedBox(height: 16),
           const CultSectionLabel('Отзывы'),

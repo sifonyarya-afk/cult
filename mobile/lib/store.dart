@@ -1020,7 +1020,10 @@ class ClinicStore extends ChangeNotifier {
       if (q.contains('скидк') || q.contains('акци') || q.contains('промо')) {
         return 'Актуальные предложения — на главной. Новым клиентам welcome-бонус 3 000 ₽ после входа по телефону.';
       }
-      if (q.contains('врач') || q.contains('специалист') || q.contains('доктор')) {
+      if (q.contains('врач') ||
+          q.contains('специалист') ||
+          q.contains('доктор') ||
+          q.contains('команда')) {
         return 'Команда врачей — в меню «Врачи». Откройте карточку специалиста и запишитесь или напишите в чат.';
       }
       if (q.contains('беремен') || q.contains('кормлен')) {

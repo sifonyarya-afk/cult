@@ -292,6 +292,18 @@ class _SuccessCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           CultButton(label: 'Перейти в личный кабинет', onPressed: onContinue),
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(
+                const ClipboardData(
+                  text: 'Welcome-бонус CULT: 3 000 ₽ на балансе',
+                ),
+              );
+              cultTapFeedback();
+              showCultSnack(context, 'Бонус скопирован');
+            },
+            child: const Text('Скопировать про бонус'),
+          ),
         ],
       ),
     );

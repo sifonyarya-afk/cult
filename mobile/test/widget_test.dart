@@ -576,6 +576,8 @@ void main() {
     expect(store.threads['bot']!.last.text.toLowerCase(), contains('блог'));
     store.sendMessage('bot', 'Покажите кейсы до и после');
     expect(store.threads['bot']!.last.text.toLowerCase(), contains('кейс'));
+    store.sendMessage('bot', 'Кто в команде врачей?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('врач'));
   });
 
   test('Бот и админ отвечают про отмену записи', () async {

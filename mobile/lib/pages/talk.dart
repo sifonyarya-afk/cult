@@ -255,6 +255,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Активировать сертификат',
     'Блог CULT TV',
     'Кейсы',
+    'Команда врачей',
   ];
 
   static const _followUp = <String>[
