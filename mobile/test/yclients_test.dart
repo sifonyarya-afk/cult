@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cult_clinic/data.dart';
 import 'package:cult_clinic/store.dart';
 import 'package:cult_clinic/yclients.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -109,11 +110,15 @@ void main() {
           final body = jsonDecode(request.body) as Map<String, dynamic>;
           expect(body['phone'], 79001112233);
           expect(body['name'], 'Мария');
+          expect(body['sex_id'], 2);
           expect(request.headers['Authorization'], contains('User'));
           return _json({
             'success': true,
             'data': {'id': 42, 'name': 'Мария', 'phone': '+79001112233', 'email': 'm@cult.clinic'},
           });
+        }
+        if (request.method == 'PUT' && request.url.path.contains('/client/988587/42')) {
+          return _json({'success': true, 'data': {'id': 42}});
         }
         return http.Response('{"meta":{"message":"нет"}}', 404);
       }),
@@ -121,20 +126,35 @@ void main() {
     final store = ClinicStore();
     await store.load();
     store.yclients = api;
+    await store.setGender(ClientGender.woman);
     expect(await store.registerWithPhone(name: 'Мария', phone: '+7 900 111-22-33', email: 'm@cult.clinic'), isNull);
     expect(created, isTrue);
     expect(store.signedIn, isTrue);
     expect(store.ycClientId, 42);
     expect(store.profilePhone, '79001112233');
     expect(store.profileName, 'Мария');
+    expect(store.catalogServices.any((item) => item.slug == 'sculpt'), isTrue);
+    expect(store.catalogServices.any((item) => item.slug == 'men-face'), isFalse);
 
     final next = ClinicStore();
     await next.load();
     expect(next.signedIn, isTrue);
     expect(next.ycClientId, 42);
+    expect(next.gender, ClientGender.woman);
     await next.signOut();
     expect(next.signedIn, isFalse);
     expect(next.ycClientId, 0);
+    expect(next.gender, ClientGender.woman);
+  });
+
+  test('Мужской каталог скрывает женские услуги', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    await store.setGender(ClientGender.man);
+    expect(store.catalogServices.any((item) => item.slug == 'men-face'), isTrue);
+    expect(store.catalogServices.any((item) => item.slug == 'sculpt'), isFalse);
+    expect(store.catalogServices.any((item) => item.slug == 'iv'), isTrue);
   });
 
   test('Повторный вход находит существующего клиента', () async {

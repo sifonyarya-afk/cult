@@ -4,6 +4,7 @@ import '../data.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'auth_page.dart';
+import 'gender_page.dart';
 import 'shop.dart';
 import 'talk.dart';
 
@@ -22,8 +23,13 @@ class CabinetPage extends StatelessWidget {
         Center(child: Text(store.displayName, style: cultHeadline(26))),
         Center(
           child: Text(
-            store.signedIn ? _phoneLabel(store.profilePhone) : 'ПЛАТИНОВЫЙ СТАТУС',
+            [
+              if (store.gender != null) store.gender!.label,
+              if (store.signedIn) _phoneLabel(store.profilePhone),
+              if (!store.signedIn && store.gender == null) 'ПЛАТИНОВЫЙ СТАТУС',
+            ].join(' · '),
             style: const TextStyle(letterSpacing: 1.2, color: Cult.muted),
+            textAlign: TextAlign.center,
           ),
         ),
         if (!store.signedIn) ...[
@@ -34,13 +40,19 @@ class CabinetPage extends StatelessWidget {
               children: [
                 Text('Войдите по телефону', style: cultHeadline(22)),
                 const SizedBox(height: 6),
-                const Text('Сохраним вас в филиале CULT в Сочи. Запись и кабинет будут на вашем номере.'),
+                const Text('Сохраним вас в филиале CULT в Сочи вместе с выбранным профилем услуг.'),
                 const SizedBox(height: 12),
                 CultButton(label: 'Войти', onPressed: () => pushPage(context, const AuthPage(allowSkip: false))),
               ],
             ),
           ),
         ],
+        const SizedBox(height: 12),
+        _Row(
+          'Профиль услуг',
+          store.gender?.servicesTitle ?? 'Не выбран',
+          () => pushPage(context, const GenderPage()),
+        ),
         if (next != null) ...[
           const SizedBox(height: 16),
           InkWell(
@@ -510,6 +522,24 @@ class _SettingsPageState extends State<SettingsPage> {
           TextField(controller: _name, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Имя в кабинете')),
           const SizedBox(height: 12),
           CultButton(label: 'Сохранить имя', onPressed: () => store.setProfileName(_name.text)),
+          const SizedBox(height: 12),
+          const Text('Профиль услуг', style: TextStyle(color: Cult.muted)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('Женские'),
+                selected: store.gender == ClientGender.woman,
+                onSelected: (_) => store.setGender(ClientGender.woman),
+              ),
+              ChoiceChip(
+                label: const Text('Мужские'),
+                selected: store.gender == ClientGender.man,
+                onSelected: (_) => store.setGender(ClientGender.man),
+              ),
+            ],
+          ),
           if (store.signedIn) ...[
             const SizedBox(height: 8),
             Text('Телефон ${_phoneLabel(store.profilePhone)}', style: const TextStyle(color: Cult.muted)),

@@ -10,43 +10,71 @@ class ServicesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final store = ClinicScope.of(context);
+    final list = store.catalogServices;
+    final gender = store.gender;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
-        Text('Каталог услуг', style: cultHeadline(32)),
+        Text(gender?.servicesTitle ?? 'Каталог услуг', style: cultHeadline(32)),
         const SizedBox(height: 8),
-        const Text('Название, цена и длительность. Подробности и противопоказания — в карточке.'),
+        Text(
+          gender == null
+              ? 'Название, цена и длительность.'
+              : 'Показываем протоколы ${gender.forLabel} и общие услуги. Сменить профиль можно в кабинете.',
+        ),
+        if (gender != null) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('Женские'),
+                selected: gender == ClientGender.woman,
+                onSelected: (_) => store.setGender(ClientGender.woman),
+              ),
+              ChoiceChip(
+                label: const Text('Мужские'),
+                selected: gender == ClientGender.man,
+                onSelected: (_) => store.setGender(ClientGender.man),
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: 16),
-        for (final service in services) ...[
-          InkWell(
-            onTap: () => pushPage(context, ServicePage(service: service)),
-            child: CultCard(
-              padding: EdgeInsets.zero,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CultImage(service.image, aspect: 16 / 10, radius: 16),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(service.category.toUpperCase(), style: const TextStyle(color: Cult.primary, letterSpacing: 1.1, fontSize: 12)),
-                        const SizedBox(height: 4),
-                        Text(service.title, style: cultHeadline(22)),
-                        const SizedBox(height: 6),
-                        Text(service.blurb),
-                        const SizedBox(height: 8),
-                        Text('${service.priceLabel} · ${service.duration}', style: const TextStyle(color: Cult.primary)),
-                      ],
+        if (list.isEmpty)
+          const Text('Для этого профиля услуг пока нет.')
+        else
+          for (final service in list) ...[
+            InkWell(
+              onTap: () => pushPage(context, ServicePage(service: service)),
+              child: CultCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CultImage(service.image, aspect: 16 / 10, radius: 16),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(service.category.toUpperCase(), style: const TextStyle(color: Cult.primary, letterSpacing: 1.1, fontSize: 12)),
+                          const SizedBox(height: 4),
+                          Text(service.title, style: cultHeadline(22)),
+                          const SizedBox(height: 6),
+                          Text(service.blurb),
+                          const SizedBox(height: 8),
+                          Text('${service.priceLabel} · ${service.duration}', style: const TextStyle(color: Cult.primary)),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-        ],
+            const SizedBox(height: 16),
+          ],
       ],
     );
   }

@@ -30,6 +30,48 @@ const photo = <String, String>{
   'logo': 'assets/media/172e126eb1b3.png',
 };
 
+enum ClientGender {
+  woman,
+  man;
+
+  String get label => this == ClientGender.woman ? 'Женщина' : 'Мужчина';
+  String get forLabel => this == ClientGender.woman ? 'для женщин' : 'для мужчин';
+  String get servicesTitle => this == ClientGender.woman ? 'Женские услуги' : 'Мужские услуги';
+  int get ycSexId => this == ClientGender.man ? 1 : 2;
+  String get storage => this == ClientGender.woman ? 'woman' : 'man';
+
+  static ClientGender? tryParse(String? raw) {
+    return switch (raw) {
+      'woman' || 'female' || 'ж' => ClientGender.woman,
+      'man' || 'male' || 'м' => ClientGender.man,
+      _ => null,
+    };
+  }
+}
+
+enum ServiceAudience {
+  all,
+  women,
+  men;
+
+  bool matches(ClientGender gender) {
+    return this == ServiceAudience.all ||
+        (this == ServiceAudience.women && gender == ClientGender.woman) ||
+        (this == ServiceAudience.men && gender == ClientGender.man);
+  }
+}
+
+ServiceAudience audienceFromText(String title, [String category = '']) {
+  final text = '${title.toLowerCase()} ${category.toLowerCase()}';
+  if (RegExp(r'мужск|для мужчин|барбер|gentleman|для него').hasMatch(text)) {
+    return ServiceAudience.men;
+  }
+  if (RegExp(r'женск|для женщин|антицеллюлит|для не[её]').hasMatch(text)) {
+    return ServiceAudience.women;
+  }
+  return ServiceAudience.all;
+}
+
 class Service {
   const Service({
     required this.slug,
@@ -44,6 +86,7 @@ class Service {
     required this.results,
     required this.steps,
     required this.contraindications,
+    this.audience = ServiceAudience.all,
   });
 
   final String slug;
@@ -58,6 +101,7 @@ class Service {
   final List<String> results;
   final List<String> steps;
   final List<String> contraindications;
+  final ServiceAudience audience;
 }
 
 const services = <Service>[
@@ -74,6 +118,7 @@ const services = <Service>[
     results: ['Лифтинг и контуринг', 'Естественное сияние', 'Снятие отечности'],
     steps: ['Глубокое очищение', 'Проработка мышц', 'Лимфодренаж и уход'],
     contraindications: ['Острое воспаление кожи', 'Температура', 'Пилинг короче 7 дней назад'],
+    audience: ServiceAudience.women,
   ),
   Service(
     slug: 'rf',
@@ -102,6 +147,7 @@ const services = <Service>[
     results: ['Чистота пор', 'Гладкость', 'Мгновенное увлажнение'],
     steps: ['Очищение', 'Вакуумная экстракция', 'Инфузия сыворотки'],
     contraindications: ['Активный герпес', 'Нарушенный барьер после кислот'],
+    audience: ServiceAudience.women,
   ),
   Service(
     slug: 'iv',
@@ -130,6 +176,7 @@ const services = <Service>[
     results: ['Ровный тон', 'Мягкое обновление', 'Меньше пигмента'],
     steps: ['Подготовка кожи', 'Нанесение состава', 'Нейтрализация и защита'],
     contraindications: ['Свежий загар', 'Изотретиноин', 'Беременность'],
+    audience: ServiceAudience.women,
   ),
   Service(
     slug: 'botox',
@@ -158,6 +205,7 @@ const services = <Service>[
     results: ['Объём', 'Чёткий контур', 'Мгновенный эффект'],
     steps: ['План коррекции', 'Введение', 'Моделирование'],
     contraindications: ['Аутоиммунная вспышка', 'Инфекция кожи', 'Беременность'],
+    audience: ServiceAudience.women,
   ),
   Service(
     slug: 'meso',
@@ -172,6 +220,52 @@ const services = <Service>[
     results: ['Сияние', 'Увлажнение', 'Курс из 4 визитов'],
     steps: ['Очищение', 'Микроинъекции', 'Успокаивающая маска'],
     contraindications: ['Нарушение свёртываемости', 'Активное акне в зоне'],
+    audience: ServiceAudience.women,
+  ),
+  Service(
+    slug: 'men-face',
+    title: 'Мужской уход за лицом',
+    category: 'Эстетика',
+    group: 'Эстетика и уход',
+    priceLabel: '16 000 ₽',
+    duration: '50 мин',
+    blurb: 'Очищение, тонус и уход без тяжёлого блеска.',
+    long: 'Протокол для мужской кожи: очищение, тонизация, лёгкий лифтинг и финиш без эффекта макияжа.',
+    image: 'sculpt',
+    results: ['Чистая кожа', 'Ровный тон', 'Матовый финиш'],
+    steps: ['Диагностика', 'Очищение и пилинг', 'Уход и защита'],
+    contraindications: ['Острое воспаление', 'Свежий загар'],
+    audience: ServiceAudience.men,
+  ),
+  Service(
+    slug: 'men-rf',
+    title: 'Мужской RF-лифтинг',
+    category: 'Точность',
+    group: 'Эстетика и уход',
+    priceLabel: '42 000 ₽',
+    duration: '75 мин',
+    blurb: 'Плотность кожи и овал с мужским протоколом.',
+    long: 'RF-протокол для более плотной кожи: овал, поры и восстановление после нагрузок.',
+    image: 'rf',
+    results: ['Плотность', 'Чёткий овал', 'Меньше пор'],
+    steps: ['Разметка', 'Проходы RF', 'Успокаивающий уход'],
+    contraindications: ['Металлические импланты', 'Кардиостимулятор'],
+    audience: ServiceAudience.men,
+  ),
+  Service(
+    slug: 'men-barber',
+    title: 'Барбер-массаж лица',
+    category: 'Эстетика',
+    group: 'Эстетика и уход',
+    priceLabel: '12 000 ₽',
+    duration: '40 мин',
+    blurb: 'Глубокая проработка мышц и лимфы.',
+    long: 'Плотный массаж лица и шеи для снятия зажимов после спорта и экрана.',
+    image: 'sculpt',
+    results: ['Снятие напряжения', 'Свежий вид', 'Лёгкость'],
+    steps: ['Разогрев', 'Проработка мышц', 'Лимфодренаж'],
+    contraindications: ['Температура', 'Острое воспаление кожи'],
+    audience: ServiceAudience.men,
   ),
 ];
 

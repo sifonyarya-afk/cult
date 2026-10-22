@@ -81,8 +81,10 @@ class _AuthPageState extends State<AuthPage> {
             const SizedBox(height: 8),
             const Text('Войдите по телефону', textAlign: TextAlign.center, style: TextStyle(color: Cult.muted)),
             const SizedBox(height: 8),
-            const Text(
-              'Мы сохраним вас в базе филиала CULT в Сочи. Запись и кабинет будут на этом номере.',
+            Text(
+              ClinicScope.of(context).gender == null
+                  ? 'Мы сохраним вас в базе филиала CULT в Сочи. Запись и кабинет будут на этом номере.'
+                  : 'Сохраним вас в филиале CULT как «${ClinicScope.of(context).gender!.label.toLowerCase()}». Запись и кабинет — на этом номере.',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),

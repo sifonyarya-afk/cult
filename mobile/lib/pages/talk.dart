@@ -5,7 +5,6 @@ import '../store.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import '../yclients.dart';
-import 'auth_page.dart';
 import 'cabinet.dart';
 
 class ChatPage extends StatelessWidget {
@@ -171,7 +170,7 @@ class BookingPage extends StatefulWidget {
 }
 
 class _BookingPageState extends State<BookingPage> {
-  late String _service = widget.initialService ?? services.first.title;
+  late String _service = widget.initialService ?? '';
   String _doctor = doctors.first.name;
   DateTime? _date;
   var _time = '10:30';
@@ -200,6 +199,10 @@ class _BookingPageState extends State<BookingPage> {
     _name.text = store.profileName;
     _phone.text = store.profilePhone;
     _email.text = store.profileEmail;
+    if (_service.isEmpty) {
+      final catalog = store.catalogServices;
+      _service = catalog.isNotEmpty ? catalog.first.title : services.first.title;
+    }
     if (!store.yclientsReady) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _loadCatalog();
@@ -228,7 +231,7 @@ class _BookingPageState extends State<BookingPage> {
       setState(() => _error = message);
       return;
     }
-    _applyService(store.liveServices);
+    _applyService(store.catalogLive);
     await _loadStaff();
   }
 
@@ -317,7 +320,13 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   Widget _local(ClinicStore store) {
-    final options = [...services.map((item) => item.title), 'Анализ крови', 'ДНК-тест старения', 'Консультация', 'Прецизионный анализ кожи'];
+    final options = [
+      ...store.catalogServices.map((item) => item.title),
+      'Анализ крови',
+      'ДНК-тест старения',
+      'Консультация',
+      if (store.gender != ClientGender.man) 'Прецизионный анализ кожи',
+    ];
     if (!options.contains(_service)) options.insert(0, _service);
     return Scaffold(
       appBar: AppBar(title: const Text('Запись')),
@@ -333,8 +342,6 @@ class _BookingPageState extends State<BookingPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Онлайн-запись к филиалу временно недоступна. Визит сохранится в приложении.'),
-                if (!store.signedIn)
-                  TextButton(onPressed: () => pushPage(context, const AuthPage(allowSkip: false)), child: const Text('Войти по телефону')),
               ],
             ),
           ),
@@ -373,7 +380,8 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   Widget _live(ClinicStore store) {
-    final serviceItems = store.liveServices;
+    final serviceItems = store.catalogLive;
+    final genderNote = store.gender == null ? '' : ' ${store.gender!.servicesTitle}.';
     return Scaffold(
       appBar: AppBar(title: const Text('Запись')),
       body: ListView(
@@ -382,13 +390,8 @@ class _BookingPageState extends State<BookingPage> {
           Text('Запись в филиал', style: cultHeadline(30)),
           const SizedBox(height: 8),
           Text(store.signedIn
-              ? 'Запись в филиал CULT, Сочи. Контакт уже в базе клиники.'
-              : 'Услуги и врачи филиала CULT в Сочи. Войдите по телефону, чтобы мы сохранили вас в базе.'),
-          if (!store.signedIn)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(onPressed: () => pushPage(context, const AuthPage(allowSkip: false)), child: const Text('Войти по телефону')),
-            ),
+              ? 'Запись в филиал CULT, Сочи.$genderNote Контакт уже в базе клиники.'
+              : 'Услуги филиала CULT в Сочи.$genderNote Войдите по телефону в кабинете, чтобы сохраниться в базе.'),
           if (_staff.isNotEmpty && _staff.every((item) => !item.bookable))
             const Padding(
               padding: EdgeInsets.only(top: 8),

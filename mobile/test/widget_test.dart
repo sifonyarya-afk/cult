@@ -1,3 +1,4 @@
+import 'package:cult_clinic/data.dart';
 import 'package:cult_clinic/main.dart';
 import 'package:cult_clinic/store.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
     await store.load();
+    await store.setGender(ClientGender.woman);
     await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
     await tester.pumpAndSettle();
 

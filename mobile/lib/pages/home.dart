@@ -31,7 +31,10 @@ class HomePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('ПЛАТИНОВЫЙ СТАТУС', style: TextStyle(color: Cult.secondary, letterSpacing: 1.2, fontSize: 12)),
+                Text(
+                  store.gender == null ? 'ПЛАТИНОВЫЙ СТАТУС' : store.gender!.servicesTitle.toUpperCase(),
+                  style: const TextStyle(color: Cult.secondary, letterSpacing: 1.2, fontSize: 12),
+                ),
                 const SizedBox(height: 8),
                 Text(hello, style: cultHeadline(28)),
                 const SizedBox(height: 8),

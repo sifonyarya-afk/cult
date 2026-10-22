@@ -300,6 +300,7 @@ class YClientsApi {
     required String name,
     required String phone,
     String email = '',
+    int sexId = 0,
   }) async {
     final digits = normalizePhone(phone);
     if (digits.length < 11) throw YcException('Укажите телефон в формате +7.');
@@ -309,6 +310,7 @@ class YClientsApi {
       'comment': 'Регистрация из приложения CULT',
     };
     if (email.trim().isNotEmpty) body['email'] = email.trim();
+    if (sexId == 1 || sexId == 2) body['sex_id'] = sexId;
     try {
       final data = await _post('/clients/$companyId', partnerToken, body, userToken: userToken);
       final client = data is Map ? _parseClient(data) : null;
@@ -327,6 +329,21 @@ class YClientsApi {
     }
   }
 
+  Future<void> updateClient({
+    required String partnerToken,
+    required String userToken,
+    required int companyId,
+    required int clientId,
+    int sexId = 0,
+    String name = '',
+  }) async {
+    final body = <String, Object?>{};
+    if (name.trim().isNotEmpty) body['name'] = name.trim();
+    if (sexId == 1 || sexId == 2) body['sex_id'] = sexId;
+    if (body.isEmpty) return;
+    await _put('/client/$companyId/$clientId', partnerToken, body, userToken: userToken);
+  }
+
   Future<YcClient> registerClient({
     required String partnerToken,
     required String userToken,
@@ -334,6 +351,7 @@ class YClientsApi {
     required String name,
     required String phone,
     String email = '',
+    int sexId = 0,
   }) async {
     final existing = await findClientByPhone(
       partnerToken: partnerToken,
@@ -341,7 +359,19 @@ class YClientsApi {
       companyId: companyId,
       phone: phone,
     );
-    if (existing != null) return existing;
+    if (existing != null) {
+      if (sexId == 1 || sexId == 2) {
+        await updateClient(
+          partnerToken: partnerToken,
+          userToken: userToken,
+          companyId: companyId,
+          clientId: existing.id,
+          sexId: sexId,
+          name: name,
+        );
+      }
+      return existing;
+    }
     return createClient(
       partnerToken: partnerToken,
       userToken: userToken,
@@ -349,6 +379,7 @@ class YClientsApi {
       name: name,
       phone: phone,
       email: email,
+      sexId: sexId,
     );
   }
 
@@ -387,6 +418,13 @@ class YClientsApi {
   Future<Object?> _post(String path, String partnerToken, Map<String, Object?> body, {String userToken = ''}) async {
     final response = await _guard(
       () => _client.post(_uri(path), headers: _headers(partnerToken, userToken), body: jsonEncode(body)).timeout(_timeout),
+    );
+    return _payload(response);
+  }
+
+  Future<Object?> _put(String path, String partnerToken, Map<String, Object?> body, {String userToken = ''}) async {
+    final response = await _guard(
+      () => _client.put(_uri(path), headers: _headers(partnerToken, userToken), body: jsonEncode(body)).timeout(_timeout),
     );
     return _payload(response);
   }

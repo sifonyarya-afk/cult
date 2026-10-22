@@ -36,36 +36,43 @@ class _PricesPageState extends State<PricesPage> {
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
     final needle = _query.text.trim().toLowerCase();
+    final live = store.catalogLive;
+    final local = store.catalogServices;
     final rows = <({String group, String name, String meta, String price})>[
-      for (final item in store.liveServices)
+      for (final item in live)
         (
           group: item.category.isEmpty ? 'YClients' : item.category,
           name: item.title,
           meta: item.durationLabel.isEmpty ? 'филиал' : item.durationLabel,
           price: item.priceLabel,
         ),
-      for (final item in services) (group: item.group, name: item.title, meta: item.duration, price: item.priceLabel),
+      for (final item in local) (group: item.group, name: item.title, meta: item.duration, price: item.priceLabel),
       for (final item in devices) (group: 'Оборудование', name: item.title, meta: item.meta, price: item.price),
       (group: 'Инфузии', name: 'NAD+ Energy', meta: '60 мин', price: '15 000 ₽'),
       (group: 'Инфузии', name: 'Immunity Boost', meta: '45 мин', price: '12 000 ₽'),
-      (group: 'Инфузии', name: 'Beauty & Glow', meta: '60 мин', price: '18 000 ₽'),
+      if (store.gender != ClientGender.man) (group: 'Инфузии', name: 'Beauty & Glow', meta: '60 мин', price: '18 000 ₽'),
     ].where((row) {
       final groupOk = _chip == 'Все' || row.group == _chip;
       final textOk = needle.isEmpty || row.name.toLowerCase().contains(needle) || row.group.toLowerCase().contains(needle);
       return groupOk && textOk;
     }).toList();
     final liveGroups = <String>[];
-    for (final item in store.liveServices) {
+    for (final item in live) {
       final group = item.category.isEmpty ? 'YClients' : item.category;
       if (!liveGroups.contains(group)) liveGroups.add(group);
     }
     final chips = ['Все', ...liveGroups, 'Эстетика и уход', 'Инъекции', 'Оборудование', 'Инфузии'];
+    final genderNote = store.gender == null ? '' : ' Сейчас: ${store.gender!.servicesTitle.toLowerCase()}.';
     return Scaffold(
       appBar: AppBar(title: const Text('Прайс')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text(store.yclientsReady ? 'Цены филиала CULT в Сочи. Поиск ищет и по категориям.' : 'Точная сумма подтверждается на консультации.'),
+          Text(
+            store.yclientsReady
+                ? 'Цены филиала CULT в Сочи.$genderNote Поиск ищет и по категориям.'
+                : 'Точная сумма подтверждается на консультации.$genderNote',
+          ),
           if (store.liveError.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(store.liveError, style: const TextStyle(color: Cult.error)),

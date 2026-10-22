@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'data.dart';
 import 'yclients.dart';
 
 class CartItem {
@@ -151,6 +152,7 @@ class ClinicStore extends ChangeNotifier {
   String profileName = '';
   String profilePhone = '';
   String profileEmail = '';
+  ClientGender? gender;
   int ycClientId = 0;
   String companyId = '';
   String chainId = '0';
@@ -166,6 +168,7 @@ class ClinicStore extends ChangeNotifier {
   int? get companyIdInt => int.tryParse(companyId.trim());
   bool get yclientsReady => companyIdInt != null && partnerToken.trim().isNotEmpty && userToken.trim().isNotEmpty;
   bool get signedIn => ycClientId > 0 && normalizePhone(profilePhone).length >= 11;
+  bool get hasGender => gender != null;
   String get displayName {
     final name = profileName.trim();
     if (name.isNotEmpty) return name;
@@ -175,6 +178,21 @@ class ClinicStore extends ChangeNotifier {
   int get cartTotal => cart.fold(0, (sum, item) => sum + item.price * item.qty);
 
   List<Appointment> get upcoming => appointments.where((item) => item.status == 'upcoming').toList();
+
+  List<Service> get catalogServices {
+    final current = gender;
+    if (current == null) return services;
+    return [for (final item in services) if (item.audience.matches(current)) item];
+  }
+
+  List<YcService> get catalogLive {
+    final current = gender;
+    if (current == null) return liveServices;
+    return [
+      for (final item in liveServices)
+        if (audienceFromText(item.title, item.category).matches(current)) item,
+    ];
+  }
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -195,6 +213,7 @@ class ClinicStore extends ChangeNotifier {
     profileName = json['profileName'] as String? ?? '';
     profilePhone = json['profilePhone'] as String? ?? '';
     profileEmail = json['profileEmail'] as String? ?? '';
+    gender = ClientGender.tryParse(json['gender'] as String?);
     ycClientId = json['ycClientId'] as int? ?? 0;
     companyId = json['companyId'] as String? ?? '';
     chainId = json['chainId'] as String? ?? '0';
@@ -239,6 +258,7 @@ class ClinicStore extends ChangeNotifier {
       'profileName': profileName,
       'profilePhone': profilePhone,
       'profileEmail': profileEmail,
+      'gender': gender?.storage,
       'ycClientId': ycClientId,
       'companyId': companyId,
       'chainId': chainId,
@@ -329,6 +349,14 @@ class ClinicStore extends ChangeNotifier {
     _save();
   }
 
+  Future<void> setGender(ClientGender value) async {
+    gender = value;
+    await _save();
+    if (signedIn) {
+      await _syncGenderToYclients();
+    }
+  }
+
   Future<String?> registerWithPhone({required String name, required String phone, String email = ''}) async {
     _applyClinicDefaults();
     final id = companyIdInt;
@@ -347,6 +375,7 @@ class ClinicStore extends ChangeNotifier {
         name: trimmed,
         phone: digits,
         email: email,
+        sexId: gender?.ycSexId ?? 0,
       );
       ycClientId = client.id;
       profileName = trimmed;
@@ -357,9 +386,28 @@ class ClinicStore extends ChangeNotifier {
         profileEmail = client.email;
       }
       await _save();
+      if (gender != null) await _syncGenderToYclients();
       return null;
     } on YcException catch (error) {
       return error.message;
+    }
+  }
+
+  Future<void> _syncGenderToYclients() async {
+    final id = companyIdInt;
+    final current = gender;
+    if (id == null || current == null || ycClientId <= 0 || partnerToken.isEmpty || userToken.isEmpty) return;
+    try {
+      await yclients.updateClient(
+        partnerToken: partnerToken,
+        userToken: userToken,
+        companyId: id,
+        clientId: ycClientId,
+        sexId: current.ycSexId,
+        name: profileName,
+      );
+    } on YcException {
+      // Пол остаётся в приложении, даже если филиал временно не принял правку.
     }
   }
 

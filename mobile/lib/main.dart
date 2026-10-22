@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'pages/auth_page.dart';
 import 'pages/browse.dart';
 import 'pages/cabinet.dart';
+import 'pages/gender_page.dart';
 import 'pages/home.dart';
 import 'pages/info.dart';
 import 'pages/shop.dart';
@@ -57,14 +58,12 @@ class Boot extends StatefulWidget {
 
 class _BootState extends State<Boot> {
   var _ready = false;
-  var _entered = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.splash == Duration.zero) {
       _ready = true;
-      _entered = true;
       return;
     }
     Future<void>.delayed(widget.splash, () {
@@ -94,11 +93,10 @@ class _BootState extends State<Boot> {
       );
     }
     final store = ClinicScope.of(context);
-    if (!_entered && !store.signedIn) {
-      return AuthPage(
-        allowSkip: true,
+    if (!store.hasGender) {
+      return GenderPage(
         onDone: () {
-          if (mounted) setState(() => _entered = true);
+          if (mounted) setState(() {});
         },
       );
     }
