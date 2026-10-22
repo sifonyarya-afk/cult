@@ -163,10 +163,36 @@ class _PricesPageState extends State<PricesPage> {
             const SizedBox(height: 12),
             if (rows.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  '${rows.length} позиц.',
-                  style: const TextStyle(color: Cult.muted, fontSize: 12),
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${rows.length} позиц.',
+                        style: const TextStyle(color: Cult.muted, fontSize: 12),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        final text = rows
+                            .take(40)
+                            .map(
+                              (row) =>
+                                  '· ${row.name} — ${row.price} (${row.meta})',
+                            )
+                            .join('\n');
+                        final more = rows.length > 40
+                            ? '\n… и ещё ${rows.length - 40}'
+                            : '';
+                        Clipboard.setData(
+                          ClipboardData(text: 'Прайс CULT\n$text$more'),
+                        );
+                        cultTapFeedback();
+                        showCultSnack(context, 'Прайс скопирован');
+                      },
+                      child: const Text('Скопировать'),
+                    ),
+                  ],
                 ),
               ),
             if (rows.isEmpty)

@@ -235,6 +235,8 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Натощак',
     'Опоздание',
     'Что надеть',
+    'Предоплата',
+    'Активировать сертификат',
   ];
 
   static const _followUp = <String>[
@@ -243,6 +245,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Телефон клиники',
     'Аллергия',
     'Солнце',
+    'Предоплата',
   ];
 
   @override
@@ -1163,6 +1166,39 @@ class _BookingPageState extends State<BookingPage> {
               );
             },
             child: const Text('Написать администратору'),
+          ),
+          TextButton(
+            onPressed: () {
+              cultTapFeedback();
+              ClinicScope.of(context).sendMessage(
+                'admin',
+                'Нужен трансфер к записи: $summary',
+              );
+              pushPage(
+                context,
+                const ChatThreadPage(contactId: 'admin'),
+              );
+              showCultSnack(
+                context,
+                'Напишите адрес подачи — оформим трансфер',
+              );
+            },
+            child: const Text('Нужен трансфер'),
+          ),
+          TextButton(
+            onPressed: () {
+              cultTapFeedback();
+              ClinicScope.of(context).sendMessage(
+                'admin',
+                'Могу опоздать к записи: $summary',
+              );
+              pushPage(
+                context,
+                const ChatThreadPage(contactId: 'admin'),
+              );
+              showCultSnack(context, 'Сообщите, на сколько опаздываете');
+            },
+            child: const Text('Сообщить об опоздании'),
           ),
           TextButton(
             onPressed: () {

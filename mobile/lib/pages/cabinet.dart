@@ -77,7 +77,16 @@ class CabinetPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        Center(child: Text(name, style: cultHeadline(28))),
+        Center(
+          child: GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: name));
+              cultTapFeedback();
+              showCultSnack(context, 'Имя скопировано');
+            },
+            child: Text(name, style: cultHeadline(28)),
+          ),
+        ),
         const SizedBox(height: 4),
         Center(
           child: Text(
@@ -1161,7 +1170,23 @@ class FavoritesPage extends StatelessWidget {
                     );
                   },
                 ),
-                const SizedBox(height: 14),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () {
+                      final text = list
+                          .map((item) => '· ${item.name} — ${rub(item.price)}')
+                          .join('\n');
+                      Clipboard.setData(
+                        ClipboardData(text: 'Избранное CULT\n$text'),
+                      );
+                      cultTapFeedback();
+                      showCultSnack(context, 'Список скопирован');
+                    },
+                    child: const Text('Скопировать список'),
+                  ),
+                ),
+                const SizedBox(height: 6),
                 for (final product in list)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
@@ -1461,32 +1486,43 @@ class _LoyaltyPageState extends State<LoyaltyPage> {
           ])
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: CultCard(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            row.$2,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          Text(
-                            row.$1,
-                            style: const TextStyle(
-                              color: Cult.muted,
-                              fontSize: 12,
+              child: GestureDetector(
+                onLongPress: () {
+                  Clipboard.setData(
+                    ClipboardData(text: '${row.$2} · ${row.$1} · ${row.$3}'),
+                  );
+                  cultTapFeedback();
+                  showCultSnack(context, 'Операция скопирована');
+                },
+                child: CultCard(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              row.$2,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                        ],
+                            Text(
+                              row.$1,
+                              style: const TextStyle(
+                                color: Cult.muted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Text(
-                      row.$3,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ],
+                      Text(
+                        row.$3,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1525,26 +1561,42 @@ class _CertificatesPageState extends State<CertificatesPage> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'CULT',
-                  style: TextStyle(color: foreground, letterSpacing: 3),
+          Semantics(
+            label: 'Превью сертификата ${rub(_nominal)}, дизайн $_design',
+            hint: 'Удерживайте, чтобы скопировать',
+            child: GestureDetector(
+              onLongPress: () {
+                Clipboard.setData(
+                  ClipboardData(
+                    text:
+                        'Сертификат CULT на ${rub(_nominal)}, дизайн $_design',
+                  ),
+                );
+                cultTapFeedback();
+                showCultSnack(context, 'Превью скопировано');
+              },
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  rub(_nominal),
-                  style: cultHeadline(32).copyWith(color: foreground),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'CULT',
+                      style: TextStyle(color: foreground, letterSpacing: 3),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      rub(_nominal),
+                      style: cultHeadline(32).copyWith(color: foreground),
+                    ),
+                    Text(_design, style: TextStyle(color: foreground)),
+                  ],
                 ),
-                Text(_design, style: TextStyle(color: foreground)),
-              ],
+              ),
             ),
           ),
           const SizedBox(height: 12),

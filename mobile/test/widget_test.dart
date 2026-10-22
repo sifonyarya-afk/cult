@@ -554,6 +554,20 @@ void main() {
     expect(store.threads['admin']!.last.text.toLowerCase(), contains('опаздыва'));
   });
 
+  test('Бот отвечает про предоплату и активацию сертификата', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Нужна предоплата?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('предоплат'));
+    store.sendMessage('bot', 'Как активировать сертификат по коду?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('код'));
+    store.sendMessage('bot', 'Где вход и лифт?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('черноморск'));
+    store.sendMessage('admin', 'Хочу погасить сертификат CULT-15-ABCD');
+    expect(store.threads['admin']!.last.text.toLowerCase(), contains('код'));
+  });
+
   test('Бот и админ отвечают про отмену записи', () async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
