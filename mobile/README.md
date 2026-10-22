@@ -57,6 +57,23 @@ open ios/Runner.xcworkspace
 
 В Xcode: Product → Clean Build Folder, затем Run. В Build Settings у Runner должны быть User-Defined значения `FLUTTER_ROOT` (путь к Flutter SDK на Mac).
 
+### `No space left on device` / `database or disk is full`
+
+На Mac закончилось место на диске (часто из‑за `DerivedData` Xcode). Закройте Xcode и в Terminal:
+
+```bash
+df -h /
+rm -rf ~/Library/Developer/Xcode/DerivedData/*
+rm -rf ~/Library/Developer/Xcode/iOS\ DeviceSupport/*
+cd ~/Desktop/cult/cult/mobile
+flutter clean
+flutter pub get
+(cd ios && pod install)
+open ios/Runner.xcworkspace
+```
+
+В Finder → Об этом Mac → Хранилище освободите ещё место, если `df -h /` показывает меньше ~5–10 GB свободно.
+
 В Xcode: цель Runner → Signing & Capabilities → Team. Выберите свой Apple ID (Personal Team). Без команды подписи сборка на iPhone не запускается.
 
 Если CocoaPods не установлен: `brew install cocoapods`.
