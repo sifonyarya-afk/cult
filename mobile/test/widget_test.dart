@@ -84,6 +84,10 @@ void main() {
       store.upcoming.where((visit) => visit.service == 'Анализ крови'),
       isEmpty,
     );
+    expect(
+      store.threads['admin']!.any((m) => m.text.contains('Отмена записи')),
+      isTrue,
+    );
     expect(store.spendBonus(30000), isFalse);
     final code = store.buyGift(5000, 'Песок');
     expect(code, startsWith('CULT-5-'));
@@ -533,6 +537,18 @@ void main() {
     expect(store.threads['bot']!.last.text.toLowerCase(), contains('алкогол'));
     store.sendMessage('specialist', 'Когда можно в бассейн?');
     expect(store.threads['specialist']!.last.text.toLowerCase(), contains('бассейн'));
+  });
+
+  test('Бот и админ отвечают про опоздание', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Я опаздываю на запись');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('опаздыва'));
+    store.sendMessage('bot', 'Что надеть на процедуру?');
+    expect(store.threads['bot']!.last.text.toLowerCase(), contains('одежд'));
+    store.sendMessage('admin', 'Задерживаюсь на 15 минут');
+    expect(store.threads['admin']!.last.text.toLowerCase(), contains('опаздыва'));
   });
 
   test('Бот и админ отвечают про отмену записи', () async {

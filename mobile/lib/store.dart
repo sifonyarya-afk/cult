@@ -527,6 +527,11 @@ class ClinicStore extends ChangeNotifier {
       }
     }
     visit.status = 'cancelled';
+    sendMessage(
+      'admin',
+      'Отмена записи: «${visit.service}» · ${visit.doctor}, '
+      '${visit.date} в ${visit.time}.',
+    );
     await _save();
     await refreshVisits();
     return null;
@@ -860,6 +865,12 @@ class ClinicStore extends ChangeNotifier {
       if (q.contains('отмен') || q.contains('перенес') || q.contains('перенос')) {
         return 'Отменить или перенести визит можно в профиле → «Мои записи» или через чат администратора.';
       }
+      if (q.contains('опозда') ||
+          q.contains('опаздыв') ||
+          q.contains('задерж') ||
+          q.contains('не успева')) {
+        return 'Если опаздываете — напишите администратору в чат с запасом 10–15 минут. Слот могут сдвинуть или предложить ближайшее окно.';
+      }
       if (q.contains('запис')) {
         return 'Откройте «Запись» в меню или нажмите «+» на главной — подберём услугу, врача и время.';
       }
@@ -973,6 +984,9 @@ class ClinicStore extends ChangeNotifier {
       }
       if (q.contains('макияж') && !q.contains('перманент')) {
         return 'Декоративный макияж на зону процедуры обычно откладывают на 24 часа и дольше после инъекций. На визит лучше прийти без плотного тона на лице.';
+      }
+      if (q.contains('надеть') || q.contains('одежд') || q.contains('дресс')) {
+        return 'Удобная одежда, которую легко снять с зоны процедуры. Для лица — без плотного макияжа; сменную обувь не обязательна, на ресепшен подскажут.';
       }
       if (q.contains('бонус')) {
         return 'Новым клиентам — 3 000 ₽ welcome-бонус. Баланс смотрите в профиле.';
@@ -1112,6 +1126,12 @@ class ClinicStore extends ChangeNotifier {
     }
     if (q.contains('отмен') || q.contains('перенес') || q.contains('перенос')) {
       return 'Отмену и перенос сделаем в часы клиники. Напишите услугу и удобную дату — подтвердим слот.';
+    }
+    if (q.contains('опозда') ||
+        q.contains('опаздыв') ||
+        q.contains('задерж') ||
+        q.contains('не успева')) {
+      return 'Приняли. Напишите на сколько опаздываете и услугу — постараемся сдвинуть или предложить соседний слот.';
     }
     if (q.contains('телефон') ||
         q.contains('позвон') ||

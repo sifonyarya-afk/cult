@@ -572,6 +572,16 @@ class _CartPageState extends State<CartPage> {
                   ),
                   TextButton(
                     onPressed: () {
+                      cultTapFeedback();
+                      showCultSnack(
+                        context,
+                        'История — в профиле → Мои заказы или меню',
+                      );
+                    },
+                    child: const Text('Где мой заказ'),
+                  ),
+                  TextButton(
+                    onPressed: () {
                       final summary =
                           'Заказ CULT · ${rub(_due)} · ${_courier ? 'Курьер: ${_address.text.trim()}' : 'Самовывоз'} · ${_name.text.trim()}';
                       Clipboard.setData(ClipboardData(text: summary));
@@ -631,19 +641,31 @@ class _CartPageState extends State<CartPage> {
                     child: Row(
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(item.name, style: cultHeadline(18)),
-                              const SizedBox(height: 4),
-                              Text(
-                                rub(item.price),
-                                style: const TextStyle(
-                                  color: Cult.primary,
-                                  fontWeight: FontWeight.w600,
+                          child: GestureDetector(
+                            onLongPress: () {
+                              Clipboard.setData(
+                                ClipboardData(
+                                  text:
+                                      '${item.name} ×${item.qty} · ${rub(item.price * item.qty)}',
                                 ),
-                              ),
-                            ],
+                              );
+                              cultTapFeedback();
+                              showCultSnack(context, 'Позиция скопирована');
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item.name, style: cultHeadline(18)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  rub(item.price),
+                                  style: const TextStyle(
+                                    color: Cult.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         IconButton(
@@ -721,39 +743,56 @@ class _CartPageState extends State<CartPage> {
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _name,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Имя'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _phone,
-              keyboardType: TextInputType.phone,
-              inputFormatters: const [CultPhoneInputFormatter()],
-              decoration: const InputDecoration(
-                labelText: 'Телефон',
-                hintText: '+7 (___) ___-__-__',
+            AutofillGroup(
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _name,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.name],
+                    decoration: const InputDecoration(labelText: 'Имя'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _phone,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: _courier
+                        ? TextInputAction.next
+                        : TextInputAction.done,
+                    autofillHints: const [AutofillHints.telephoneNumber],
+                    inputFormatters: const [CultPhoneInputFormatter()],
+                    decoration: const InputDecoration(
+                      labelText: 'Телефон',
+                      hintText: '+7 (___) ___-__-__',
+                    ),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Курьер'),
+                    subtitle: const Text('Иначе самовывоз в клинике'),
+                    value: _courier,
+                    onChanged: (value) {
+                      cultTapFeedback();
+                      setState(() => _courier = value);
+                    },
+                  ),
+                  if (_courier) ...[
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: _address,
+                      textCapitalization: TextCapitalization.sentences,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [
+                        AutofillHints.fullStreetAddress,
+                        AutofillHints.streetAddressLine1,
+                      ],
+                      decoration: const InputDecoration(labelText: 'Адрес'),
+                    ),
+                  ],
+                ],
               ),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Курьер'),
-              subtitle: const Text('Иначе самовывоз в клинике'),
-              value: _courier,
-              onChanged: (value) {
-                cultTapFeedback();
-                setState(() => _courier = value);
-              },
-            ),
-            if (_courier) ...[
-              const SizedBox(height: 4),
-              TextField(
-                controller: _address,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(labelText: 'Адрес'),
-              ),
-            ],
             RadioGroup<String>(
               groupValue: _pay,
               onChanged: (value) {

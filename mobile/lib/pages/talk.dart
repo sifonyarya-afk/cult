@@ -233,6 +233,8 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Спорт',
     'Алкоголь',
     'Натощак',
+    'Опоздание',
+    'Что надеть',
   ];
 
   static const _followUp = <String>[

@@ -510,81 +510,116 @@ class _VisitsPageState extends State<VisitsPage> {
                 for (final visit in store.upcoming)
                   Padding(
                     padding: const EdgeInsets.only(top: 12),
-                    child: GestureDetector(
-                      onLongPress: () => _copyVisit(visit),
-                      child: CultCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              () {
-                                final wait = formatVisitCountdown(
-                                  visit.date,
-                                  visit.time,
-                                );
-                                final weekday = formatVisitWeekday(visit.date);
-                                return '${formatVisitDate(visit.date)}'
-                                    '${weekday.isEmpty ? '' : ', $weekday'}'
-                                    ' · ${visit.time}'
-                                    '${wait.isEmpty ? '' : ' · $wait'}';
-                              }(),
-                              style: const TextStyle(
-                                color: Cult.secondary,
-                                letterSpacing: 0.6,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(visit.service, style: cultHeadline(20)),
-                            Text(
-                              visit.doctor,
-                              style: const TextStyle(color: Cult.muted),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'CULT · Сочи, Черноморская, 6',
-                              style: TextStyle(
-                                color: Cult.muted,
-                                fontSize: 12,
-                              ),
-                            ),
-                            Wrap(
-                              alignment: WrapAlignment.end,
-                              children: [
-                                TextButton(
-                                  onPressed: () {
-                                    cultTapFeedback();
-                                    openExternal(
-                                      'https://maps.google.com/?q=${Uri.encodeComponent('Сочи, Черноморская, 6')}',
-                                      context: context,
-                                    );
-                                  },
-                                  child: const Text('Маршрут'),
+                    child: Semantics(
+                      label:
+                          '${visit.service}, ${visit.doctor}, ${formatVisitDate(visit.date)} в ${visit.time}',
+                      hint: 'Удерживайте, чтобы скопировать',
+                      child: GestureDetector(
+                        onLongPress: () => _copyVisit(visit),
+                        child: CultCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                () {
+                                  final wait = formatVisitCountdown(
+                                    visit.date,
+                                    visit.time,
+                                  );
+                                  final weekday = formatVisitWeekday(
+                                    visit.date,
+                                  );
+                                  return '${formatVisitDate(visit.date)}'
+                                      '${weekday.isEmpty ? '' : ', $weekday'}'
+                                      ' · ${visit.time}'
+                                      '${wait.isEmpty ? '' : ' · $wait'}';
+                                }(),
+                                style: const TextStyle(
+                                  color: Cult.secondary,
+                                  letterSpacing: 0.6,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
                                 ),
-                                TextButton(
-                                  onPressed: () {
-                                    cultTapFeedback();
-                                    pushPage(
-                                      context,
-                                      const ChatThreadPage(
-                                        contactId: 'specialist',
-                                      ),
-                                    );
-                                  },
-                                  child: const Text('Написать врачу'),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(visit.service, style: cultHeadline(20)),
+                              Text(
+                                visit.doctor,
+                                style: const TextStyle(color: Cult.muted),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'CULT · Сочи, Черноморская, 6',
+                                style: TextStyle(
+                                  color: Cult.muted,
+                                  fontSize: 12,
                                 ),
-                                TextButton(
-                                  onPressed: () =>
-                                      _confirmCancel(store, visit.id),
-                                  child: const Text(
-                                    'Отменить',
-                                    style: TextStyle(color: Cult.error),
+                              ),
+                              Wrap(
+                                alignment: WrapAlignment.end,
+                                children: [
+                                  TextButton(
+                                    onPressed: () {
+                                      cultTapFeedback();
+                                      openExternal(
+                                        'https://maps.google.com/?q=${Uri.encodeComponent('Сочи, Черноморская, 6')}',
+                                        context: context,
+                                      );
+                                    },
+                                    child: const Text('Маршрут'),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                  TextButton(
+                                    onPressed: () {
+                                      cultTapFeedback();
+                                      pushPage(
+                                        context,
+                                        const ChatThreadPage(
+                                          contactId: 'specialist',
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('Написать врачу'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      cultTapFeedback();
+                                      final weekday = formatVisitWeekday(
+                                        visit.date,
+                                      );
+                                      store.sendMessage(
+                                        'admin',
+                                        'Прошу перенести «${visit.service}» '
+                                        'с ${formatVisitDate(visit.date)}'
+                                        '${weekday.isEmpty ? '' : ' ($weekday)'}'
+                                        ' ${visit.time}'
+                                        '${visit.doctor.trim().isEmpty ? '' : ' · ${visit.doctor}'}.',
+                                      );
+                                      pushPage(
+                                        context,
+                                        BookingPage(
+                                          initialService: visit.service,
+                                          initialDoctor: visit.doctor,
+                                        ),
+                                      );
+                                      showCultSnack(
+                                        context,
+                                        'Выберите новый слот — администратор в курсе',
+                                      );
+                                    },
+                                    child: const Text('Перенести'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        _confirmCancel(store, visit.id),
+                                    child: const Text(
+                                      'Отменить',
+                                      style: TextStyle(color: Cult.error),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -634,21 +669,38 @@ class _VisitsPageState extends State<VisitsPage> {
                                 fontSize: 13,
                               ),
                             ),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () {
-                                  cultTapFeedback();
-                                  pushPage(
-                                    context,
-                                    BookingPage(
-                                      initialService: visit.service,
-                                      initialDoctor: visit.doctor,
-                                    ),
-                                  );
-                                },
-                                child: const Text('Повторить запись'),
-                              ),
+                            Wrap(
+                              alignment: WrapAlignment.end,
+                              children: [
+                                TextButton(
+                                  onPressed: () {
+                                    cultTapFeedback();
+                                    store.sendMessage(
+                                      'specialist',
+                                      'Вопрос после визита «${visit.service}» '
+                                      'от ${formatVisitDate(visit.date)}.',
+                                    );
+                                    showCultSnack(
+                                      context,
+                                      'Сообщение врачу отправлено',
+                                    );
+                                  },
+                                  child: const Text('Написать врачу'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    cultTapFeedback();
+                                    pushPage(
+                                      context,
+                                      BookingPage(
+                                        initialService: visit.service,
+                                        initialDoctor: visit.doctor,
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('Повторить запись'),
+                                ),
+                              ],
                             ),
                           ],
                         ),
