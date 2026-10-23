@@ -1100,4 +1100,47 @@ void main() {
     expect(clean.toLowerCase(), anyOf(contains('чистк'), contains('бот')));
     expect(clean.toLowerCase(), isNot(contains('скажите пару процедур')));
   });
+
+  test('Вегетарианство и астма + капельница не меню инфузий', () {
+    final veg = cultAgent.answer('Можно ли капельницу если я вегетарианка?');
+    expect(veg.toLowerCase(), contains('вегетариан'));
+    expect(veg.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final asthma = cultAgent.answer('У меня астма — капельницу можно?');
+    expect(asthma.toLowerCase(), contains('астм'));
+    expect(asthma.toLowerCase(), isNot(contains('меню «инфузии»')));
+  });
+
+  test('Опущенное веко после ботокса и рыбий жир', () {
+    final lid = cultAgent.answer('Что делать если после ботокса опущено веко?');
+    expect(lid.toLowerCase(), anyOf(contains('веко'), contains('птоз'), contains('врач')));
+    expect(lid.toLowerCase(), isNot(contains('подбирает врач после осмотра')));
+    final oil = cultAgent.answer('Можно ли делать ботокс если пью рыбий жир?');
+    expect(oil.toLowerCase(), anyOf(contains('рыбий'), contains('омега'), contains('синяк')));
+  });
+
+  test('Aura Mist простыми словами и сертификат на английском', () {
+    final aura = cultAgent.answer('Что такое Aura Mineral Mist простыми словами?');
+    expect(aura.toLowerCase(), contains('aura'));
+    expect(aura.toLowerCase(), isNot(contains('скажите проще')));
+    final cert = cultAgent.answer('Хочу подарочный сертификат на английском');
+    expect(cert.toLowerCase(), anyOf(contains('сертификат'), contains('английск'), contains('админ')));
+    expect(cert.toLowerCase(), isNot(contains('i can help in simple english')));
+  });
+
+  test('Массаж+ботокс один день и подушка после филлера', () {
+    final combo = cultAgent.answer('Можно ли совместить массаж и ботокс в один день?');
+    expect(combo.toLowerCase(), anyOf(contains('массаж'), contains('бот')));
+    expect(combo.toLowerCase(), isNot(contains('скажите пару процедур')));
+    final pillow = cultAgent.answer('Сколько нельзя спать лицом в подушку после филлера?');
+    expect(pillow.toLowerCase(), anyOf(contains('филлер'), contains('подуш'), contains('лицом')));
+    expect(pillow.toLowerCase(), isNot(contains('на боку спать обычно можно')));
+  });
+
+  test('После RF пилинг и капельница+баня', () {
+    final rf = cultAgent.answer('После RF можно делать пилинг?');
+    expect(rf.toLowerCase(), anyOf(contains('rf'), contains('пилинг'), contains('пауз')));
+    expect(rf.toLowerCase(), isNot(contains('химический пилинг l3')));
+    final bath = cultAgent.answer('После капельницы можно в баню в тот же день?');
+    expect(bath.toLowerCase(), anyOf(contains('капель'), contains('бан'), contains('саун')));
+  });
 }
