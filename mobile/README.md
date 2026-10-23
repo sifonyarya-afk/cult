@@ -152,6 +152,30 @@ flutter run
 flutter run --release
 ```
 
+### `Error connecting to the service protocol` / `Connection reset by peer`
+
+Сборка и установка прошли (`Xcode build done`, `Installing and launching…`), но Flutter не смог подключить hot-reload к телефону. **Часто CULT уже открыт на iPhone** — проверьте экран. Это сбой отладчика, не кода.
+
+1. Разблокируйте телефон, отключите VPN, оставьте кабель.
+2. Если iOS спросил **Локальная сеть** для Runner/Flutter — разрешите.
+3. В Terminal:
+
+```bash
+cd ~/Desktop/cult/cult/mobile
+killall -9 dart flutter Runner lldb-rpc-server 2>/dev/null
+flutter devices
+flutter run
+```
+
+4. Если снова reset — без отладчика (приложение ставится и работает):
+
+```bash
+cd ~/Desktop/cult/cult/mobile
+flutter run --release
+```
+
+5. Запасной вариант: Xcode → Stop → Product → Clean Build Folder → Run из `Runner.xcworkspace`, либо переподключите кабель / другой порт USB.
+
 Предупреждение CocoaPods «no platform was specified» значит, что на Mac ещё старый `Podfile` (не подтянули фиксы). Сделайте `git stash` + `git pull` из корня `cult` — см. блок выше.
 
 ### `module 'Flutter' not found` / `shared_preferences_foundation` / VerifyModule
