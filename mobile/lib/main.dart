@@ -394,82 +394,46 @@ class _ShellState extends State<Shell> {
                       ),
                   ],
                 ),
+          extendBody: true,
           body: IndexedStack(
             index: _index,
             children: [
               HomePage(onShop: _openShop, scrollController: _homeScroll),
               const ServicesPage(),
-              AgentVoicePage(active: _index == _tabAgent),
+              // Leave room for the floating dock above the mic controls.
+              Padding(
+                padding: const EdgeInsets.only(bottom: 96),
+                child: AgentVoicePage(active: _index == _tabAgent),
+              ),
               ShopPage(key: ValueKey(_shopTab), initialTab: _shopTab),
               const CabinetPage(),
             ],
           ),
-          floatingActionButton: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            child: _index == _tabHome
-                ? FloatingActionButton(
-                    key: const ValueKey('fab-book'),
-                    heroTag: 'shell-book',
-                    backgroundColor: Cult.ink,
-                    foregroundColor: Colors.white,
-                    tooltip: 'Запись',
-                    onPressed: () {
-                      HapticFeedback.mediumImpact();
-                      pushPage(context, const BookingPage());
-                    },
-                    child: const Icon(Icons.add),
-                  )
-                : const SizedBox.shrink(key: ValueKey('fab-none')),
-          ),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: _index,
-            onDestinationSelected: (value) {
-              FocusManager.instance.primaryFocus?.unfocus();
-              HapticFeedback.selectionClick();
-              if (value == _index) {
-                Navigator.of(context).popUntil((route) => route.isFirst);
-                if (value == _tabHome && _homeScroll.hasClients) {
-                  _homeScroll.animateTo(
-                    0,
-                    duration: const Duration(milliseconds: 320),
-                    curve: Curves.easeOutCubic,
-                  );
-                }
-                return;
-              }
-              setState(() => _index = value);
-            },
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home),
-                label: 'Главная',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.spa_outlined),
-                selectedIcon: Icon(Icons.spa),
-                label: 'Услуги',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.mic_none),
-                selectedIcon: Icon(Icons.mic),
-                label: 'Агент',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.shopping_bag_outlined),
-                selectedIcon: Icon(Icons.shopping_bag),
-                label: 'Магазин',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.person_outline),
-                selectedIcon: Icon(Icons.person),
-                label: 'Профиль',
-              ),
-            ],
+          bottomNavigationBar: _CultDockBar(
+            index: _index,
+            agentSelected: _index == _tabAgent,
+            onSelect: _selectTab,
           ),
         ),
       ),
     );
+  }
+
+  void _selectTab(int value) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    HapticFeedback.selectionClick();
+    if (value == _index) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      if (value == _tabHome && _homeScroll.hasClients) {
+        _homeScroll.animateTo(
+          0,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+        );
+      }
+      return;
+    }
+    setState(() => _index = value);
   }
 
   void _menu(BuildContext context) {
@@ -665,6 +629,198 @@ class _MenuLabel extends StatelessWidget {
           color: Cult.muted,
           fontSize: 12,
           letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+}
+
+/// Floating pill dock with center champagne Agent button (notched gap).
+class _CultDockBar extends StatelessWidget {
+  const _CultDockBar({
+    required this.index,
+    required this.agentSelected,
+    required this.onSelect,
+  });
+
+  final int index;
+  final bool agentSelected;
+  final ValueChanged<int> onSelect;
+
+  static const _tabHome = 0;
+  static const _tabServices = 1;
+  static const _tabAgent = 2;
+  static const _tabShop = 3;
+  static const _tabProfile = 4;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+        child: SizedBox(
+          height: 84,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            clipBehavior: Clip.none,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 18),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(40),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 22,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    height: 66,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _DockItem(
+                            tooltip: 'Главная',
+                            selected: index == _tabHome,
+                            icon: Icons.home_outlined,
+                            selectedIcon: Icons.home,
+                            onTap: () => onSelect(_tabHome),
+                          ),
+                        ),
+                        Expanded(
+                          child: _DockItem(
+                            tooltip: 'Услуги',
+                            selected: index == _tabServices,
+                            icon: Icons.spa_outlined,
+                            selectedIcon: Icons.spa,
+                            onTap: () => onSelect(_tabServices),
+                          ),
+                        ),
+                        const SizedBox(width: 72),
+                        Expanded(
+                          child: _DockItem(
+                            tooltip: 'Магазин',
+                            selected: index == _tabShop,
+                            icon: Icons.shopping_bag_outlined,
+                            selectedIcon: Icons.shopping_bag,
+                            onTap: () => onSelect(_tabShop),
+                          ),
+                        ),
+                        Expanded(
+                          child: _DockItem(
+                            tooltip: 'Профиль',
+                            selected: index == _tabProfile,
+                            icon: Icons.person_outline,
+                            selectedIcon: Icons.person,
+                            onTap: () => onSelect(_tabProfile),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                child: Semantics(
+                  button: true,
+                  selected: agentSelected,
+                  label: 'Агент',
+                  child: Tooltip(
+                    message: 'Агент',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => onSelect(
+                          agentSelected ? _tabHome : _tabAgent,
+                        ),
+                        child: Ink(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: agentSelected
+                                  ? const [
+                                      Color(0xFFE8D9C0),
+                                      Color(0xFFB9A07A),
+                                    ]
+                                  : const [
+                                      Color(0xFFD7BEA0),
+                                      Color(0xFFC4A882),
+                                    ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Cult.sand.withValues(alpha: 0.55),
+                                blurRadius: 18,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 3,
+                            ),
+                          ),
+                          child: Icon(
+                            agentSelected
+                                ? Icons.close_rounded
+                                : Icons.mic_rounded,
+                            color: const Color(0xFF1B1408),
+                            size: 28,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DockItem extends StatelessWidget {
+  const _DockItem({
+    required this.tooltip,
+    required this.selected,
+    required this.icon,
+    required this.selectedIcon,
+    required this.onTap,
+  });
+
+  final String tooltip;
+  final bool selected;
+  final IconData icon;
+  final IconData selectedIcon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(
+          height: 66,
+          child: Icon(
+            selected ? selectedIcon : icon,
+            size: 26,
+            color: selected ? Cult.primary : Cult.muted,
+          ),
         ),
       ),
     );

@@ -26,7 +26,7 @@ void main() {
     expect(find.text('Онлайн запись'), findsOneWidget);
     expect(find.text('Магазин биохакинга'), findsOneWidget);
     expect(find.text('Чат с врачом'), findsOneWidget);
-    expect(find.text('Агент'), findsOneWidget);
+    expect(find.byTooltip('Агент'), findsOneWidget);
     expect(find.text('CULT Агент'), findsNothing);
 
     await tester.ensureVisible(find.text('Мои анализы'));
@@ -73,7 +73,7 @@ void main() {
     await store.setGender(ClientGender.woman);
     await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Агент'));
+    await tester.tap(find.byTooltip('Агент'));
     // Agent pulse animation runs forever — don't pumpAndSettle.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 80));
@@ -110,7 +110,7 @@ void main() {
     await store.setGender(ClientGender.woman);
     await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Профиль'));
+    await tester.tap(find.byTooltip('Профиль'));
     await tester.pumpAndSettle();
     expect(find.byType(RefreshIndicator), findsWidgets);
     expect(find.text('Войдите по телефону'), findsOneWidget);
@@ -230,7 +230,7 @@ void main() {
     await store.setGender(ClientGender.woman);
     await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Услуги'));
+    await tester.tap(find.byTooltip('Услуги'));
     await tester.pumpAndSettle();
     expect(find.text('Поиск процедур...'), findsOneWidget);
     await tester.enterText(find.byType(TextField).first, 'морфеус');
