@@ -1227,4 +1227,40 @@ void main() {
     expect(sauna.toLowerCase(), contains('hydrapure'));
     expect(sauna.toLowerCase(), anyOf(contains('саун'), contains('пауз')));
   });
+
+  test('Диабет/почки/ВИЧ + капельница/эстетика', () {
+    final diabetes = cultAgent.answer('У меня диабет 2 типа — капельницу можно?');
+    expect(diabetes.toLowerCase(), contains('диабет'));
+    expect(diabetes.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final kidney = cultAgent.answer('Можно ли капельницу при почечной недостаточности?');
+    expect(kidney.toLowerCase(), anyOf(contains('почечн'), contains('почк')));
+    expect(kidney.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final hiv = cultAgent.answer('У меня ВИЧ — эстетику можно?');
+    expect(hiv.toLowerCase(), contains('вич'));
+    expect(hiv.toLowerCase(), isNot(contains('не уверена')));
+  });
+
+  test('Антидепрессанты+ботокс, асимметрия губ, SMAS отёк', () {
+    final ad = cultAgent.answer('Можно ли делать ботокс если пью антидепрессанты?');
+    expect(ad.toLowerCase(), contains('антидепресс'));
+    expect(ad.toLowerCase(), isNot(contains('подбирает врач после осмотра')));
+    final lips = cultAgent.answer('Что делать если после филлера губы сильно асимметричны?');
+    expect(lips.toLowerCase(), anyOf(contains('филлер'), contains('губ')));
+    expect(lips.toLowerCase(), isNot(contains('ботулин')));
+    final edema = cultAgent.answer('После SMAS лицо отекло на третий день — норма?');
+    expect(edema.toLowerCase(), anyOf(contains('отёк'), contains('отек'), contains('smas')));
+    expect(edema.toLowerCase(), isNot(contains('массаж посильнее')));
+  });
+
+  test('Барбер+RF цена, отмена записи, синяки к съёмке', () {
+    final combo = cultAgent.answer('Сколько стоит мужской барбер-массаж и RF вместе?');
+    expect(combo, contains('12'));
+    expect(combo, contains('42'));
+    final cancel = cultAgent.answer('Хочу отменить запись голосом на завтра');
+    expect(cancel.toLowerCase(), anyOf(contains('отмен'), contains('моих записей'), contains('перенес')));
+    expect(cancel.toLowerCase(), isNot(contains('beauty & glow')));
+    final bruise = cultAgent.answer('Боюсь синяков после мезо к важной фотосессии');
+    expect(bruise.toLowerCase(), anyOf(contains('съёмк'), contains('съемк'), contains('фотосесс'), contains('запас')));
+    expect(bruise.toLowerCase(), isNot(contains('анестезией')));
+  });
 }
