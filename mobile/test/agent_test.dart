@@ -1370,4 +1370,43 @@ void main() {
     expect(sleep.toLowerCase(), contains('живот'));
     expect(sleep.toLowerCase(), isNot(contains('на боку спать обычно можно ближе к вечеру')));
   });
+
+  test('Ринопластика, увеличение груди, ферритин+IV', () {
+    final rhino = cultAgent.answer('Делаете ли ринопластику?');
+    expect(rhino.toLowerCase(), anyOf(contains('ринопласт'), contains('не делаем'), contains('хирург')));
+    expect(rhino.toLowerCase(), isNot(contains('давайте проще')));
+    final breast = cultAgent.answer('Делаете ли увеличение груди?');
+    expect(breast.toLowerCase(), anyOf(contains('груди'), contains('маммопласт'), contains('не делаем')));
+    expect(breast.toLowerCase(), isNot(contains('если сложно сформулировать')));
+    final ferr = cultAgent.answer('У меня низкий ферритин — капельницу можно?');
+    expect(ferr.toLowerCase(), contains('ферритин'));
+    expect(ferr.toLowerCase(), isNot(contains('hydrapure')));
+  });
+
+  test('Инфаркт+RF, желчнокаменная, ботокс+пилинг через 2 нед', () {
+    final infarct = cultAgent.answer('Можно ли делать RF если недавно был инфаркт?');
+    expect(infarct.toLowerCase(), anyOf(contains('инфаркт'), contains('кардиолог'), contains('сердечн')));
+    expect(infarct.toLowerCase(), isNot(contains('слышу много нюансов')));
+    final gall = cultAgent.answer('Можно ли капельницу при желчнокаменной болезни?');
+    expect(gall.toLowerCase(), contains('желч'));
+    expect(gall.toLowerCase(), isNot(contains('hydrapure')));
+    final peel = cultAgent.answer('После ботокса можно делать пилинг через две недели?');
+    expect(peel.toLowerCase(), anyOf(contains('ботулин'), contains('пилинг'), contains('недел')));
+    expect(peel.toLowerCase(), isNot(contains('под дату')));
+  });
+
+  test('IPL зуд, никель+RF, Veil простыми, запись без кнопки', () {
+    final itch = cultAgent.answer('После IPL лицо чешется на второй день — норма?');
+    expect(itch.toLowerCase(), anyOf(contains('зуд'), contains('чеш')));
+    expect(itch.toLowerCase(), isNot(contains('пятна иногда временно темнеют')));
+    final nick = cultAgent.answer('У меня аллергия на никель — RF можно?');
+    expect(nick.toLowerCase(), contains('никель'));
+    expect(nick.toLowerCase(), isNot(contains('анестезию, металлы или косметику')));
+    final veil = cultAgent.answer('Что такое Veil Peptide Serum простыми словами?');
+    expect(veil.toLowerCase(), contains('veil'));
+    expect(veil.toLowerCase(), isNot(contains('neuro-regen')));
+    final conf = cultAgent.answer('Хочу подтвердить запись голосом без кнопки');
+    expect(conf.toLowerCase(), anyOf(contains('кнопк'), contains('нельзя')));
+    expect(conf.toLowerCase(), isNot(contains('или откройте запись в меню')));
+  });
 }
