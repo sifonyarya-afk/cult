@@ -200,6 +200,12 @@ class ClinicStore extends ChangeNotifier {
   /// Draft from Мира — applied only via [confirmAgentBooking] («Запись» button).
   AgentBookingDraft? agentBookingDraft;
 
+  /// Last product Мира put in the cart (UI snack / voice status).
+  String? agentLastCartName;
+
+  /// Chat to open after a Mira handoff turn (`admin` / `specialist`); UI consumes.
+  String? agentOpenChat;
+
   YClientsApi yclients = YClientsApi();
 
   int get balance {
@@ -539,6 +545,39 @@ class ClinicStore extends ChangeNotifier {
   void clearAgentBookingDraft() {
     if (agentBookingDraft == null) return;
     agentBookingDraft = null;
+    notifyListeners();
+  }
+
+  /// UI reads once after a handoff turn.
+  String? consumeAgentOpenChat() {
+    final id = agentOpenChat;
+    agentOpenChat = null;
+    return id;
+  }
+
+  /// Post VIP transfer to admin chat (same payload as TransferPage).
+  void requestTransfer({required String from, String? when}) {
+    final place = from.trim();
+    if (place.length < 3) return;
+    final list = threads.putIfAbsent('admin', () => []);
+    final stamp = DateTime.now().microsecondsSinceEpoch;
+    final line =
+        'Трансфер: забрать с «$place» → Черноморская, 6'
+        '${when == null || when.isEmpty ? '' : ' · $when'}.';
+    list.add(
+      ChatMessage(id: 'me-transfer-$stamp', from: 'me', text: line),
+    );
+    list.add(
+      ChatMessage(
+        id: 'them-transfer-$stamp',
+        from: 'them',
+        text:
+            'Приняли запрос на трансфер. Водитель напишет сюда, когда машина будет готова. '
+            'Если нужно поправить адрес или время — ответьте в этом чате.',
+      ),
+    );
+    chatRead['admin'] = list.last.id;
+    _save();
     notifyListeners();
   }
 
@@ -962,6 +1001,17 @@ class ClinicStore extends ChangeNotifier {
         recentUsers: recentUsers,
       );
       agentBookingDraft = turn.pendingBooking;
+      agentLastCartName = null;
+      agentOpenChat = turn.openChat;
+      final cart = turn.cartAdd;
+      if (cart != null) {
+        addToCart(cart.id, cart.name, cart.price);
+        agentLastCartName = cart.name;
+      }
+      final transfer = turn.transfer;
+      if (transfer != null && transfer.ready && transfer.from.trim().length >= 3) {
+        requestTransfer(from: transfer.from, when: transfer.when);
+      }
       return turn.reply;
     }
     if (contactId == 'specialist') {

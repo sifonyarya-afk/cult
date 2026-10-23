@@ -8,7 +8,10 @@ import '../store.dart';
 import '../theme.dart';
 import '../tts.dart';
 import '../widgets.dart';
-/// Voice-first Мира: pearl orb, living consult, booking only via «Запись».
+import 'shop.dart';
+import 'talk.dart';
+
+/// Voice-first Мира: pearl orb, booking / cart / transfer / handoff actions.
 class AgentVoicePage extends StatefulWidget {
   const AgentVoicePage({super.key, this.active = true});
 
@@ -264,8 +267,11 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     });
     _syncPulse();
     HapticFeedback.selectionClick();
+    final cartBefore = store.cartCount;
     store.sendMessage('bot', text);
     store.markChatRead('bot');
+    final cartName = store.agentLastCartName;
+    final openChat = store.consumeAgentOpenChat();
     final reply = store.threads['bot']?.lastOrNull;
     final line = (reply != null && reply.from == 'them') ? reply.text : '';
     if (!mounted) return;
@@ -280,14 +286,29 @@ class _AgentVoicePageState extends State<AgentVoicePage>
       await _tts.speak(line, complete: true);
     }
     if (!mounted) return;
+    if (cartName != null && store.cartCount > cartBefore) {
+      showCultSnack(
+        context,
+        '$cartName в корзине',
+        actionLabel: 'Корзина',
+        onAction: () => pushPage(context, const CartPage()),
+      );
+    }
     setState(() {
       _speaking = false;
       _status = store.agentBookingDraft != null
           ? 'Проверьте детали и нажмите «Запись»'
-          : 'Слушаю вас';
+          : (cartName != null
+              ? 'Товар в корзине — слушаю дальше'
+              : 'Слушаю вас');
     });
     _syncPulse();
     _busy = false;
+    if (openChat == 'admin' || openChat == 'specialist') {
+      if (!mounted) return;
+      pushPage(context, ChatThreadPage(contactId: openChat!));
+      return;
+    }
     if (store.agentBookingDraft != null) return;
     await Future<void>.delayed(const Duration(milliseconds: 280));
     if (!mounted || _listening || _speaking) return;

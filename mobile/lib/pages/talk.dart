@@ -10,6 +10,7 @@ import '../widgets.dart';
 import '../yclients.dart';
 import 'agent_voice.dart';
 import 'cabinet.dart';
+import 'shop.dart';
 
 class ChatPage extends StatelessWidget {
   const ChatPage({super.key});
@@ -422,9 +423,25 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     final text = raw.trim();
     if (text.isEmpty) return;
     HapticFeedback.selectionClick();
+    final cartBefore = store.cartCount;
     store.sendMessage(widget.contactId, text);
     store.markChatRead(widget.contactId);
     _text.clear();
+    if (_isAgent) {
+      final cartName = store.agentLastCartName;
+      final openChat = store.consumeAgentOpenChat();
+      if (cartName != null && store.cartCount > cartBefore && mounted) {
+        showCultSnack(
+          context,
+          '$cartName в корзине',
+          actionLabel: 'Корзина',
+          onAction: () => pushPage(context, const CartPage()),
+        );
+      }
+      if ((openChat == 'admin' || openChat == 'specialist') && mounted) {
+        pushPage(context, ChatThreadPage(contactId: openChat!));
+      }
+    }
     if (_isAgent && (_speakReplies || fromVoice)) {
       final reply = store.threads[widget.contactId]?.lastOrNull;
       if (reply != null && reply.from == 'them') {

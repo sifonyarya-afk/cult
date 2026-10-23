@@ -368,19 +368,52 @@ void main() {
     expect(reply.toLowerCase(), contains('ресепшен'));
   });
 
-  test('Возьму это после рекомендации', () {
-    final reply = cultAgent.answer(
+  test('Возьму это после рекомендации кладёт в корзину', () {
+    final turn = cultAgent.respond(
       'возьму это',
       lastBot: 'Посмотрела Veil Peptide Serum. Стоит 12 500 ₽.',
     );
-    expect(reply.toLowerCase(), contains('veil'));
-    expect(reply.toLowerCase(), contains('магазин'));
+    expect(turn.reply.toLowerCase(), contains('veil'));
+    expect(turn.reply.toLowerCase(), contains('корзин'));
+    expect(turn.cartAdd, isNotNull);
+    expect(turn.cartAdd!.name.toLowerCase(), contains('veil'));
   });
 
-  test('Хочу живого врача — handoff', () {
-    final reply = cultAgent.answer('Хочу живого врача');
-    expect(reply.toLowerCase(), anyOf(contains('врач'), contains('чат')));
-    expect(reply.toLowerCase(), contains('специалист'));
+  test('Положи в корзину крем добавляет Lumen Barrier', () {
+    final turn = cultAgent.respond('положи в корзину барьерный крем');
+    expect(turn.cartAdd, isNotNull);
+    expect(turn.cartAdd!.name.toLowerCase(), contains('barrier'));
+    expect(turn.reply.toLowerCase(), contains('корзин'));
+  });
+
+  test('Трансфер из аэропорта создаёт заявку', () {
+    final turn = cultAgent.respond('Нужен трансфер из аэропорта');
+    expect(turn.transfer, isNotNull);
+    expect(turn.transfer!.ready, isTrue);
+    expect(turn.transfer!.from.toLowerCase(), contains('аэропорт'));
+    expect(turn.reply.toLowerCase(), anyOf(contains('трансфер'), contains('администратор')));
+  });
+
+  test('Трансфер без адреса спрашивает откуда', () {
+    final turn = cultAgent.respond('Вызови трансфер');
+    expect(turn.transfer?.ready ?? false, isFalse);
+    expect(
+      turn.reply.toLowerCase(),
+      anyOf(contains('откуда'), contains('адрес')),
+    );
+    expect(turn.reply.toLowerCase(), contains('трансфер'));
+  });
+
+  test('Хочу живого врача — handoff открывает чат', () {
+    final turn = cultAgent.respond('Хочу живого врача');
+    expect(turn.openChat, 'specialist');
+    expect(turn.reply.toLowerCase(), anyOf(contains('врач'), contains('чат')));
+  });
+
+  test('Переведи на администратора открывает admin', () {
+    final turn = cultAgent.respond('Переведи на администратора');
+    expect(turn.openChat, 'admin');
+    expect(turn.reply.toLowerCase(), contains('администратор'));
   });
 
   test('Кейсы до и после', () {
@@ -627,11 +660,39 @@ void main() {
     final bot = store.threads['bot']!;
     expect(bot.length, 1);
     expect(bot.first.text, contains('Мира'));
-    expect(bot.first.text.toLowerCase(), contains('кож'));
     expect(
       bot.first.text.toLowerCase(),
-      anyOf(contains('запис'), contains('услуг'), contains('уход')),
+      anyOf(
+        contains('запис'),
+        contains('корзин'),
+        contains('трансфер'),
+        contains('услуг'),
+      ),
     );
+  });
+
+  test('Store: Мира кладёт товар в корзину по голосу', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    final before = store.cartCount;
+    store.sendMessage('bot', 'Положи в корзину Veil Peptide');
+    expect(store.cartCount, greaterThan(before));
+    expect(store.agentLastCartName!.toLowerCase(), contains('veil'));
+    expect(
+      store.cart.any((c) => c.name.toLowerCase().contains('veil')),
+      isTrue,
+    );
+  });
+
+  test('Store: Мира вызывает трансфер в чат админа', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Нужен трансфер из аэропорта к 15:00');
+    final admin = store.threads['admin'] ?? [];
+    expect(admin.any((m) => m.text.toLowerCase().contains('трансфер')), isTrue);
+    expect(admin.any((m) => m.text.toLowerCase().contains('аэропорт')), isTrue);
   });
 
   test('Не дублирует уточняющий вопрос подряд', () {

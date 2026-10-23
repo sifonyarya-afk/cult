@@ -1,8 +1,9 @@
 import 'data.dart';
 import 'yclients.dart';
 
-/// On-device CULT cosmetologist [cultAgentName]: FAQ + services/shop + booking draft.
-/// Voice UI speaks [AgentTurn.reply]; booking only after the user taps «Запись».
+/// On-device CULT cosmetologist [cultAgentName]: FAQ + services/shop + real actions.
+/// Voice UI speaks [AgentTurn.reply]; booking confirms via «Запись»;
+/// cart/transfer/handoff apply through [ClinicStore] after each turn.
 class CultAgent {
   const CultAgent();
 
@@ -33,7 +34,7 @@ class CultAgent {
     ).reply;
   }
 
-  /// Full turn: living reply + optional booking draft awaiting «Запись» tap.
+  /// Full turn: living reply + booking draft / cart / transfer / open chat.
   AgentTurn respond(
     String text, {
     List<Service> localServices = services,
@@ -47,6 +48,28 @@ class CultAgent {
     List<String> recentUsers = const [],
   }) {
     final q = _repairAsr(_normalize(text));
+    final seed = '$text|${lastBot ?? ''}|${lastUser ?? ''}';
+
+    AgentTurn wrap(
+      String raw, {
+      AgentBookingDraft? pendingBooking,
+      AgentCartAdd? cartAdd,
+      AgentTransferRequest? transfer,
+      String? openChat,
+    }) {
+      return AgentTurn(
+        reply: _naturalize(
+          _dedupeClarify(raw, lastBot, user: text),
+          seed: seed,
+          lastBot: lastBot,
+        ),
+        pendingBooking: pendingBooking,
+        cartAdd: cartAdd,
+        transfer: transfer,
+        openChat: openChat,
+      );
+    }
+
     final book = _bookFlow(
       q,
       raw: text,
@@ -61,12 +84,34 @@ class CultAgent {
       localInfusions: localInfusions,
     );
     if (book != null) {
-      final reply = _naturalize(
-        _dedupeClarify(book.reply, lastBot, user: text),
-        seed: '$text|${lastBot ?? ''}|${lastUser ?? ''}',
-        lastBot: lastBot,
-      );
-      return AgentTurn(reply: reply, pendingBooking: book.draft);
+      return wrap(book.reply, pendingBooking: book.draft);
+    }
+
+    final cart = _cartFlow(
+      q,
+      raw: text,
+      lastBot: lastBot,
+      lastUser: lastUser,
+      recentUsers: recentUsers,
+      localProducts: localProducts,
+    );
+    if (cart != null) {
+      return wrap(cart.reply, cartAdd: cart.add);
+    }
+
+    final transfer = _transferFlow(
+      q,
+      raw: text,
+      lastBot: lastBot,
+      lastUser: lastUser,
+    );
+    if (transfer != null) {
+      return wrap(transfer.reply, transfer: transfer.request);
+    }
+
+    final handoff = _handoffTurn(q, raw: text);
+    if (handoff != null) {
+      return wrap(handoff.reply, openChat: handoff.openChat);
     }
 
     final raw = _answerBody(
@@ -81,13 +126,7 @@ class CultAgent {
       lastUser: lastUser,
       recentUsers: recentUsers,
     );
-    return AgentTurn(
-      reply: _naturalize(
-        _dedupeClarify(raw, lastBot, user: text),
-        seed: '$text|${lastBot ?? ''}|${lastUser ?? ''}',
-        lastBot: lastBot,
-      ),
-    );
+    return wrap(raw);
   }
 
   String _answerBody(
@@ -153,15 +192,7 @@ class CultAgent {
     final care = _careFlowReply(q, gender: gender);
     if (care != null) return care;
 
-    // «Возьму это» after a named recommendation.
-    final take = _takeItReply(q, lastBot);
-    if (take != null) return take;
-
-    // Живой врач / администратор.
-    final handoff = _handoffReply(q);
-    if (handoff != null) return handoff;
-
-    // Booking is handled in [respond] → [_bookFlow] (needs confirm button).
+    // Cart / handoff / transfer / booking are handled in [respond] (real actions).
 
     // «Без уколов / только дом» preferences before catalog suggestions.
     final preference = _preferenceReply(q, gender: gender);
@@ -820,11 +851,17 @@ class CultAgent {
     final wants = q.contains('запиши') ||
         q.contains('записать меня') ||
         q.contains('запишите') ||
+        q.contains('забронируй') ||
+        q.contains('забронировать') ||
+        q.contains('оформи запись') ||
+        q.contains('оформить запись') ||
         q.contains('давай запишемся') ||
         q.contains('давайте запишемся') ||
         q.contains('хочу записаться') ||
         q.contains('хочу на процедуру') ||
         q.contains('запишемся') ||
+        q.contains('на запись') ||
+        q.contains('запиши меня') ||
         (q.contains('хочу на') &&
             (q.contains('массаж') ||
                 q.contains('rf') ||
@@ -834,7 +871,9 @@ class CultAgent {
                 q.contains('капель') ||
                 q.contains('консульт') ||
                 q.contains('чистка') ||
-                q.contains('лазер')));
+                q.contains('лазер') ||
+                q.contains('ботокс') ||
+                q.contains('мезо')));
     final slotOnly = _extractTimeLabel(q) != null ||
         _extractWeekday(q) != null ||
         q.contains('завтра') ||
@@ -1348,12 +1387,20 @@ class CultAgent {
     return null;
   }
 
-  String? _takeItReply(String q, String? lastBot) {
+  /// Put shop formula into cart (applied by store).
+  ({String reply, AgentCartAdd? add})? _cartFlow(
+    String q, {
+    required String raw,
+    String? lastBot,
+    String? lastUser,
+    List<String> recentUsers = const [],
+    required List<Product> localProducts,
+  }) {
     final compact = q
         .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
-    final hit = compact == 'возьму' ||
+    final takeIt = compact == 'возьму' ||
         compact == 'беру' ||
         compact == 'оформляй' ||
         compact == 'оформляем' ||
@@ -1365,47 +1412,295 @@ class CultAgent {
         compact.contains('беру это') ||
         compact.contains('давай его') ||
         compact.contains('давай ее') ||
-        compact.contains('давай ее');
-    if (!hit) return null;
-    if (lastBot == null || lastBot.isEmpty) {
-      return 'Отлично. Уточните, что берём — услугу через «+» или формулу в «Магазин» — и оформлю следующий шаг.';
+        compact.contains('давай её');
+    final cartVerb = q.contains('в корзину') ||
+        q.contains('корзину') ||
+        q.contains('добавь в корзин') ||
+        q.contains('положи в корзин') ||
+        q.contains('положите в корзин') ||
+        q.contains('добавьте в корзин') ||
+        q.contains('в корзину полож') ||
+        q.contains('купи') ||
+        q.contains('закажу') ||
+        q.contains('закажи') ||
+        q.contains('хочу купить') ||
+        q.contains('хочу взять') ||
+        (q.contains('добавь') &&
+            (q.contains('крем') ||
+                q.contains('сыворот') ||
+                q.contains('формул') ||
+                q.contains('serum') ||
+                q.contains('veil') ||
+                q.contains('barrier') ||
+                q.contains('mito')));
+    if (!cartVerb && !takeIt) return null;
+
+    final product = _resolveCartProduct(
+      q: q,
+      lastBot: lastBot,
+      lastUser: lastUser,
+      recentUsers: recentUsers,
+      localProducts: localProducts,
+    );
+    if (product == null) {
+      return (
+        reply: takeIt
+            ? 'Что именно берём в корзину — крем, сыворотку или название из шопа? Могу положить сразу.'
+            : 'Какую формулу положить в корзину? Скажите бренд или «крем» / «сыворотка» — добавлю сама.',
+        add: null,
+      );
     }
-    final named = RegExp(r'«([^»]+)»').firstMatch(lastBot)?.group(1) ??
-        RegExp(r'Посмотрела ([^.]+)\.').firstMatch(lastBot)?.group(1)?.trim();
-    final shop = lastBot.toLowerCase().contains('магазин') ||
-        lastBot.toLowerCase().contains('корзин') ||
-        lastBot.contains('Посмотрела') ||
-        (lastBot.contains('₽') && lastBot.toLowerCase().contains('состав'));
-    if (named != null && named.isNotEmpty) {
-      if (shop) {
-        return 'Супер, берём «$named». Откройте карточку в «Магазин» и положите в корзину — или скажите администратору в чат для самовывоза. '
-            'На консультации при необходимости скорректируем.';
-      }
-      return 'Супер, остаёмся на «$named». Запись: «+» на главной или меню «Запись» — врач и время. '
-          'Если слот не находится, напишите администратору в чат.';
-    }
-    return 'Приняла. Откройте «+» для записи или «Магазин» для формулы — и завершите шаг. '
-        'Если нужно, коротко назовите ещё раз, что именно берём.';
+    return (
+      reply: _pick('cart-added', [
+        'Готово — ${product.name} уже в корзине. Можете оформить в магазине или продолжим подбор.',
+        'Положила ${product.name} в корзину. Открыть корзину в магазине или ещё что-то добавить?',
+        '${product.name} в корзине. Если нужна ещё формула — назовите, положу следом.',
+      ], raw),
+      add: AgentCartAdd(
+        id: product.id,
+        name: product.name,
+        price: product.price,
+      ),
+    );
   }
 
-  String? _handoffReply(String q) {
-    final wantsHuman = q.contains('живого врача') ||
+  Product? _resolveCartProduct({
+    required String q,
+    String? lastBot,
+    String? lastUser,
+    List<String> recentUsers = const [],
+    required List<Product> localProducts,
+  }) {
+    // Explicit name in the user line first.
+    for (final item in localProducts) {
+      final name = _normalize(item.name);
+      final short = name.split(RegExp(r'\s+')).where((w) => w.length >= 4);
+      if (q.contains(name)) return item;
+      for (final w in short) {
+        if (w.length >= 5 && q.contains(w)) return item;
+      }
+    }
+    // Russian aliases.
+    if (q.contains('барьер') || q.contains('крем')) {
+      final hit = _clinicProduct('lumen barrier') ??
+          localProducts.where((p) => _normalize(p.name).contains('barrier')).firstOrNull;
+      if (hit != null && (q.contains('барьер') || q.contains('крем') || q.contains('lumen'))) {
+        return hit;
+      }
+    }
+    if (q.contains('сыворот') || q.contains('пептид') || q.contains('veil')) {
+      final hit = _clinicProduct('veil peptide') ??
+          localProducts.where((p) => _normalize(p.name).contains('veil')).firstOrNull;
+      if (hit != null) return hit;
+    }
+    if (q.contains('mito') || q.contains('энерг') || q.contains('топлив')) {
+      final hit = _clinicProduct('mitochondrial');
+      if (hit != null) return hit;
+    }
+
+    final blob = _normalize('${lastBot ?? ''} ${lastUser ?? ''} ${recentUsers.join(' ')}');
+    // Named product in last bot reply.
+    final looked = RegExp(
+      r'посмотрела ([^.]+)\.',
+      caseSensitive: false,
+    ).firstMatch(lastBot ?? '');
+    if (looked != null) {
+      final title = looked.group(1)?.trim() ?? '';
+      for (final item in localProducts) {
+        if (_normalize(item.name) == _normalize(title) ||
+            _normalize(title).contains(_normalize(item.name))) {
+          return item;
+        }
+      }
+    }
+    for (final item in localProducts) {
+      if (blob.contains(_normalize(item.name))) return item;
+      final key = _normalize(item.name).split(' ').firstWhere(
+            (w) => w.length >= 5,
+            orElse: () => '',
+          );
+      if (key.isNotEmpty && blob.contains(key)) return item;
+    }
+    if (blob.contains('барьер') || blob.contains('barrier')) {
+      return _clinicProduct('lumen barrier');
+    }
+    if (blob.contains('пептид') || blob.contains('veil') || blob.contains('сыворот')) {
+      return _clinicProduct('veil peptide');
+    }
+    return null;
+  }
+
+  /// VIP transfer → admin chat (applied by store when [AgentTransferRequest.ready]).
+  ({String reply, AgentTransferRequest? request})? _transferFlow(
+    String q, {
+    required String raw,
+    String? lastBot,
+    String? lastUser,
+  }) {
+    final prev = _normalize(lastBot ?? '');
+    final awaitingPlace = prev.contains('откуда забрать') ||
+        prev.contains('адрес подачи') ||
+        prev.contains('откуда подать машину') ||
+        prev.contains('откуда вас забрать');
+    final wants = q.contains('трансфер') ||
+        q.contains('такси') ||
+        q.contains('машин') ||
+        q.contains('заберите') ||
+        q.contains('забрать меня') ||
+        q.contains('подайте машин') ||
+        q.contains('вызвать трансфер') ||
+        q.contains('нужен трансфер') ||
+        q.contains('хочу трансфер') ||
+        q.contains('водитель') ||
+        (q.contains('аэропорт') &&
+            (q.contains('забер') || q.contains('встрет') || q.contains('машин'))) ||
+        awaitingPlace;
+    if (!wants) return null;
+
+    final place = _extractTransferPlace(q) ??
+        (awaitingPlace ? _extractTransferPlace(_normalize(lastUser ?? '')) : null);
+    final when = _extractTransferWhen(q);
+
+    if (place == null || place.trim().length < 3) {
+      return (
+        reply: _pick('transfer-ask', [
+          'Оформлю трансфер до клиники. Откуда забрать — аэропорт, вокзал, отель или ваш адрес?',
+          'Трансфер до Черноморской, 6 закажу. Скажите, откуда подать машину — или «аэропорт Сочи».',
+          'Трансфер сделаю через администратора. Откуда вас забрать?',
+        ], raw),
+        request: const AgentTransferRequest(from: '', ready: false),
+      );
+    }
+
+    return (
+      reply: _pick('transfer-ready', [
+        'Приняла: трансфер с «$place»'
+            '${when == null ? '' : ' · $when'}'
+            ' до Черноморской, 6. Заявку уже отправила администратору — водитель напишет в чат.',
+        'Заказала трансфер: забрать с «$place»'
+            '${when == null ? '' : ', $when'}'
+            '. Администратор подтвердит машину в чате.',
+        'Готово — трансфер с «$place» в заявке у администратора'
+            '${when == null ? '' : ' ($when)'}'
+            '. Могу ещё помочь с записью или шопом.',
+      ], raw),
+      request: AgentTransferRequest(from: place, when: when, ready: true),
+    );
+  }
+
+  String? _extractTransferPlace(String q) {
+    if (q.contains('аэропорт') || q.contains('адлер аэро')) {
+      return 'Аэропорт Сочи';
+    }
+    if (q.contains('вокзал') || q.contains('жд ')) return 'ЖД вокзал';
+    if (q.contains('риксос') || q.contains('rixos')) return 'Отель Rixos';
+    if (q.contains('красная поляна') || q.contains('полян')) {
+      return 'Красная Поляна';
+    }
+    if (q.contains('центр сочи') || q.contains('из центра')) return 'Центр Сочи';
+    if (q.contains('адлер') && !q.contains('аэропорт')) return 'Адлер';
+    // Free-form: «с отеля …», «с улицы …», «от …»
+    final from = RegExp(
+      r'(?:с|со|от|из)\s+(.{3,48})$',
+    ).firstMatch(q.trim());
+    if (from != null) {
+      var place = from.group(1)!.trim();
+      place = place
+          .replaceAll(RegExp(r'[.!?]+$'), '')
+          .replaceAll(
+            RegExp(
+              r'\s+(пожалуйста|срочн\w*|сейчас|сегодня|завтра)$',
+            ),
+            '',
+          )
+          .trim();
+      if (place.length >= 3 &&
+          !place.contains('трансфер') &&
+          !place.contains('машин') &&
+          place != 'клиники' &&
+          place != 'вас') {
+        return place[0].toUpperCase() + place.substring(1);
+      }
+    }
+    // Bare hotel / address-ish line while awaiting.
+    if (q.contains('отел') || q.contains('улиц') || q.contains('проспект')) {
+      final cleaned = q
+          .replaceAll('нужен трансфер', '')
+          .replaceAll('трансфер', '')
+          .replaceAll('пожалуйста', '')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+      if (cleaned.length >= 5) {
+        return cleaned[0].toUpperCase() + cleaned.substring(1);
+      }
+    }
+    return null;
+  }
+
+  String? _extractTransferWhen(String q) {
+    if (q.contains('как можно скорее') || q.contains('скорее') || q.contains('сейчас')) {
+      return 'как можно скорее';
+    }
+    final clock = RegExp(r'\b([01]?\d|2[0-3])[:.]([0-5]\d)\b').firstMatch(q);
+    if (clock != null) return 'к ${clock.group(1)}:${clock.group(2)}';
+    if (q.contains('к 10') || q.contains('к десяти')) return 'к 10:00';
+    if (q.contains('к 12') || q.contains('к двенадцат')) return 'к 12:00';
+    if (q.contains('к 15') || q.contains('к пятнадцат')) return 'к 15:00';
+    if (q.contains('к 18') || q.contains('к восемнадцат')) return 'к 18:00';
+    if (q.contains('утром')) return 'к утру';
+    if (q.contains('вечером')) return 'к вечеру';
+    return null;
+  }
+
+  /// Open admin / doctor chat (UI navigates via [AgentTurn.openChat]).
+  ({String reply, String openChat})? _handoffTurn(String q, {required String raw}) {
+    final toDoctor = q.contains('живого врача') ||
         q.contains('настоящего врача') ||
-        q.contains('живого человека') ||
-        q.contains('реального человека') ||
         q.contains('переведи на врача') ||
         q.contains('соедини с врачом') ||
         q.contains('позови врача') ||
         q.contains('хочу к врачу') ||
-        q.contains('нужен врач не бот') ||
+        q.contains('нужен врач') ||
+        q.contains('чат врача') ||
+        q.contains('напиши врачу') ||
+        (q.contains('врач') &&
+            (q.contains('перевед') ||
+                q.contains('соедини') ||
+                q.contains('позов') ||
+                q.contains('живой') ||
+                q.contains('настоящ')));
+    final toAdmin = q.contains('оператор') ||
+        q.contains('администратор') ||
+        q.contains('админу') ||
+        q.contains('переведи на человек') ||
+        q.contains('соедини с человек') ||
+        q.contains('живого человека') ||
+        q.contains('реального человека') ||
         q.contains('хватит бота') ||
-        q.contains('оператор') ||
-        (q.contains('администратор') &&
-            (q.contains('напиш') || q.contains('позов') || q.contains('соеди')));
-    if (!wantsHuman) return null;
-    return 'Конечно — я только помощник, решение и осмотр за специалистом. '
-        'Откройте чат «Врач» или «Администратор» в разделе Чат, либо запишитесь через «+» / меню «Врачи». '
-        'Могу перед этим коротко сузить задачу, чтобы врачу было проще.';
+        q.contains('не бот') ||
+        q.contains('позови человек') ||
+        q.contains('живой консультант') ||
+        (q.contains('переведи') && !toDoctor) ||
+        (q.contains('соедини') && !toDoctor);
+    if (!toDoctor && !toAdmin) return null;
+    if (toDoctor) {
+      return (
+        reply: _pick('handoff-doc', [
+          'Конечно — открываю чат с врачом. Напишите зону и что беспокоит: специалист ответит лично.',
+          'Перевожу к врачу в чат. Я только помощник; осмотр и назначение — за ним.',
+          'Открываю переписку с врачом CULT. Кратко опишите задачу — так быстрее разберёте.',
+        ], raw),
+        openChat: 'specialist',
+      );
+    }
+    return (
+      reply: _pick('handoff-admin', [
+        'Хорошо — открываю чат с администратором. Там помогут с записью, трансфером и сертификатом.',
+        'Соединяю с администратором. Можете сразу написать, что нужно.',
+        'Перевожу на живого консультанта в чат администратора.',
+      ], raw),
+      openChat: 'admin',
+    );
   }
 
   String? _remindReply(
@@ -3377,7 +3672,8 @@ class CultAgent {
       return 'Сертификаты — в профиле → «Купить сертификат». Номинал и дизайн выбираете сами, код копируется в один тап.';
     }
     if (q.contains('трансфер') || q.contains('такси') || q.contains('машин')) {
-      return 'VIP-трансфер заказывается в профиле. Укажите адрес — водитель напишет в чат администратора.';
+      // Prefer [_transferFlow] in respond(); keep as soft FAQ fallback.
+      return 'Трансфер до клиники оформлю сама: скажите «трансфер из аэропорта» или адрес подачи — заявку отправлю администратору.';
     }
     if (q.contains('прайс') || q.contains('цен') || q.contains('стоим')) {
       return 'Актуальный прайс филиала — в меню «Прайс». Назовите услугу голосом — подскажу цену из каталога и мягкий следующий шаг к записи.';
@@ -4298,11 +4594,48 @@ class AgentBookingDraft {
   final String summary;
 }
 
+/// Shop line Мира adds via [ClinicStore.addToCart].
+class AgentCartAdd {
+  const AgentCartAdd({
+    required this.id,
+    required this.name,
+    required this.price,
+  });
+
+  final String id;
+  final String name;
+  final int price;
+}
+
+/// VIP transfer request — store posts to admin when [ready].
+class AgentTransferRequest {
+  const AgentTransferRequest({
+    required this.from,
+    this.when,
+    this.ready = false,
+  });
+
+  final String from;
+  final String? when;
+  final bool ready;
+}
+
 class AgentTurn {
-  const AgentTurn({required this.reply, this.pendingBooking});
+  const AgentTurn({
+    required this.reply,
+    this.pendingBooking,
+    this.cartAdd,
+    this.transfer,
+    this.openChat,
+  });
 
   final String reply;
   final AgentBookingDraft? pendingBooking;
+  final AgentCartAdd? cartAdd;
+  final AgentTransferRequest? transfer;
+
+  /// `admin` or `specialist` — voice/UI opens that chat.
+  final String? openChat;
 }
 
 /// Display name of the on-device cosmetologist agent.
