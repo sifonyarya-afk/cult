@@ -17,6 +17,7 @@ class CultAgent {
     List<Infusion> localInfusions = infusions,
     ClientGender? gender,
     String? lastBot,
+    String? lastUser,
   }) {
     final q = _normalize(text);
     if (q.isEmpty) {
@@ -25,21 +26,38 @@ class CultAgent {
           'или какой результат хотите к дате. Подскажу мягкий следующий шаг.';
     }
 
+    // «Повтори / не поняла» — briefly restate last bot line.
+    final meta = _metaReply(q, lastBot);
+    if (meta != null) return meta;
+
     // Follow-ups first when we have context (so «да» after CTA is not generic).
-    final follow = _followUpReply(q, lastBot, gender: gender);
+    final follow = _followUpReply(
+      q,
+      lastBot,
+      gender: gender,
+      lastUser: lastUser,
+    );
     if (follow != null) return follow;
 
     // Small talk — short «да/нет» defer if lastBot exists (handled above).
     final chat = _chatReply(q, lastBot: lastBot, gender: gender);
     if (chat != null) return chat;
 
+    // Bare «лицо» / «тело» without prior turn.
+    final zone = _zoneOnlyReply(q);
+    if (zone != null) return zone;
+
     // «Что лучше…» comparisons before raw catalog dump.
     final compare = _compareReply(q, gender: gender);
     if (compare != null) return compare;
 
-    // Deadline / event / «посоветуй что-нибудь».
+    // Deadline / event / budget / «посоветуй что-нибудь».
     final situation = _situationReply(q, gender: gender);
     if (situation != null) return situation;
+
+    // Two concerns in one phrase (dry + tired…).
+    final blend = _blendConcernReply(q, gender: gender);
+    if (blend != null) return blend;
 
     // Free-form concerns / goals without exact catalog names.
     final concern = _concernReply(q, gender: gender);
@@ -57,14 +75,177 @@ class CultAgent {
     final faq = _faqReply(q);
 
     // Strong title/phrase hits beat FAQ; softer catalog hits fill after FAQ.
-    if (hit != null && hit.score >= 8) return hit.reply;
+    if (hit != null && hit.score >= 8) {
+      return _withCatalogWarmth(q, hit.reply);
+    }
     if (faq != null) return faq;
-    if (hit != null && hit.score >= 5) return hit.reply;
+    if (hit != null && hit.score >= 5) {
+      return _withCatalogWarmth(q, hit.reply);
+    }
+
+    // Resume from previous user concern if this turn is vague.
+    final resume = _resumeLastUser(q, lastUser, gender: gender);
+    if (resume != null) return resume;
 
     return 'Слышу вас — давайте сузим без жёстких названий. '
         'Одного ориентира достаточно: лицо, тело, энергия или домашний уход. '
         'Или как в зеркале: тусклость, отёк, морщинки, пигмент — '
         'дам два спокойных варианта и мягкий путь к записи, если захотите.';
+  }
+
+  String _withCatalogWarmth(String q, String reply) {
+    if (q.contains('боюсь') ||
+        q.contains('страшно') ||
+        q.contains('пережива')) {
+      return 'Понимаю осторожность — вот по делу, без давления. $reply';
+    }
+    if (q.contains('не знаю') || q.contains('подскажи') || q.contains('посоветуй')) {
+      return 'Давайте мягко. $reply';
+    }
+    return reply;
+  }
+
+  String? _metaReply(String q, String? lastBot) {
+    final wantsRepeat = q.contains('повтори') ||
+        q.contains('повтор') ||
+        q.contains('еще раз') ||
+        q.contains('ещё раз') ||
+        q.contains('не понял') ||
+        q.contains('не поняла') ||
+        q.contains('не расслыша') ||
+        q.contains('что ты сказа') ||
+        q.contains('что вы сказа');
+    if (!wantsRepeat) return null;
+    if (lastBot == null || lastBot.trim().isEmpty) {
+      return 'Конечно. Скажите ещё раз вопрос своими словами — отвечу короче и по шагам.';
+    }
+    final brief = _briefRestate(lastBot);
+    return 'Коротко повторю: $brief '
+        'Если удобнее иначе — уточните зону или цель одним словом.';
+  }
+
+  String _briefRestate(String raw) {
+    final t = raw.replaceAll('\n', ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+    final parts = t.split(RegExp(r'(?<=[.!?])\s+'));
+    final take = parts.take(2).join(' ').trim();
+    if (take.length <= 220) return take.endsWith('.') || take.endsWith('?') || take.endsWith('!') ? take : '$take.';
+    return '${take.substring(0, 217).trim()}…';
+  }
+
+  String? _zoneOnlyReply(String q) {
+    final compact = q
+        .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (compact == 'лицо' || compact == 'про лицо' || compact == 'для лица') {
+      return 'Хорошо, лицо. Что заметнее: сухость, тусклость, морщинки, отёк или пигмент? '
+          'От этого выберу массаж, уход, аппаратную или домашний крем.';
+    }
+    if (compact == 'тело' || compact == 'про тело' || compact == 'для тела') {
+      return 'Хорошо, тело. Чаще смотрим плотность, рельеф или тонус — без обещаний «за один раз». '
+          'Ближе консультация с аппаратной или сначала просто осмотр?';
+    }
+    if (compact == 'энергия' || compact == 'энергетика' || compact == 'про энергию') {
+      return 'Про энергию чаще говорим про инфузии: NAD+, Immunity, Beauty & Glow. '
+          'Могу коротко сравнить три или помочь записаться через «+».';
+    }
+    if (compact == 'уход' || compact == 'домашний уход' || compact == 'дом') {
+      return 'Для дома хорошо заходят барьерный крем и пептидная сыворотка. '
+          'Скажите «крем» или «сыворотка» — назову цену и наличие.';
+    }
+    return null;
+  }
+
+  String? _resumeLastUser(
+    String q,
+    String? lastUser, {
+    ClientGender? gender,
+  }) {
+    if (lastUser == null || lastUser.trim().isEmpty) return null;
+    final compact = q
+        .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final vague = compact.length <= 18 ||
+        compact.contains('а дальше') ||
+        compact.contains('что дальше') ||
+        compact.contains('и что') ||
+        compact.contains('ну и') ||
+        compact == 'дальше' ||
+        compact == 'продолжим' ||
+        compact == 'и всё' ||
+        compact.contains('а что с этим');
+    if (!vague) return null;
+    final prev = _normalize(lastUser);
+    final blend = _blendConcernReply(prev, gender: gender);
+    if (blend != null) {
+      return 'Продолжим с того, о чём вы говорили. $blend';
+    }
+    final concern = _concernReply(prev, gender: gender);
+    if (concern != null) {
+      return 'Продолжим с того, о чём вы говорили. $concern';
+    }
+    return null;
+  }
+
+  String? _blendConcernReply(String q, {ClientGender? gender}) {
+    final dry = q.contains('сух') ||
+        q.contains('стягив') ||
+        q.contains('шелуш') ||
+        q.contains('обезвож');
+    final tired = q.contains('устал') ||
+        q.contains('нет сил') ||
+        q.contains('энерг') ||
+        q.contains('выгоран');
+    final dull = q.contains('тускл') ||
+        q.contains('серый') ||
+        q.contains('сияни') ||
+        q.contains('свежий');
+    final wrinkle = q.contains('морщин') || q.contains('мими') || q.contains('гусиные');
+    final oval = q.contains('овал') ||
+        q.contains('второй подбородок') ||
+        q.contains('брыл') ||
+        q.contains('контур лиц');
+    final edema = q.contains('отёк') || q.contains('мешк') || q.contains('пастоз');
+    final pigment = q.contains('пигмент') || q.contains('пятн');
+    final stress = q.contains('стресс') || q.contains('нервн') || q.contains('тревож');
+
+    final hits = [dry, tired, dull, wrinkle, oval, edema, pigment, stress]
+        .where((x) => x)
+        .length;
+    if (hits < 2) return null;
+
+    if (dry && tired) {
+      return 'Слышу и про барьер, и про силы — часто идут рядом. '
+          'Снаружи: мягкий увлажняющий уход и барьерный крем; изнутри при необходимости — инфузия (NAD+ или Beauty & Glow). '
+          'С чего начнём: дом, уход в клинике или капельница?';
+    }
+    if (dull && tired) {
+      return 'Тусклость плюс усталость — обычно связка «лицо + энергия». '
+          'На лицо: массаж или уход без тяжёлой реабилитации; для сил — коротко про инфузии. '
+          'Что сейчас важнее — зеркало или самочувствие?';
+    }
+    if (wrinkle && oval) {
+      return gender == ClientGender.man
+          ? 'Мимика и овал у мужчин часто ведём связкой: сначала массаж или осмотр, затем при необходимости RF — без «перекачанного» вида. '
+              'Хотите сравнить мягкий и курсовой путь или сразу запись на консультацию?'
+          : 'Мимика и овал можно развести по темпу: мягкий вход — массаж и уход; стойкость — RF или инъекции после осмотра. '
+              'Что ближе — быстрый свежий вид или курс?';
+    }
+    if (edema && dry) {
+      return 'Отёк и сухость вместе бывают при нарушенном барьере и лимфе. '
+          'Спокойный старт: лимфодренажный или скульптурный массаж плюс барьерный крем дома — без агрессии. '
+          'Скажите «массаж» или «крем», продолжим цифрами.';
+    }
+    if (pigment && dull) {
+      return 'Пигмент и тусклый тон разбираем спокойно: чаще пилинг или IPL после оценки фототипа, дома — аккуратный уход без самоотбеливания. '
+          'Запишем осмотр или сначала назову мягкий уход из прайса?';
+    }
+    if (stress && (dry || dull || edema)) {
+      return 'Стресс часто читается и в коже, и в лице. Иногда достаточно массажа и паузы без «тяжёлой артиллерии», плюс простой домашний барьер. '
+          'Хотите мягкий ритуал ухода или запись просто поговорить с врачом?';
+    }
+    return null;
   }
 
   ({String reply, int score})? _catalogHit(
@@ -479,8 +660,16 @@ class CultAgent {
     String q,
     String? lastBot, {
     ClientGender? gender,
+    String? lastUser,
   }) {
-    if (lastBot == null || lastBot.isEmpty) return null;
+    if (lastBot == null || lastBot.isEmpty) {
+      // Still allow «а дальше» from last user concern without bot CTA.
+      if (lastUser != null && lastUser.trim().isNotEmpty) {
+        final resume = _resumeLastUser(q, lastUser, gender: gender);
+        if (resume != null) return resume;
+      }
+      return null;
+    }
     final prev = _normalize(lastBot);
     final compact = q
         .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
@@ -757,6 +946,29 @@ class CultAgent {
           : 'Частый спокойный старт: скульптурный массаж или увлажняющий уход, дома — барьерный крем; если сил мало — коротко про инфузии. '
               'Скажите, что важнее сейчас — зеркало, энергия или запись — и выберем один шаг.';
     }
+
+    final budgetMatch = RegExp(r'до\s*(\d+[\s\u00a0]?\d*)').firstMatch(q);
+    final thousands = RegExp(r'до\s*(\d+)\s*тыс').firstMatch(q);
+    if (budgetMatch != null ||
+        thousands != null ||
+        q.contains('не больше') ||
+        q.contains('максимум')) {
+      final raw = thousands != null
+          ? (int.tryParse(thousands.group(1)!) ?? 0) * 1000
+          : int.tryParse(
+                (budgetMatch?.group(1) ?? '').replaceAll(RegExp(r'[\s\u00a0]'), ''),
+              ) ??
+              0;
+      if (raw > 0 && raw <= 15000) {
+        return 'В коридоре до ${_rub(raw)} реалистичны уходы, массаж и формулы из шопа; тяжёлую аппаратную лучше обсуждать отдельно. '
+            'Скажите зону — лицо или тело — подберу спокойный вход в бюджет.';
+      }
+      if (raw > 15000) {
+        return 'Ориентир до ${_rub(raw)} уже открывает уходы, массаж и часть аппаратных/инъекционных протоколов после осмотра. '
+            'Что в приоритете — свежий вид, овал или энергия? Сузим до двух вариантов.';
+      }
+      return 'Бюджет учтём без давления. Назовите потолок цифрой или зону — подберу вход: уход, массаж, шоп или консультацию.';
+    }
     return null;
   }
 
@@ -875,6 +1087,24 @@ class CultAgent {
         q.contains('щипл')) {
       return 'Чувствительность — сигнал снизить агрессию: сначала барьер и мягкий уход, аппаратные и кислоты — только после осмотра. '
           'Могу подсказать барьерный крем из шопа или записать на спокойную консультацию.';
+    }
+    if (q.contains('после процедур') ||
+        q.contains('после укол') ||
+        q.contains('после инъек') ||
+        q.contains('после пилинг') ||
+        q.contains('после массаж') ||
+        q.contains('что нельзя после') ||
+        q.contains('как ухаживать после')) {
+      return 'После процедуры обычно бережём кожу: без жёстких активов и сауны, пока врач не разрешит; точную схему дадут в чате или на визите. '
+          'Если есть жжение, сильный отёк или боль — опишите зону и дату визита врачу в чате специалиста.';
+    }
+    if (q.contains('хочу красиво') ||
+        q.contains('хочу лучше') ||
+        q.contains('просто улучшить') ||
+        q.contains('навести порядок') ||
+        q.contains('привести себя')) {
+      return 'Давайте без хаоса: один спокойный шаг. Чаще начинают с осмотра или массажа/ухода, дома — барьер. '
+          'Скажите, что важнее в зеркале или по самочувствию — сузим.';
     }
     return null;
   }

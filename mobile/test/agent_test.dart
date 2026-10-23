@@ -151,6 +151,42 @@ void main() {
     expect(man.toLowerCase(), anyOf(contains('муж'), contains('барбер'), contains('овал')));
   });
 
+  test('Смешанная жалоба сухость + усталость', () {
+    final reply = cultAgent.answer('Кожа сухая и совсем нет сил');
+    expect(reply.toLowerCase(), contains('барьер'));
+    expect(reply.toLowerCase(), contains('инфуз'));
+  });
+
+  test('Повтори опирается на lastBot', () {
+    final reply = cultAgent.answer(
+      'Повтори пожалуйста',
+      lastBot: 'CULT Сочи открыта с 9:00 до 21:00. Черноморская, 6.',
+    );
+    expect(reply.toLowerCase(), contains('повтор'));
+    expect(reply, contains('9:00'));
+  });
+
+  test('Короткое «лицо» без контекста уточняет симптом', () {
+    final reply = cultAgent.answer('лицо');
+    expect(reply.toLowerCase(), contains('лицо'));
+    expect(reply.toLowerCase(), anyOf(contains('сухость'), contains('морщин')));
+  });
+
+  test('А дальше продолжает lastUser', () {
+    final reply = cultAgent.answer(
+      'а дальше',
+      lastUser: 'Кожа очень сухая и стягивает',
+    );
+    expect(reply.toLowerCase(), contains('барьер'));
+    expect(reply.toLowerCase(), contains('продолж'));
+  });
+
+  test('Бюджет до 10000 предлагает мягкий вход', () {
+    final reply = cultAgent.answer('до 10000 что можно на лицо');
+    expect(reply.toLowerCase(), anyOf(contains('уход'), contains('массаж'), contains('шоп')));
+    expect(reply, contains('10'));
+  });
+
   test('Мужской профиль не предлагает женский массаж первым', () {
     final reply = cultAgent.answer(
       'скульптурный массаж лица',
