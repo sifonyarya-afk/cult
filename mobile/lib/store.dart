@@ -328,7 +328,7 @@ class ClinicStore extends ChangeNotifier {
   static const _chatSeeds = {
     'admin': 'Здравствуйте. Помогу с записью, трансфером и сертификатом.',
     'bot':
-        'Здравствуйте. Я консультант CULT — отвечу спокойно, как на приёме: про самочувствие, процедуры, уход и запись. Нажмите «Голос» или напишите — слушаю вас до конца фразы.',
+        'Здравствуйте. Я консультант CULT — можно просто поговорить: про самочувствие, кожу, процедуры или запись. Нажмите «Голос» или напишите своими словами — подстроюсь.',
     'specialist': 'Здравствуйте. Я на связи по уходу после процедур.',
   };
 
@@ -894,12 +894,20 @@ class ClinicStore extends ChangeNotifier {
   String _autoReply(String contactId, String text) {
     final q = text.toLowerCase();
     if (contactId == 'bot') {
+      final thread = threads['bot'] ?? [];
+      // Last bot line before the user message just appended (for follow-ups).
+      final lastBot = thread.reversed
+          .skip(1)
+          .where((m) => m.from == 'them')
+          .map((m) => m.text)
+          .firstOrNull;
       return cultAgent.answer(
         text,
         localServices: catalogServices,
         localProducts: products,
         liveServices: catalogLive,
         gender: gender,
+        lastBot: lastBot,
       );
     }
     if (contactId == 'specialist') {

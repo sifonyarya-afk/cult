@@ -816,7 +816,7 @@ class Contact {
 }
 
 /// Bump when shipping a user-visible feature so Settings proves the Mac build is fresh.
-const cultBuildTag = 'tts-milena-premium';
+const cultBuildTag = 'voice-free-talk';
 
 const contacts = <Contact>[
   Contact(
@@ -824,7 +824,7 @@ const contacts = <Contact>[
     name: 'CULT Агент',
     role: 'Голос · как на консультации',
     seed:
-        'Здравствуйте. Я консультант CULT — отвечу спокойно, как на приёме: про самочувствие, процедуры, уход и запись. Нажмите «Голос» или напишите — слушаю вас до конца фразы.',
+        'Здравствуйте. Я консультант CULT — можно просто поговорить: про самочувствие, кожу, процедуры или запись. Нажмите «Голос» или напишите своими словами — подстроюсь.',
   ),
   Contact(
     id: 'admin',

@@ -83,11 +83,31 @@ void main() {
     expect(hi.toLowerCase(), contains('здравств'));
     expect(hi.toLowerCase(), isNot(contains('не нашла')));
     final mood = cultAgent.answer('Как дела?');
-    expect(mood.toLowerCase(), anyOf(contains('помощ'), contains('чувству')));
+    expect(mood.toLowerCase(), anyOf(contains('ровн'), contains('чувству')));
     final thanks = cultAgent.answer('Спасибо');
-    expect(thanks.toLowerCase(), contains('пожалуйста'));
+    expect(thanks.toLowerCase(), contains('спасибо'));
     final tip = cultAgent.answer('Подскажи');
-    expect(tip.toLowerCase(), anyOf(contains('разбер'), contains('скажите')));
+    expect(tip.toLowerCase(), anyOf(contains('вместе'), contains('лицо')));
+  });
+
+  test('Свободный разговор по жалобе без названия услуги', () {
+    final dry = cultAgent.answer('Кожа очень сухая и стягивает');
+    expect(dry.toLowerCase(), anyOf(contains('барьер'), contains('влаг')));
+    expect(dry.toLowerCase(), isNot(contains('точного совпадения')));
+    final tired = cultAgent.answer('Я устала, нет сил');
+    expect(tired.toLowerCase(), contains('инфуз'));
+    final fear = cultAgent.answer('Боюсь что будет больно');
+    expect(fear.toLowerCase(), anyOf(contains('анестез'), contains('страх')));
+  });
+
+  test('Follow-up после уточнения лицо или тело', () {
+    final reply = cultAgent.answer(
+      'лицо',
+      lastBot:
+          'Вам сейчас ближе лицо или тело? Можете просто сказать, что не нравится.',
+    );
+    expect(reply.toLowerCase(), contains('лицо'));
+    expect(reply.toLowerCase(), anyOf(contains('сухость'), contains('морщин')));
   });
 
   test('Мужской профиль не предлагает женский массаж первым', () {
@@ -113,6 +133,6 @@ void main() {
     expect(bot.length, 1);
     expect(bot.first.text, contains('CULT'));
     expect(bot.first.text, contains('Голос'));
-    expect(bot.first.text.toLowerCase(), contains('приём'));
+    expect(bot.first.text.toLowerCase(), contains('поговорить'));
   });
 }

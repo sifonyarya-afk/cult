@@ -84,7 +84,7 @@ class ChatPage extends StatelessWidget {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Как врач на приёме: привет, совет, цена — голосом',
+                            'Свободный разговор голосом — как на консультации',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 13,
@@ -628,7 +628,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                             ? 'Слушаю до конца фразы… можно говорить спокойно'
                             : (_speechDenied
                                   ? 'Нет доступа к микрофону — включите в Настройках → CULT'
-                                  : 'Нажмите «Голос» — отвечу как на консультации'),
+                                  : 'Нажмите «Голос» — можно просто поговорить'),
                         style: TextStyle(
                           fontSize: 13,
                           height: 1.3,

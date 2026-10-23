@@ -10,6 +10,7 @@ void main() {
     expect(spoken.toLowerCase(), contains('эн эй ди'));
     expect(spoken.toLowerCase(), contains('эр эф'));
     expect(spoken, contains('рублей'));
+    expect(spoken.toLowerCase(), contains('тысяч'));
     expect(spoken, isNot(contains('·')));
     expect(spoken, isNot(contains('₽')));
   });
