@@ -328,7 +328,7 @@ class ClinicStore extends ChangeNotifier {
   static const _chatSeeds = {
     'admin': 'Здравствуйте. Помогу с записью, трансфером и сертификатом.',
     'bot':
-        'Я CULT Агент. Спросите голосом или текстом про услуги, цены и формулы шопа — нажмите «Голос» или микрофон внизу.',
+        'Здравствуйте. Я консультант CULT — отвечу спокойно, как на приёме: про самочувствие, процедуры, уход и запись. Нажмите «Голос» или напишите — слушаю вас до конца фразы.',
     'specialist': 'Здравствуйте. Я на связи по уходу после процедур.',
   };
 
@@ -355,7 +355,7 @@ class ClinicStore extends ChangeNotifier {
     final text = thread.first.text;
     final fresh = _chatSeeds['bot']!;
     if (text == fresh) return;
-    if (text.contains('микрофон') || text.contains('«Голос»')) return;
+    // Always refresh welcome when the thread is still only a seed.
     final seed = ChatMessage(
       id: 'bot-seed-${DateTime.now().microsecondsSinceEpoch}',
       from: 'them',

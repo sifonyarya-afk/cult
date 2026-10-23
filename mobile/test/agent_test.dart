@@ -78,6 +78,18 @@ void main() {
     expect(reply.toLowerCase(), contains('микрофон'));
   });
 
+  test('Агент отвечает на привет и как дела как живой консультант', () {
+    final hi = cultAgent.answer('Привет');
+    expect(hi.toLowerCase(), contains('здравств'));
+    expect(hi.toLowerCase(), isNot(contains('не нашла')));
+    final mood = cultAgent.answer('Как дела?');
+    expect(mood.toLowerCase(), anyOf(contains('помощ'), contains('чувству')));
+    final thanks = cultAgent.answer('Спасибо');
+    expect(thanks.toLowerCase(), contains('пожалуйста'));
+    final tip = cultAgent.answer('Подскажи');
+    expect(tip.toLowerCase(), anyOf(contains('разбер'), contains('скажите')));
+  });
+
   test('Мужской профиль не предлагает женский массаж первым', () {
     final reply = cultAgent.answer(
       'скульптурный массаж лица',
@@ -99,7 +111,8 @@ void main() {
     await store.load();
     final bot = store.threads['bot']!;
     expect(bot.length, 1);
-    expect(bot.first.text, contains('CULT Агент'));
+    expect(bot.first.text, contains('CULT'));
     expect(bot.first.text, contains('Голос'));
+    expect(bot.first.text.toLowerCase(), contains('приём'));
   });
 }

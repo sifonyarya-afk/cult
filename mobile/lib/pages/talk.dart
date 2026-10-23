@@ -84,7 +84,7 @@ class ChatPage extends StatelessWidget {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Говорите про услуги и шоп — отвечу голосом',
+                            'Как врач на приёме: привет, совет, цена — голосом',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 13,
@@ -357,13 +357,117 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
   Future<void> _prepareVoice() async {
     if (!_isAgent || _ttsReady) return;
     try {
+      await _tts.awaitSpeakCompletion(true);
+      try {
+        await _tts.setSharedInstance(true);
+        await _tts.setIosAudioCategory(
+          IosTextToSpeechAudioCategory.playback,
+          [
+            IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+            IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+            IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+          ],
+          IosTextToSpeechAudioMode.voicePrompt,
+        );
+      } catch (_) {}
       await _tts.setLanguage('ru-RU');
-      await _tts.setSpeechRate(0.48);
-      await _tts.setPitch(1.0);
+      // Slightly slower, calmer — less robotic, less mid-phrase cut-off.
+      await _tts.setSpeechRate(0.42);
+      await _tts.setPitch(0.96);
+      await _tts.setVolume(1.0);
+      await _pickHumanVoice();
       _ttsReady = true;
     } catch (_) {
       _ttsReady = false;
     }
+  }
+
+  /// Prefer an enhanced / natural Russian voice when the OS exposes one.
+  Future<void> _pickHumanVoice() async {
+    try {
+      final raw = await _tts.getVoices;
+      if (raw is! List) return;
+      Map<String, String>? best;
+      var bestScore = -1;
+      for (final entry in raw) {
+        if (entry is! Map) continue;
+        final voice = <String, String>{
+          for (final e in entry.entries) '${e.key}': '${e.value}',
+        };
+        final locale =
+            (voice['locale'] ?? voice['localeId'] ?? '').toLowerCase();
+        final name = (voice['name'] ?? '').toLowerCase();
+        final quality = (voice['quality'] ?? '').toLowerCase();
+        final gender = (voice['gender'] ?? '').toLowerCase();
+        if (!locale.contains('ru')) continue;
+        var score = 1;
+        if (locale.contains('ru-ru') || locale.contains('ru_ru')) score += 2;
+        if (quality.contains('enhanced') ||
+            quality.contains('premium') ||
+            quality.contains('superior')) {
+          score += 6;
+        }
+        if (name.contains('enhanced') ||
+            name.contains('premium') ||
+            name.contains('neural') ||
+            name.contains('natural')) {
+          score += 4;
+        }
+        if (gender.contains('female') ||
+            name.contains('female') ||
+            name.contains('milena') ||
+            name.contains('katya') ||
+            name.contains('irina')) {
+          score += 3;
+        }
+        if (score > bestScore) {
+          bestScore = score;
+          best = voice;
+        }
+      }
+      if (best != null) await _tts.setVoice(best);
+    } catch (_) {}
+  }
+
+  /// Flatten catalog punctuation so TTS finishes every clause.
+  String _forSpeech(String text) {
+    var s = text
+        .replaceAll('·', ',')
+        .replaceAll('—', ',')
+        .replaceAll('–', ',')
+        .replaceAll('→', ',')
+        .replaceAll('«', '')
+        .replaceAll('»', '')
+        .replaceAll('₽', ' рублей')
+        .replaceAll('\n', '. ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (s.isEmpty) return s;
+    if (!RegExp(r'[.!?…]$').hasMatch(s)) s = '$s.';
+    return s;
+  }
+
+  List<String> _speechChunks(String spoken) {
+    final parts = spoken
+        .split(RegExp(r'(?<=[.!?…])\s+'))
+        .map((c) => c.trim())
+        .where((c) => c.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return [spoken];
+    final merged = <String>[];
+    var buf = '';
+    for (final part in parts) {
+      if (buf.isEmpty) {
+        buf = part;
+      } else if (buf.length + part.length < 140) {
+        buf = '$buf $part';
+      } else {
+        merged.add(buf);
+        buf = part;
+      }
+    }
+    if (buf.isNotEmpty) merged.add(buf);
+    return merged;
   }
 
   Future<bool> _ensureSpeech() async {
@@ -418,15 +522,21 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
   }
 
   static const _chatSeedFallback =
-      'Я CULT Агент. Нажмите «Голос» и спросите про услугу или формулу.';
+      'Здравствуйте. Я консультант CULT. Нажмите «Голос» — слушаю вас.';
 
   Future<void> _speak(String text) async {
     if (!_isAgent || !_speakReplies || text.trim().isEmpty) return;
     await _prepareVoice();
     if (!_ttsReady) return;
+    final spoken = _forSpeech(text);
+    if (spoken.isEmpty) return;
+    final chunks = _speechChunks(spoken);
     try {
       await _tts.stop();
-      await _tts.speak(text);
+      for (final chunk in chunks) {
+        if (!mounted || !_speakReplies) return;
+        await _tts.speak(chunk);
+      }
     } catch (_) {}
   }
 
@@ -468,11 +578,12 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
       },
       listenOptions: SpeechListenOptions(
         localeId: 'ru_RU',
-        listenFor: const Duration(seconds: 28),
-        pauseFor: const Duration(seconds: 3),
+        // Longer window so the user can finish a full phrase.
+        listenFor: const Duration(seconds: 45),
+        pauseFor: const Duration(seconds: 5),
         partialResults: true,
         cancelOnError: true,
-        listenMode: ListenMode.confirmation,
+        listenMode: ListenMode.dictation,
       ),
     );
   }
@@ -636,10 +747,10 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                     Expanded(
                       child: Text(
                         _listening
-                            ? 'Слушаю… скажите услугу или товар'
+                            ? 'Слушаю до конца фразы… можно говорить спокойно'
                             : (_speechDenied
                                   ? 'Нет доступа к микрофону — включите в Настройках → CULT'
-                                  : 'Нажмите «Голос» ниже — спрошу про цены и шоп'),
+                                  : 'Нажмите «Голос» — отвечу как на консультации'),
                         style: TextStyle(
                           fontSize: 13,
                           height: 1.3,

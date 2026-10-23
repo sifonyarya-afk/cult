@@ -75,7 +75,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('CULT Агент'), findsWidgets);
     expect(find.textContaining(cultBuildTag), findsOneWidget);
-    expect(find.textContaining('Говорите про услуги'), findsOneWidget);
+    expect(find.textContaining('Как врач на приёме'), findsOneWidget);
   });
 
   testWidgets('Профиль тянется вниз для синхронизации', (tester) async {

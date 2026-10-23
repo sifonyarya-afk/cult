@@ -19,8 +19,13 @@ class CultAgent {
   }) {
     final q = _normalize(text);
     if (q.isEmpty) {
-      return 'Спросите голосом или текстом про услугу, цену или формулу из шопа.';
+      return 'Я вас слушаю. Скажите, что беспокоит, какую процедуру рассматриваете '
+          'или какую формулу из шопа подобрать — отвечу спокойно и по делу.';
     }
+
+    // Small talk first — like a doctor greeting a patient.
+    final chat = _chatReply(q);
+    if (chat != null) return chat;
 
     final hit = _catalogHit(
       q,
@@ -38,10 +43,9 @@ class CultAgent {
     if (faq != null) return faq;
     if (hit != null && hit.score >= 5) return hit.reply;
 
-    return 'Не нашла точного совпадения в каталоге CULT. '
-        'Спросите название услуги или формулы, откройте «Прайс» / «Магазин», '
-        'или запишитесь через «+» на главной. '
-        'Клиника: ежедневно 9:00–21:00, Черноморская, 6.';
+    return 'Точного совпадения в каталоге пока не вижу. '
+        'Назовите услугу или формулу своими словами — или откройте «Прайс» и «Магазин». '
+        'Запись через «+» на главной. Мы на Черноморской, 6, ежедневно с девяти до девяти вечера.';
   }
 
   ({String reply, int score})? _catalogHit(
@@ -167,13 +171,15 @@ class CultAgent {
     } else if (bestInfusion == best && infusionHits.isNotEmpty) {
       final item = infusionHits.first.item;
       reply =
-          '${item.title} — ${item.price}, ${item.duration}. ${item.blurb} '
-          'Запись: «+» на главной или меню «Инфузии».';
+          'По инфузии «${item.title}»: ${item.price}, ${item.duration}. '
+          '${item.blurb} '
+          'Запишем через «+» на главной или в меню «Инфузии» — перед капельницей врач уточнит показания.';
     } else if (bestDevice == best && deviceHits.isNotEmpty) {
       final item = deviceHits.first.item;
       reply =
-          '${item.title}: ${item.meta}. Ориентир по цене — ${item.price}. '
-          'Подробности в меню «Аппаратная».';
+          'Аппаратный протокол «${item.title}»: ${item.meta}. '
+          'Ориентир по цене — ${item.price}. '
+          'Подробности в меню «Аппаратная», на консультации подберём интенсивность под вашу кожу.';
     } else {
       return null;
     }
@@ -189,37 +195,45 @@ class CultAgent {
     final parts = <String>[];
     for (final item in items) {
       final stock = switch (item.stock) {
-        'low' => 'осталось мало',
-        'out' => 'сейчас нет в наличии',
-        _ => 'в наличии',
+        'low' => 'На полке осталось мало — если подходит, лучше взять сейчас.',
+        'out' => 'Сейчас этой формулы нет в наличии, могу предложить соседнюю из шопа.',
+        _ => 'Формула сейчас в наличии.',
       };
-      final bits = <String>[
-        item.name,
-        if (wantsPrice) _rub(item.price),
-        item.blurb,
-        if (wantsCompose) 'состав: ${item.composition}',
-        if (wantsStock || item.stock != 'in') stock,
-        item.about,
-      ];
-      parts.add(bits.join(' · '));
+      final about = _firstSentence(item.about);
+      final buf = StringBuffer('Обратите внимание на ${item.name}. ');
+      if (wantsPrice) buf.write('Ориентир по цене — ${_rub(item.price)}. ');
+      buf.write('${item.blurb}. ');
+      if (wantsCompose) {
+        buf.write('В составе: ${item.composition}. ');
+      }
+      if (wantsStock || item.stock != 'in') buf.write('$stock ');
+      if (about.isNotEmpty) buf.write('$about ');
+      parts.add(buf.toString().trim());
     }
     final tail = items.length == 1
-        ? 'Откройте карточку в «Магазин» или добавьте в корзину.'
-        : 'Ещё формулы — во вкладке «Магазин».';
-    return '${parts.join('\n')}\n$tail';
+        ? 'Карточку откройте в «Магазин» или сразу положите в корзину — при необходимости скорректируем на консультации.'
+        : 'Другие формулы смотрите во вкладке «Магазин», могу сузить выбор под вашу задачу.';
+    return '${parts.join(' ')}\n$tail';
   }
 
   String _formatServices(List<Service> items, {required bool wantsPrice}) {
     final parts = <String>[];
     for (final item in items) {
-      parts.add(
-        '${item.title} — ${item.priceLabel}, ${item.duration}. '
-        '${item.blurb}'
-        '${wantsPrice ? '' : ' ${item.results.take(2).join(', ')}. '}'
-        'Противопоказания: ${item.contraindications.take(2).join('; ')}.',
+      final buf = StringBuffer(
+        'По протоколу «${item.title}»: ${item.priceLabel}, занимает ${item.duration}. ',
       );
+      buf.write('${item.blurb} ');
+      if (!wantsPrice && item.results.isNotEmpty) {
+        buf.write('Ожидаемый эффект: ${item.results.take(2).join(', ')}. ');
+      }
+      if (item.contraindications.isNotEmpty) {
+        buf.write(
+          'Важно учесть противопоказания: ${item.contraindications.take(2).join('; ')}. ',
+        );
+      }
+      parts.add(buf.toString().trim());
     }
-    return '${parts.join('\n')}\nЗапись — через «+» или меню «Услуги».';
+    return '${parts.join(' ')}\nЕсли откликается — запишем через «+» или меню «Услуги», на осмотре уточним детали.';
   }
 
   String _formatLive(List<YcService> items) {
@@ -228,10 +242,94 @@ class CultAgent {
         '${item.title}'
             '${item.priceLabel.isEmpty ? '' : ' — ${item.priceLabel}'}'
             '${item.durationLabel.isEmpty ? '' : ', ${item.durationLabel}'}'
-            '${item.category.isEmpty ? '' : ' · ${item.category}'}',
+            '${item.category.isEmpty ? '' : ', ${item.category}'}',
     ];
-    return 'В филиале CULT Сочи:\n${lines.join('\n')}\n'
-        'Актуальный прайс — в меню «Прайс», запись — через «+».';
+    return 'В филиале CULT Сочи сейчас так: ${lines.join('; ')}. '
+        'Актуальный прайс — в меню «Прайс», запись удобнее через «+».';
+  }
+
+  String _firstSentence(String raw) {
+    final t = raw.trim();
+    if (t.isEmpty) return '';
+    final cut = t.split(RegExp(r'(?<=[.!?])\s+')).first.trim();
+    return cut.length > 160 ? '${cut.substring(0, 157)}…' : cut;
+  }
+
+  /// Greetings and bedside manner — answers before catalog/FAQ ops.
+  /// Note: Dart `\b` is ASCII-only, so we avoid it for Cyrillic.
+  String? _chatReply(String q) {
+    final compact = q
+        .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final words = compact.split(' ').where((w) => w.isNotEmpty).toList();
+    final first = words.isEmpty ? '' : words.first;
+    final isGreeting = const {
+          'привет',
+          'здравствуй',
+          'здравствуйте',
+          'хай',
+          'hello',
+          'hi',
+          'здорово',
+        }.contains(first) ||
+        compact.startsWith('добрый день') ||
+        compact.startsWith('доброе утро') ||
+        compact.startsWith('добрый вечер');
+    if (isGreeting && words.length <= 4) {
+      return 'Здравствуйте. Рада вас слышать. '
+          'Я консультант клиники CULT — могу ответить как на приёме: '
+          'про самочувствие, процедуру, уход или запись. Что вас сейчас интересует?';
+    }
+    if (q.contains('как дела') ||
+        q.contains('как ты') ||
+        q.contains('как вы') ||
+        q.contains('как настроен') ||
+        q.contains('как жизнь') ||
+        q.contains('how are you')) {
+      return 'Спасибо, у меня всё спокойно — я здесь, чтобы помочь вам. '
+          'Как вы себя чувствуете? Если что-то беспокоит до или после процедуры — расскажите, разберём вместе.';
+    }
+    if (words.any(
+      (w) => const {'спасибо', 'благодарю', 'сенкс', 'thanks'}.contains(w),
+    )) {
+      return 'Пожалуйста. Если появится ещё вопрос по коже, протоколу или шопу — напишите или скажите голосом, я на связи.';
+    }
+    if (compact == 'пока' ||
+        compact.startsWith('до встречи') ||
+        compact.startsWith('всего доброго') ||
+        compact.startsWith('до свидания')) {
+      return 'Всего доброго. Берегите себя, и до встречи в CULT на Черноморской, 6.';
+    }
+    if (q.contains('кто ты') ||
+        q.contains('как тебя зовут') ||
+        q.contains('что ты умеешь') ||
+        q.contains('чем можешь помочь') ||
+        q.contains('ты врач') ||
+        q.contains('ты бот')) {
+      return 'Я CULT Агент — голосовой консультант клиники. '
+          'Говорю простым языком, как врач на осмотре: услуги, цены, домашние формулы, подготовка к визиту. '
+          'Окончательное решение по протоколу всегда за очным специалистом.';
+    }
+    if (words.length <= 4 &&
+        const {
+          'подскажи',
+          'посоветуй',
+          'помоги',
+          'совет',
+        }.contains(first)) {
+      return 'Конечно, давайте разберём. '
+          'Скажите коротко: лицо или тело, что хотите улучшить, и был ли уже курс у нас. '
+          'Могу предложить услугу, домашний уход или запись.';
+    }
+    if (compact == 'нужен совет' ||
+        compact == 'что посоветуешь' ||
+        compact == 'есть вопрос') {
+      return 'Конечно, давайте разберём. '
+          'Скажите коротко: лицо или тело, что хотите улучшить, и был ли уже курс у нас. '
+          'Могу предложить услугу, домашний уход или запись.';
+    }
+    return null;
   }
 
   String? _faqReply(String q) {
