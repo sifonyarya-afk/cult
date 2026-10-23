@@ -110,6 +110,22 @@ void main() {
     expect(reply.toLowerCase(), anyOf(contains('сухость'), contains('морщин')));
   });
 
+  test('Сравнение массаж или RF отвечает по делу', () {
+    final reply = cultAgent.answer('Что лучше: массаж или RF?');
+    expect(reply.toLowerCase(), contains('массаж'));
+    expect(reply.toLowerCase(), contains('rf'));
+    expect(reply.toLowerCase(), isNot(contains('не нашла')));
+  });
+
+  test('Сравнение крем и сыворотка без каталожного тупика', () {
+    final reply = cultAgent.answer('Что выбрать: крем или сыворотка?');
+    expect(
+      reply.toLowerCase(),
+      anyOf(contains('крем'), contains('сыворот'), contains('barrier')),
+    );
+    expect(reply.toLowerCase(), isNot(contains('точного совпадения')));
+  });
+
   test('Мужской профиль не предлагает женский массаж первым', () {
     final reply = cultAgent.answer(
       'скульптурный массаж лица',
