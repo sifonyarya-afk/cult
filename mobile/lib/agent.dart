@@ -3271,11 +3271,13 @@ class CultAgent {
     }
     // Avoid false hits like «помолодеть» / «долголетие» on bare «дет».
     if (q.contains('детск') ||
+        q.contains('детям') ||
         q.contains('ребен') ||
         q.contains('несовершеннолет') ||
         q.contains('подрост') ||
         RegExp(r'(^|[^а-яa-z])дети([^а-яa-z]|$)').hasMatch(q) ||
-        RegExp(r'(^|[^а-яa-z])дитя([^а-яa-z]|$)').hasMatch(q)) {
+        RegExp(r'(^|[^а-яa-z])дитя([^а-яa-z]|$)').hasMatch(q) ||
+        RegExp(r'(^|[^а-яa-z])для\s+дет').hasMatch(q)) {
       return 'Большинство эстетических протоколов — с 18 лет. Для подростков нужна очная консультация врача и согласие опекуна.';
     }
     return null;

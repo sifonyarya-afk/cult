@@ -27,7 +27,7 @@ void main() {
     expect(find.text('Магазин биохакинга'), findsOneWidget);
     expect(find.text('Чат с врачом'), findsOneWidget);
     expect(find.text('CULT Агент'), findsOneWidget);
-    expect(find.textContaining('голосом про услуги'), findsOneWidget);
+    expect(find.textContaining('Одна кнопка'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Мои анализы'));
     await tester.pumpAndSettle();
@@ -75,7 +75,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('CULT Агент'), findsWidgets);
     expect(find.textContaining(cultBuildTag), findsOneWidget);
-    expect(find.textContaining('Свободный разговор голосом'), findsOneWidget);
+    expect(find.textContaining('Живой разговор'), findsOneWidget);
   });
 
   testWidgets('Профиль тянется вниз для синхронизации', (tester) async {

@@ -5,7 +5,8 @@ class Cult {
   static const ink = Color(0xFF1B1C1C);
   static const primary = Color(0xFF6E5B43);
   static const secondary = Color(0xFF775A19);
-  static const gold = Color(0xFFFED488);
+  /// Champagne accent — same family as the bottom-nav selection pill.
+  static const gold = Color(0xFFD7BEA0);
   static const sand = Color(0xFFD7BEA0);
   static const line = Color(0xFFD0C5B9);
   static const muted = Color(0xFF7F766C);

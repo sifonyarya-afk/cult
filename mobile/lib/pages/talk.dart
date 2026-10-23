@@ -86,7 +86,7 @@ class ChatPage extends StatelessWidget {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Одна кнопка — слушаю и отвечаю голосом, без клавиатуры',
+                            'Живой разговор — одна кнопка, без клавиатуры',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 13,

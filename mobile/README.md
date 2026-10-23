@@ -4,7 +4,7 @@
 
 **CULT Агент** (главная → баннер или Чат → CULT Агент): живой голосовой экран с **одной кнопкой**, без клавиатуры. Слушает → отвечает до конца своими формулировками → снова слушает; сверху мягкие подсказки услуг и шопа (не «пуш»). iOS спросит Микрофон и «Распознавание речи».
 
-Если агента нет / старый UI — на Mac почти всегда **старый коммит** и `git pull` не прошёл. Актуальная сборка в Настройках: **`agent-voice-v18`**.
+Если агента нет / старый UI — на Mac почти всегда **старый коммит** и `git pull` не прошёл. Актуальная сборка в Настройках: **`champagne-accent-v19`**.
 
 В zsh строка после `#` — не комментарий (если нет `INTERACTIVE_COMMENTS`). Не копируйте команды с `# …` в конец: будет `fatal: '#' does not appear to be a git repository` и `pathspec '#'`.
 
@@ -21,7 +21,7 @@ grep cultBuildTag mobile/lib/data.dart
 grep speech_to_text mobile/pubspec.yaml
 ```
 
-После `pull` `cultBuildTag` должен быть `agent-voice-v18`. Если `pull` снова ругается на локальные файлы:
+После `pull` `cultBuildTag` должен быть `champagne-accent-v19`. Если `pull` снова ругается на локальные файлы:
 
 ```bash
 cd ~/Desktop/cult/cult
@@ -41,7 +41,7 @@ cd ..
 flutter run
 ```
 
-В `flutter pub get` должны появиться `speech_to_text 7.4.0` и `flutter_tts` (не 7.5 — он требует Dart 3.12). В приложении: Чат → **CULT Агент**; Настройки → Сборка = `agent-voice-v18`.
+В `flutter pub get` должны появиться `speech_to_text 7.4.0` и `flutter_tts` (не 7.5 — он требует Dart 3.12). В приложении: Чат → **CULT Агент**; Настройки → Сборка = `champagne-accent-v19`. Акцент везде шампань (`#D7BEA0`), как у выбранного пункта нижнего меню — без ярко-жёлтого.
 
 ### SIGKILL / Lost connection to device при `flutter run`
 

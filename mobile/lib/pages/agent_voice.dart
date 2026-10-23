@@ -461,7 +461,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
                         style: TextStyle(
                           color: Color.lerp(
                             const Color(0xFFE8D8BE),
-                            const Color(0xFFFED488),
+                            Cult.sand,
                             _pulse.value,
                           ),
                           fontSize: 16,
@@ -534,8 +534,8 @@ class _AgentVoicePageState extends State<AgentVoicePage>
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: const Color(0xFFFED488)
-                                    .withValues(alpha: 0.22 + _pulse.value * 0.2),
+                                color: Cult.sand
+                                    .withValues(alpha: 0.28 + _pulse.value * 0.22),
                                 width: 1.2,
                               ),
                             ),
@@ -564,24 +564,23 @@ class _AgentVoicePageState extends State<AgentVoicePage>
                                       end: Alignment.bottomRight,
                                       colors: _listening
                                           ? const [
-                                              Color(0xFFFFE2A8),
-                                              Color(0xFFC4A35A),
+                                              Color(0xFFE8D9C0),
+                                              Color(0xFFB9A07A),
                                             ]
                                           : (_speaking
                                               ? const [
-                                                  Color(0xFFC4A06A),
-                                                  Color(0xFF6E5320),
+                                                  Color(0xFFC9B496),
+                                                  Color(0xFF6E5B43),
                                                 ]
                                               : const [
-                                                  Color(0xFFE7C98A),
-                                                  Color(0xFF8A6A2E),
+                                                  Color(0xFFD7BEA0),
+                                                  Color(0xFF8A7355),
                                                 ]),
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFFED488)
-                                            .withValues(
-                                          alpha: _listening ? 0.4 : 0.18,
+                                        color: Cult.sand.withValues(
+                                          alpha: _listening ? 0.35 : 0.16,
                                         ),
                                         blurRadius: _listening ? 32 : 18,
                                         spreadRadius: _listening ? 1 : 0,
@@ -646,7 +645,7 @@ class _SuggestCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0x33FED488)),
+            border: Border.all(color: Cult.sand.withValues(alpha: 0.35)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -699,7 +698,7 @@ class _SuggestCard extends StatelessWidget {
                   const Text(
                     'Рассказать',
                     style: TextStyle(
-                      color: Color(0xFFFED488),
+                      color: Cult.sand,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),

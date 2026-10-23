@@ -1582,7 +1582,7 @@ class _CertificatesPageState extends State<CertificatesPage> {
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
     final color = switch (_design) {
-      'Золото' => Cult.gold,
+      'Золото' => const Color(0xFFC9B496),
       'Ночь' => Cult.ink,
       _ => Cult.sand,
     };
