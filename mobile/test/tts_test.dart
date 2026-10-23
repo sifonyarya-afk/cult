@@ -40,6 +40,26 @@ void main() {
     expect(h.toLowerCase(), contains('стоит примерно'));
   });
 
+  test('humanize смягчает новые фразы агента', () {
+    final h = CultTts.humanize(
+      'Если правильно поняла запрос — вот ближайшее. По услуге «RF». 1) осмотр. 2) уход.',
+    );
+    expect(h.toLowerCase(), contains('правильно поняла'));
+    expect(h.toLowerCase(), contains('по процедуре'));
+    expect(h.toLowerCase(), contains('во-первых'));
+  });
+
+  test('toSpokenBrief убирает мягкий хвост каталога', () {
+    final brief = CultTts.toSpokenBrief(
+      'Если правильно поняла запрос — вот ближайшее. '
+      'Посмотрела Veil Peptide Serum. Стоит 12 500 ₽. '
+      'Если мимо — скажите «не то» или уточните название.',
+    );
+    expect(brief.toLowerCase(), contains('вейл'));
+    expect(brief.toLowerCase(), isNot(contains('мимо')));
+    expect(brief.length, lessThan(220));
+  });
+
   test('breathGroups дробит длинную фразу', () {
     final words = List.filled(24, 'слово').join(' ');
     final groups = CultTts.breathGroups(words);

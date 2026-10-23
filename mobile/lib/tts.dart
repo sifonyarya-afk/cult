@@ -320,16 +320,35 @@ class CultTts {
       'Ориентир по цене —': 'Стоит примерно',
       'Ориентир по цене': 'Цена примерно',
       'По протоколу': 'По процедуре',
+      'По услуге': 'По процедуре',
       'Точного совпадения в каталоге пока не вижу.':
           'Давайте подберём вместе, без сложных названий.',
       'Хорошо, давайте разберём без каталога.': 'Хорошо, давайте разберёмся.',
+      'Слышу вас — давайте сузим без жёстких названий.':
+          'Слышу вас. Давайте сузим без сложных названий.',
+      'Если правильно поняла запрос — вот ближайшее.':
+          'Если я правильно поняла,',
+      'Если мимо — скажите «не то» или уточните название.':
+          'Если мимо — скажите: не то.',
+      'Помню про «без уколов».': 'Помню: без уколов.',
       'Я CULT Агент — голосовой консультант клиники.':
           'Я консультант клиники Культ.',
+      'Я CULT Агент — голос клиники.': 'Я консультант клиники Культ.',
       'окончательное решение по протоколу всегда за очным специалистом':
           'окончательное решение всегда за врачом на приёме',
       'Нажмите «Голос»': 'Нажмите голос',
       'через «+»': 'через плюс на главной',
       'через плюс на главной на главной': 'через плюс на главной',
+      'меню «Запись»': 'меню запись',
+      'меню «Услуги»': 'меню услуги',
+      'меню «Врачи»': 'меню врачи',
+      'вкладки «Магазин»': 'вкладки магазин',
+      'во вкладке «Магазин»': 'в магазине',
+      '1) ': 'Во-первых, ',
+      '2) ': 'Во-вторых, ',
+      '3) ': 'В-третьих, ',
+      'Важно: вы упоминали аллергию — на осмотре обязательно скажите врачу про реакции на анестезию, металлы или косметику; я не заменяю сбор анамнеза.':
+          'Учтите аллергию: скажите о ней врачу на осмотре.',
     };
     for (final e in swaps.entries) {
       s = s.replaceAll(e.key, e.value);
@@ -339,22 +358,82 @@ class CultTts {
 
   /// Short spoken form for TTS; full reply stays in the chat bubble.
   static String toSpokenBrief(String text) {
-    final full = forSpeech(text);
-    if (full.length <= 240) return full;
+    var full = forSpeech(text);
+    // Drop chat-only scaffolding that sounds robotic aloud.
+    full = full
+        .replaceAll(
+          RegExp(
+            r'Если мимо[^.]*(?:\.|$)',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(
+            r'Если правильно поняла запрос[^,]*,\s*',
+            caseSensitive: false,
+          ),
+          '',
+        )
+        .replaceAll(
+          RegExp(
+            r'Если я правильно поняла,\s*',
+            caseSensitive: false,
+          ),
+          '',
+        )
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (full.length <= 220) {
+      if (full.isNotEmpty && !RegExp(r'[.!?…]$').hasMatch(full)) {
+        full = '$full.';
+      }
+      return full;
+    }
     final sentences = full
         .split(RegExp(r'(?<=[.!?…])\s+'))
         .map((s) => s.trim())
         .where((s) => s.isNotEmpty)
         .toList();
     if (sentences.isEmpty) return full;
+
+    int rank(String s) {
+      final l = s.toLowerCase();
+      var n = 0;
+      if (l.contains('стоит') ||
+          l.contains('руб') ||
+          l.contains('тысяч') ||
+          RegExp(r'\d').hasMatch(l)) {
+        n += 4;
+      }
+      if (l.contains('запис') || l.contains('плюс') || l.contains('консульт')) {
+        n += 3;
+      }
+      if (l.contains('массаж') ||
+          l.contains('уход') ||
+          l.contains('крем') ||
+          l.contains('инфуз')) {
+        n += 2;
+      }
+      if (l.contains('слышу') || l.contains('понима')) n += 1;
+      if (l.contains('мимо') || l.contains('карточки кейса')) n -= 3;
+      if (s.length > 140) n -= 1;
+      return n;
+    }
+
+    // Keep original order, but skip low-value tail once we have substance.
     final buf = StringBuffer();
+    var kept = 0;
     for (var i = 0; i < sentences.length; i++) {
       final sentence = sentences[i];
+      if (kept >= 1 && rank(sentence) < 0) continue;
       final next = buf.isEmpty ? sentence : '$buf $sentence';
-      if (buf.isNotEmpty && next.length > 240) break;
+      if (buf.isNotEmpty && next.length > 220) break;
       if (buf.isNotEmpty) buf.write(' ');
       buf.write(sentence);
-      if (buf.length >= 160 && i >= 1) break;
+      kept++;
+      if (buf.length >= 150 && kept >= 2) break;
+      if (kept >= 3) break;
     }
     var out = buf.toString().trim();
     if (out.isEmpty) out = sentences.first;
@@ -452,6 +531,10 @@ class CultTts {
     'Home Bio-Scan Kit': 'Хоум Био Скан Кит',
     'Circadian Light Panel': 'Циркадиан Лайт Панел',
     'AlethiaPro': 'Алетиа Про',
+    'Д-р Элара Торн': 'доктор Элара Торн',
+    'Элара Торн': 'Элара Торн',
+    'Д-р Джулиан Торн': 'доктор Джулиан Торн',
+    'Джулиан Торн': 'Джулиан Торн',
     'NAD+ Micro-Patch': 'эн эй ди плюс Майкро Патч',
     'NAD+ Energy': 'эн эй ди плюс Энерджи',
     'NAD+': 'эн эй ди плюс',
