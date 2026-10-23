@@ -830,7 +830,7 @@ class Contact {
 }
 
 /// Bump when shipping a user-visible feature so a Mac pull proves the build is fresh.
-const cultBuildTag = 'mira-human-v31';
+const cultBuildTag = 'mira-train-v32';
 
 const contacts = <Contact>[
   Contact(

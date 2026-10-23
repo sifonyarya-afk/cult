@@ -108,6 +108,30 @@ void main() {
     expect(tip.toLowerCase(), anyOf(contains('вместе'), contains('лицо')));
   });
 
+  test('Мира обучена на клинические вопросы без слабого fallback', () {
+    final lips = cultAgent.answer('Хочу губы натуральные');
+    expect(lips.toLowerCase(), anyOf(contains('губ'), contains('натурал')));
+    expect(lips.toLowerCase(), isNot(contains('не уверена')));
+    final peel = cultAgent.answer('Что лучше пилинг или чистка?');
+    expect(peel.toLowerCase(), contains('чистка'));
+    expect(peel.toLowerCase(), contains('пилинг'));
+    final burn = cultAgent.answer('Кожа горит после кислоты');
+    expect(burn.toLowerCase(), anyOf(contains('барьер'), contains('актив')));
+    expect(burn.toLowerCase(), isNot(contains('к вечеру')));
+    final flake = cultAgent.answer('Норм ли шелушение после пилинга?');
+    expect(flake.toLowerCase(), anyOf(contains('норма'), contains('spf'), contains('барьер')));
+    final drip = cultAgent.answer('Можно натощак на капельницу?');
+    expect(drip.toLowerCase(), contains('капельниц'));
+    expect(drip.toLowerCase(), isNot(contains('забор крови')));
+    final admin = cultAgent.answer('Чем ты отличаешься от чата админа?');
+    expect(admin.toLowerCase(), contains('администратор'));
+    expect(admin.toLowerCase(), contains('мира'));
+    final filler = cultAgent.answer('Сколько держится филлер?');
+    expect(filler.toLowerCase(), anyOf(contains('месяц'), contains('год')));
+    final ref = cultAgent.answer('Нужна справка для работы');
+    expect(ref.toLowerCase(), anyOf(contains('справк'), contains('администратор')));
+  });
+
   test('Мира отвечает на разные житейские вопросы по-человечески', () {
     final pregnant = cultAgent.answer('Я беременна, что можно?');
     expect(pregnant.toLowerCase(), anyOf(contains('врач'), contains('беремен')));
