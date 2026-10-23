@@ -2091,6 +2091,27 @@ class _SettingsPageState extends State<SettingsPage> {
               pushPage(context, const AboutPage());
             },
           ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.tag),
+            title: const Text('Сборка приложения'),
+            subtitle: const Text(cultBuildTag),
+            onTap: () {
+              Clipboard.setData(const ClipboardData(text: cultBuildTag));
+              cultTapFeedback();
+              showCultSnack(context, 'Метка сборки скопирована');
+            },
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.mic_none),
+            title: const Text('CULT Агент'),
+            subtitle: const Text('Голос · услуги и шоп'),
+            onTap: () {
+              cultTapFeedback();
+              pushPage(context, const ChatThreadPage(contactId: 'bot'));
+            },
+          ),
         ],
       ),
     );

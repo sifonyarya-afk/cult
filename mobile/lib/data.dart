@@ -815,19 +815,22 @@ class Contact {
   final String seed;
 }
 
+/// Bump when shipping a user-visible feature so Settings proves the Mac build is fresh.
+const cultBuildTag = 'voice-agent-visible';
+
 const contacts = <Contact>[
-  Contact(
-    id: 'admin',
-    name: 'Администратор',
-    role: 'Расписание и логистика',
-    seed: 'Здравствуйте. Помогу с записью, трансфером и сертификатом.',
-  ),
   Contact(
     id: 'bot',
     name: 'CULT Агент',
     role: 'Голос и текст · услуги и шоп',
     seed:
         'Я CULT Агент. Спросите голосом или текстом про услуги, цены и формулы шопа — нажмите «Голос» или микрофон внизу.',
+  ),
+  Contact(
+    id: 'admin',
+    name: 'Администратор',
+    role: 'Расписание и логистика',
+    seed: 'Здравствуйте. Помогу с записью, трансфером и сертификатом.',
   ),
   Contact(
     id: 'specialist',

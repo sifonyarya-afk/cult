@@ -26,11 +26,6 @@ void main() {
     expect(find.text('Онлайн запись'), findsOneWidget);
     expect(find.text('Магазин биохакинга'), findsOneWidget);
     expect(find.text('Чат с врачом'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('CULT Агент'),
-      80,
-      scrollable: find.byType(Scrollable).first,
-    );
     expect(find.text('CULT Агент'), findsOneWidget);
     expect(find.textContaining('голосом про услуги'), findsOneWidget);
 
@@ -67,6 +62,20 @@ void main() {
     expect(find.text('Позвонить'), findsOneWidget);
     expect(find.text('Администратор'), findsOneWidget);
     expect(find.text('Трансфер'), findsWidgets);
+  });
+
+  testWidgets('Во вкладке Чат сверху CULT Агент и метка сборки', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    await store.setGender(ClientGender.woman);
+    await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Чат'));
+    await tester.pumpAndSettle();
+    expect(find.text('CULT Агент'), findsWidgets);
+    expect(find.textContaining('voice-agent'), findsOneWidget);
+    expect(find.textContaining('Говорите про услуги'), findsOneWidget);
   });
 
   testWidgets('Профиль тянется вниз для синхронизации', (tester) async {

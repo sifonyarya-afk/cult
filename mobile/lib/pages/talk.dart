@@ -28,8 +28,13 @@ class ChatPage extends StatelessWidget {
         Text('Центр поддержки', style: cultHeadline(30)),
         const SizedBox(height: 6),
         const Text(
-          'Администратор, CULT Агент (голос) или специалист — ответим по делу.',
+          'Сначала CULT Агент (голос), затем администратор и врач.',
           style: TextStyle(color: Cult.muted),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Сборка $cultBuildTag',
+          style: const TextStyle(color: Cult.muted, fontSize: 11),
         ),
         if (store.hasUnreadChat) ...[
           const SizedBox(height: 10),
@@ -45,6 +50,57 @@ class ChatPage extends StatelessWidget {
             ),
           ),
         ],
+        const SizedBox(height: 14),
+        Semantics(
+          button: true,
+          label: 'CULT Агент голосом',
+          child: Material(
+            color: Cult.ink,
+            borderRadius: BorderRadius.circular(18),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: () {
+                cultTapFeedback();
+                pushPage(context, const ChatThreadPage(contactId: 'bot'));
+              },
+              child: const Padding(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
+                child: Row(
+                  children: [
+                    Icon(Icons.mic, color: Colors.white, size: 28),
+                    SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'CULT Агент',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Говорите про услуги и шоп — отвечу голосом',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: Colors.white70),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
         const SizedBox(height: 16),
         for (final contact in contacts)
           Padding(
@@ -145,7 +201,7 @@ class ChatPage extends StatelessWidget {
           child: Column(
             children: [
               _SupportLink(
-                title: 'Часто задаваемые вопросы',
+                title: 'CULT Агент · голос и FAQ',
                 onTap: () =>
                     pushPage(context, const ChatThreadPage(contactId: 'bot')),
               ),

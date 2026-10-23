@@ -4,7 +4,29 @@
 
 **CULT Агент** (главная → баннер или Чат → CULT Агент): кнопка **«Голос»**, микрофон внизу, динамик в шапке. При открытии чата iOS спросит Микрофон и «Распознавание речи»; приветствие озвучивается.
 
-Если видите только старое «Я ассистент…» без кнопки «Голос» — на телефоне старый билд. Сделайте `git pull`, `flutter pub get`, `(cd ios && pod install)`, `flutter run` (в `pub get` должны быть `speech_to_text` и `flutter_tts`).
+Если бота нет совсем или только старое «Я ассистент…» — на Mac собирается **не тот код**. Удаление приложения с телефона не обновляет исходники. Проверка из корня репозитория:
+
+```bash
+cd ~/Desktop/cult/cult
+pwd
+git rev-parse --short HEAD
+git log -1 --oneline
+grep -n "CULT Агент" mobile/lib/data.dart
+grep speech_to_text mobile/pubspec.yaml
+```
+
+Должны увидеть метку вроде `voice-agent-…`, строку `CULT Агент` и `speech_to_text`. Если `grep` пустой — вы не в том каталоге или не сделали `git pull`. Затем:
+
+```bash
+git stash push -u -m "local ios" -- mobile/ios   # если pull ругается
+git pull
+cd mobile
+flutter pub get
+(cd ios && pod install)
+flutter run
+```
+
+В приложении: вкладка **Чат** — чёрная кнопка **CULT Агент**; на главной — баннер сверху; в **Настройки** → «Сборка приложения» = `voice-agent-…`.
 
 Нужны Mac, Xcode и Flutter.
 
