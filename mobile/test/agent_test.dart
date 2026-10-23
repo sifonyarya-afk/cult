@@ -49,6 +49,30 @@ void main() {
     expect(reply, contains('21:00'));
   });
 
+  test('Русский запрос сыворотка находит Serum в шопе', () {
+    final reply = cultAgent.answer('есть ли сыворотка');
+    expect(reply.toLowerCase(), anyOf(contains('serum'), contains('сыворот')));
+    expect(reply.toLowerCase(), isNot(contains('не нашла точного совпадения')));
+  });
+
+  test('Крем и барьерный крем попадают в каталог', () {
+    final cream = cultAgent.answer('крем');
+    expect(cream, contains('Lumen Barrier Cream'));
+    final barrier = cultAgent.answer('барьерный крем');
+    expect(barrier, contains('Lumen Barrier Cream'));
+  });
+
+  test('Короткий бренд Veil и слово serum находятся', () {
+    expect(cultAgent.answer('Veil'), contains('Veil Peptide'));
+    expect(cultAgent.answer('serum').toLowerCase(), contains('serum'));
+  });
+
+  test('Общий вопрос про услуги не уходит в пустой каталог', () {
+    final reply = cultAgent.answer('какие услуги');
+    expect(reply.toLowerCase(), isNot(contains('не нашла точного совпадения')));
+    expect(reply.toLowerCase(), anyOf(contains('услуг'), contains('прайс')));
+  });
+
   test('Голосовая подсказка про микрофон', () {
     final reply = cultAgent.answer('Как спросить голосом?');
     expect(reply.toLowerCase(), contains('микрофон'));

@@ -33,10 +33,10 @@ class CultAgent {
     );
     final faq = _faqReply(q);
 
-    // Title-level catalog match (score ≥ 9) answers product/service questions.
-    if (hit != null && hit.score >= 9) return hit.reply;
+    // Strong title/phrase hits beat FAQ; softer catalog hits fill after FAQ.
+    if (hit != null && hit.score >= 8) return hit.reply;
     if (faq != null) return faq;
-    if (hit != null && hit.score >= 7) return hit.reply;
+    if (hit != null && hit.score >= 5) return hit.reply;
 
     return 'Не нашла точного совпадения в каталоге CULT. '
         'Спросите название услуги или формулы, откройте «Прайс» / «Магазин», '
@@ -136,7 +136,7 @@ class CultAgent {
       bestInfusion,
     ].reduce((a, b) => a > b ? a : b);
 
-    if (best < 7) return null;
+    if (best < 5) return null;
 
     final wantsPrice = RegExp(
       r'цен|стоим|скольк|прайс|руб|₽',
@@ -279,6 +279,22 @@ class CultAgent {
         q.contains('ингредиент') ||
         q.contains('компонент')) {
       return 'Назовите формулу из шопа — отвечу составом. Или откройте карточку в «Магазин»: долгое нажатие копирует текст.';
+    }
+    // Only generic catalog questions — not «на процедуру» / «длится процедура».
+    if (RegExp(r'(^|\s)услуг').hasMatch(q) ||
+        q.contains('каталог услуг') ||
+        q.contains('что делаете') ||
+        q.contains('чем занима')) {
+      return 'В CULT Сочи: уходы и пилинги, массаж, инъекции, аппаратная (RF, IPL, SMAS), '
+          'инфузии и лаборатория. Откройте «Услуги» / «Прайс» или назовите процедуру голосом — отвечу ценой.';
+    }
+    if (q.contains('формул') &&
+        !q.contains('сыворот') &&
+        !q.contains('крем') &&
+        !q.contains('serum') &&
+        !q.contains('cream')) {
+      return 'Формулы биохакинг-шопа — во вкладке «Магазин»: сыворотки, кремы, NAD+ и катализаторы. '
+          'Спросите, например: «Veil Peptide» или «барьерный крем».';
     }
     if (q.contains('массаж') || q.contains('лимфодрен')) {
       return 'Массаж и лимфодренаж — в меню «Услуги» и на записи. Спросите конкретное название — подскажу цену и длительность.';
@@ -533,27 +549,31 @@ class CultAgent {
     if (hay.isEmpty) return 0;
     var score = 0;
     var titleHits = 0;
+    var bodyHits = 0;
     for (final token in tokens) {
       if (token.length < 3) continue;
       if (titleNorm.contains(token)) {
         titleHits++;
+        // Short brand tokens (veil, nad) still count as real title hits.
         score += token.length >= 6 ? 8 : 6;
         continue;
       }
-      // Body matches only for longer tokens — avoid FAQ words leaking in.
-      if (token.length >= 5 && hay.contains(token)) {
-        score += 2;
+      // Blurb/composition matches: Russian type words often live only in body.
+      if (token.length >= 4 && hay.contains(token)) {
+        bodyHits++;
+        score += token.length >= 6 ? 4 : 3;
       }
     }
     final phrase = tokens.where((t) => t.length >= 3).join(' ');
     if (phrase.length >= 6 && titleNorm.contains(phrase)) score += 10;
-    // Require at least one title token for a usable hit.
-    if (titleHits == 0) return 0;
+    // Title hit preferred; strong body-only (e.g. «сыворотка», «барьерный крем») OK.
+    if (titleHits == 0 && bodyHits == 0) return 0;
+    if (titleHits == 0 && score < 5) return 0;
     return score;
   }
 
   List<String> _tokens(String q) {
-    return q
+    final raw = q
         .split(RegExp(r'[^a-zа-я0-9+]+'))
         .where((t) => t.length >= 3)
         .where(
@@ -588,9 +608,63 @@ class CultAgent {
             'товары',
             'формул',
             'формула',
+            'лицо',
+            'лица',
+            'кожа',
+            'кожи',
           }.contains(t),
         )
         .toList();
+    return _expandSynonyms(raw);
+  }
+
+  /// RU/EN catalog synonyms so voice queries hit English titles.
+  List<String> _expandSynonyms(List<String> tokens) {
+    const pairs = <String, List<String>>{
+      'сыворотка': ['serum', 'сыворот'],
+      'сыворотки': ['serum', 'сыворот'],
+      'сывороткой': ['serum', 'сыворот'],
+      'сыворотк': ['serum'],
+      'serum': ['сыворот', 'сыворотка'],
+      'крем': ['cream'],
+      'крема': ['cream'],
+      'кремом': ['cream'],
+      'cream': ['крем'],
+      'пептид': ['peptide'],
+      'пептиды': ['peptide'],
+      'пептидн': ['peptide'],
+      'peptide': ['пептид'],
+      'барьерный': ['barrier', 'барьер'],
+      'барьерная': ['barrier', 'барьер'],
+      'барьер': ['barrier'],
+      'barrier': ['барьер'],
+      'митохондриальн': ['mitochondrial'],
+      'митохондри': ['mitochondrial'],
+      'mitochondrial': ['митохондри'],
+      'липосомальн': ['liposomal'],
+      'liposomal': ['липосомальн'],
+      'глутатион': ['gluta'],
+      'патч': ['patch'],
+      'патчи': ['patch'],
+      'капельниц': ['infusion', 'инфуз'],
+      'капельница': ['infusion', 'инфуз'],
+      'инфузия': ['infusion', 'инфуз'],
+      'инфузии': ['infusion', 'инфуз'],
+    };
+    final out = <String>[...tokens];
+    for (final t in tokens) {
+      final extra = pairs[t];
+      if (extra != null) {
+        out.addAll(extra);
+        continue;
+      }
+      for (final entry in pairs.entries) {
+        if (t.startsWith(entry.key) || entry.key.startsWith(t)) {
+          out.addAll(entry.value);
+        }
+      }
+    }
+    return out.toSet().toList();
   }
 
   String _normalize(String raw) {

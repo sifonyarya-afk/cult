@@ -74,7 +74,7 @@ void main() {
     await tester.tap(find.text('Чат'));
     await tester.pumpAndSettle();
     expect(find.text('CULT Агент'), findsWidgets);
-    expect(find.textContaining('voice-agent'), findsOneWidget);
+    expect(find.textContaining(cultBuildTag), findsOneWidget);
     expect(find.textContaining('Говорите про услуги'), findsOneWidget);
   });
 

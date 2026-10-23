@@ -816,7 +816,7 @@ class Contact {
 }
 
 /// Bump when shipping a user-visible feature so Settings proves the Mac build is fresh.
-const cultBuildTag = 'voice-agent-dart311';
+const cultBuildTag = 'agent-match-ru-en';
 
 const contacts = <Contact>[
   Contact(
