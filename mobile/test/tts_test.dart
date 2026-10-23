@@ -21,8 +21,20 @@ void main() {
   });
 
   test('spokenGreeting короткий для озвучки', () {
-    expect(CultTts.spokenGreeting.length, lessThan(120));
+    expect(CultTts.spokenGreeting.length, lessThan(160));
     expect(CultTts.spokenGreeting.toLowerCase(), contains('здравствуйте'));
+    expect(CultTts.spokenGreeting.toLowerCase(), contains('кнопк'));
+  });
+
+  test('toSpokenBrief complete договаривает длинный ответ', () {
+    final long = List.filled(
+      10,
+      'Это отдельное предложение про массаж, уход и запись через плюс.',
+    ).join(' ');
+    final brief = CultTts.toSpokenBrief(long, maxLen: 220);
+    final full = CultTts.toSpokenBrief(long, maxLen: 900, complete: true);
+    expect(full.length, greaterThan(brief.length));
+    expect(full.toLowerCase(), contains('массаж'));
   });
 
   test('toSpokenBrief сжимает длинный каталожный ответ', () {

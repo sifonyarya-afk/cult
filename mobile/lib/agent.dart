@@ -20,6 +20,35 @@ class CultAgent {
     String? lastUser,
     List<String> recentUsers = const [],
   }) {
+    return _dedupeClarify(
+      _answerBody(
+        text,
+        localServices: localServices,
+        localProducts: localProducts,
+        liveServices: liveServices,
+        localDevices: localDevices,
+        localInfusions: localInfusions,
+        gender: gender,
+        lastBot: lastBot,
+        lastUser: lastUser,
+        recentUsers: recentUsers,
+      ),
+      lastBot,
+    );
+  }
+
+  String _answerBody(
+    String text, {
+    List<Service> localServices = services,
+    List<Product> localProducts = products,
+    List<YcService> liveServices = const [],
+    List<Device> localDevices = devices,
+    List<Infusion> localInfusions = infusions,
+    ClientGender? gender,
+    String? lastBot,
+    String? lastUser,
+    List<String> recentUsers = const [],
+  }) {
     final q = _repairAsr(_normalize(text));
     if (q.isEmpty) {
       return 'Я рядом и внимательно слушаю. '
@@ -28,7 +57,7 @@ class CultAgent {
     }
 
     if (RegExp(r'^[.…\-\s]+$').hasMatch(q) || q == 'мм' || q == 'эм' || q == 'хм') {
-      return 'Я здесь. Можно просто сказать, что смущает — или нажать «Голос», если удобнее говорить.';
+      return 'Я здесь. Можно просто сказать, что смущает — или нажать кнопку микрофона.';
     }
 
     final topic = _topicBlob(lastUser: lastUser, recentUsers: recentUsers);
@@ -2622,7 +2651,7 @@ class CultAgent {
         q.contains('голосовой') ||
         q.contains('распознаван') ||
         RegExp(r'(^|\s)(голос|озвуч)').hasMatch(q)) {
-      return 'Нажмите микрофон внизу чата и говорите своими словами — например: «сколько стоит микроигольчатый RF» или «есть ли Mitochondrial Fuel». '
+      return 'Нажмите одну кнопку микрофона и говорите своими словами — например: «сколько стоит микроигольчатый RF» или «есть ли Mitochondrial Fuel». Клавиатура не нужна. '
           'Ответ могу проговорить вслух, как на спокойной консультации.';
     }
     if (q.contains('остал') ||
@@ -3320,6 +3349,175 @@ class CultAgent {
     return out.toSet().toList();
   }
 
+  /// Avoid repeating the same clarifying question twice in a row.
+  String _dedupeClarify(String reply, String? lastBot) {
+    if (lastBot == null || lastBot.trim().isEmpty) return reply;
+    final prev = _normalize(lastBot);
+    final next = _normalize(reply);
+    const markers = <String>[
+      'лицо или тело',
+      'лицо, тело, энергия',
+      'что видите в зеркале',
+      'что заметнее',
+      'одного ориентира достаточно',
+      'слышу вас — давайте сузим',
+      'скажите зону',
+      'с чего начнём',
+      'с чего начнем',
+    ];
+    var hits = 0;
+    for (final m in markers) {
+      if (prev.contains(m) && next.contains(m)) hits++;
+    }
+    if (hits == 0) return reply;
+    return 'Продолжим без повтора вопроса. '
+        'Одно слово по делу: сухость, отёк, морщинки, тусклость, энергия — '
+        'или сразу «массаж», «крем», «запись». Я отвечу конкретно.';
+  }
+
+  /// Push-style catalog cards from the latest reply + user topic.
+  List<AgentOffer> suggestOffers(
+    String reply, {
+    String? lastUser,
+    List<Service> localServices = services,
+    List<Product> localProducts = products,
+    List<Infusion> localInfusions = infusions,
+    ClientGender? gender,
+  }) {
+    final blob = _normalize('$reply ${lastUser ?? ''}');
+    final offers = <AgentOffer>[];
+    final seen = <String>{};
+
+    void add(AgentOffer offer) {
+      final key = _normalize(offer.title);
+      if (seen.contains(key) || offers.length >= 3) return;
+      seen.add(key);
+      offers.add(offer);
+    }
+
+    for (final item in localServices) {
+      if (gender != null && !item.audience.matches(gender)) continue;
+      final title = _normalize(item.title);
+      final hay = _normalize('${item.title} ${item.blurb} ${item.category}');
+      var score = 0;
+      for (final token in _tokens(blob)) {
+        if (token.length < 4) continue;
+        if (title.contains(token)) score += 6;
+        else if (hay.contains(token)) score += 3;
+      }
+      if (blob.contains('массаж') && title.contains('массаж')) score += 8;
+      if (blob.contains('rf') && title.contains('rf')) score += 8;
+      if (blob.contains('уход') && title.contains('уход')) score += 5;
+      if (score < 6) continue;
+      add(
+        AgentOffer(
+          title: item.title,
+          subtitle: item.blurb,
+          priceLabel: item.priceLabel,
+          kind: 'service',
+          ask: item.title,
+        ),
+      );
+    }
+
+    for (final item in localProducts) {
+      final title = _normalize(item.name);
+      final hay = _normalize('${item.name} ${item.blurb} ${item.composition}');
+      var score = 0;
+      for (final token in _tokens(blob)) {
+        if (token.length < 4) continue;
+        if (title.contains(token)) score += 6;
+        else if (hay.contains(token)) score += 3;
+      }
+      if (blob.contains('крем') && (title.contains('cream') || hay.contains('крем'))) {
+        score += 7;
+      }
+      if (blob.contains('сыворот') && title.contains('serum')) score += 7;
+      if (score < 6) continue;
+      add(
+        AgentOffer(
+          title: item.name,
+          subtitle: item.blurb,
+          priceLabel: _rub(item.price),
+          kind: 'product',
+          ask: item.name,
+        ),
+      );
+    }
+
+    for (final item in localInfusions) {
+      final title = _normalize(item.title);
+      var score = 0;
+      if (blob.contains('инфуз') || blob.contains('капель') || blob.contains('энерг')) {
+        score += 4;
+      }
+      if (blob.contains('nad') && title.contains('nad')) score += 8;
+      if (blob.contains('glow') && title.contains('glow')) score += 8;
+      if (blob.contains('immunity') && title.contains('immunity')) score += 8;
+      if (score < 6) continue;
+      add(
+        AgentOffer(
+          title: item.title,
+          subtitle: item.blurb,
+          priceLabel: item.price,
+          kind: 'infusion',
+          ask: item.title,
+        ),
+      );
+    }
+
+    if (offers.isEmpty) {
+      // Soft defaults so the push rail is never empty after a real turn.
+      if (blob.contains('энерг') || blob.contains('устал') || blob.contains('инфуз')) {
+        final drip = localInfusions.isNotEmpty ? localInfusions.first : null;
+        if (drip != null) {
+          add(
+            AgentOffer(
+              title: drip.title,
+              subtitle: drip.blurb,
+              priceLabel: drip.price,
+              kind: 'infusion',
+              ask: drip.title,
+            ),
+          );
+        }
+      } else if (blob.contains('сух') || blob.contains('барьер') || blob.contains('крем')) {
+        for (final item in localProducts) {
+          if (_normalize(item.name).contains('barrier') ||
+              _normalize(item.blurb).contains('барьер')) {
+            add(
+              AgentOffer(
+                title: item.name,
+                subtitle: item.blurb,
+                priceLabel: _rub(item.price),
+                kind: 'product',
+                ask: item.name,
+              ),
+            );
+            break;
+          }
+        }
+      } else {
+        for (final item in localServices) {
+          if (gender != null && !item.audience.matches(gender)) continue;
+          if (_normalize(item.title).contains('массаж')) {
+            add(
+              AgentOffer(
+                title: item.title,
+                subtitle: item.blurb,
+                priceLabel: item.priceLabel,
+                kind: 'service',
+                ask: item.title,
+              ),
+            );
+            break;
+          }
+        }
+      }
+    }
+    return offers;
+  }
+
   String _normalize(String raw) {
     return raw.toLowerCase().replaceAll('ё', 'е').trim();
   }
@@ -3333,6 +3531,23 @@ class CultAgent {
     }
     return '$buf ₽';
   }
+}
+
+/// Catalog card for the voice agent push rail.
+class AgentOffer {
+  const AgentOffer({
+    required this.title,
+    required this.subtitle,
+    required this.priceLabel,
+    required this.kind,
+    required this.ask,
+  });
+
+  final String title;
+  final String subtitle;
+  final String priceLabel;
+  final String kind;
+  final String ask;
 }
 
 const cultAgent = CultAgent();

@@ -558,7 +558,25 @@ void main() {
     final bot = store.threads['bot']!;
     expect(bot.length, 1);
     expect(bot.first.text, contains('CULT'));
-    expect(bot.first.text, contains('Голос'));
-    expect(bot.first.text.toLowerCase(), contains('поговорить'));
+    expect(bot.first.text.toLowerCase(), anyOf(contains('кнопк'), contains('голос')));
+    expect(bot.first.text.toLowerCase(), contains('говор'));
+  });
+
+  test('Не дублирует уточняющий вопрос подряд', () {
+    const ask =
+        'Слышу вас — давайте сузим без жёстких названий. Одного ориентира достаточно: лицо, тело, энергия или домашний уход.';
+    final reply = cultAgent.answer('ну', lastBot: ask);
+    expect(reply.toLowerCase(), contains('без повтора'));
+    expect(reply.toLowerCase(), isNot(contains('одного ориентира достаточно')));
+  });
+
+  test('suggestOffers даёт карточки услуг или шопа', () {
+    final offers = cultAgent.suggestOffers(
+      'Понимаю: стянутость и сухость часто про барьер. Дома — барьерный крем Lumen Barrier.',
+      lastUser: 'сухость лица',
+    );
+    expect(offers, isNotEmpty);
+    expect(offers.first.title, isNotEmpty);
+    expect(offers.first.priceLabel, isNotEmpty);
   });
 }

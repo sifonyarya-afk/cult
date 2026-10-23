@@ -2117,7 +2117,7 @@ class _SettingsPageState extends State<SettingsPage> {
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.mic_none),
             title: const Text('CULT Агент'),
-            subtitle: const Text('Голос · услуги и шоп'),
+            subtitle: const Text('Одна кнопка · голос без клавиатуры'),
             onTap: () {
               cultTapFeedback();
               pushPage(context, const ChatThreadPage(contactId: 'bot'));

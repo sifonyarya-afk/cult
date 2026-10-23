@@ -85,7 +85,7 @@ class HomePage extends StatelessWidget {
                             ),
                             SizedBox(height: 2),
                             Text(
-                              'Спросите голосом про услуги и шоп',
+                              'Одна кнопка — говорите, без клавиатуры',
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 13,

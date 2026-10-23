@@ -8,6 +8,7 @@ import '../theme.dart';
 import '../tts.dart';
 import '../widgets.dart';
 import '../yclients.dart';
+import 'agent_voice.dart';
 import 'cabinet.dart';
 import 'voice_settings.dart';
 
@@ -62,7 +63,7 @@ class ChatPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
               onTap: () {
                 cultTapFeedback();
-                pushPage(context, const ChatThreadPage(contactId: 'bot'));
+                pushPage(context, const AgentVoicePage());
               },
               child: const Padding(
                 padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -85,7 +86,7 @@ class ChatPage extends StatelessWidget {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Свободный разговор голосом — как на консультации',
+                            'Одна кнопка — слушаю и отвечаю голосом, без клавиатуры',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 13,
@@ -103,7 +104,7 @@ class ChatPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        for (final contact in contacts)
+        for (final contact in contacts.where((c) => c.id != 'bot'))
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Semantics(
@@ -202,9 +203,8 @@ class ChatPage extends StatelessWidget {
           child: Column(
             children: [
               _SupportLink(
-                title: 'CULT Агент · голос и FAQ',
-                onTap: () =>
-                    pushPage(context, const ChatThreadPage(contactId: 'bot')),
+                title: 'CULT Агент · одна кнопка',
+                onTap: () => pushPage(context, const AgentVoicePage()),
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               _SupportLink(
@@ -344,13 +344,14 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Bot uses AgentVoicePage — no classic chat voice boot here.
+    if (_isAgent) return;
     if (_markedRead) return;
     _markedRead = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final store = ClinicScope.of(context);
       store.markChatRead(widget.contactId);
-      if (_isAgent) _bootAgentVoice();
     });
   }
 
@@ -552,6 +553,9 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Voice-first surface — distinct from admin/doctor chat threads.
+    if (_isAgent) return const AgentVoicePage();
+
     final store = ClinicScope.of(context);
     final contact = contacts.firstWhere((item) => item.id == widget.contactId);
     final messages = store.threads[widget.contactId] ?? [];

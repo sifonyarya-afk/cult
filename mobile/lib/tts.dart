@@ -229,12 +229,21 @@ class CultTts {
     } catch (_) {}
   }
 
-  Future<void> speak(String text, {bool tight = false}) async {
+  Future<void> speak(
+    String text, {
+    bool tight = false,
+    /// Speak the reply to the end (voice agent) — no aggressive trim.
+    bool complete = false,
+  }) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
     await prepare();
     // toSpokenBrief → forSpeech → humanize (do not humanize twice).
-    final spoken = toSpokenBrief(trimmed, maxLen: tight ? 170 : 220);
+    final spoken = toSpokenBrief(
+      trimmed,
+      maxLen: complete ? 900 : (tight ? 170 : 220),
+      complete: complete,
+    );
     if (spoken.isEmpty) return;
     final gen = ++_speakGen;
 
@@ -359,8 +368,13 @@ class CultTts {
 
   /// Short spoken form for TTS; full reply stays in the chat bubble.
   /// [maxLen] — softer cap after voice questions (`tight` speak).
-  static String toSpokenBrief(String text, {int maxLen = 220}) {
-    final cap = maxLen.clamp(120, 320);
+  /// [complete] — keep almost the whole reply so speech is not cut mid-thought.
+  static String toSpokenBrief(
+    String text, {
+    int maxLen = 220,
+    bool complete = false,
+  }) {
+    final cap = complete ? maxLen.clamp(400, 1200) : maxLen.clamp(120, 320);
     var full = forSpeech(text);
     // Drop chat-only scaffolding that sounds robotic aloud.
     full = full
@@ -399,6 +413,20 @@ class CultTts {
         .where((s) => s.isNotEmpty)
         .toList();
     if (sentences.isEmpty) return full;
+
+    if (complete) {
+      final buf = StringBuffer();
+      for (final sentence in sentences) {
+        final next = buf.isEmpty ? sentence : '$buf $sentence';
+        if (buf.isNotEmpty && next.length > cap) break;
+        if (buf.isNotEmpty) buf.write(' ');
+        buf.write(sentence);
+      }
+      var out = buf.toString().trim();
+      if (out.isEmpty) out = sentences.first;
+      if (!RegExp(r'[.!?…]$').hasMatch(out)) out = '$out.';
+      return out;
+    }
 
     int rank(String s) {
       final l = s.toLowerCase();
@@ -520,7 +548,7 @@ class CultTts {
   static List<String> speechChunks(String spoken) => breathGroups(spoken);
 
   static const spokenGreeting =
-      'Здравствуйте. Я рядом. Нажмите голос — расскажите, что смущает, без сложных названий.';
+      'Здравствуйте. Я рядом. Нажмите кнопку и говорите — слушаю и отвечу до конца, без клавиатуры.';
 
   static const _phonetics = <String, String>{
     'Veil Peptide Serum': 'Вейл Пептайд Сёрум',
