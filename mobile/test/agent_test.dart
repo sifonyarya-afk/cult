@@ -940,4 +940,33 @@ void main() {
     expect(reply.toLowerCase(), contains('похмел'));
     expect(reply.toLowerCase(), isNot(contains('меню «инфузии»')));
   });
+
+  test('Гиалуронидаза не путается со вторым подбородком', () {
+    final reply = cultAgent.answer('Хочу убрать второй подбородок гиалуронидазой');
+    expect(reply.toLowerCase(), contains('гиалуронидаз'));
+    expect(reply.toLowerCase(), isNot(contains('скульптурный массаж лица, при необходимости')));
+  });
+
+  test('Программа для невест и демодекс не generic', () {
+    final bride = cultAgent.answer('Есть ли программа для невест?');
+    expect(bride.toLowerCase(), anyOf(contains('невест'), contains('свадьб'), contains('дат')));
+    expect(bride.toLowerCase(), isNot(contains('если сложно сформулировать')));
+    final dem = cultAgent.answer('У меня демодекс — что можно?');
+    expect(dem.toLowerCase(), contains('демодекс'));
+  });
+
+  test('Immunity простыми словами и золотые нити + RF', () {
+    final imm = cultAgent.answer('Что такое Immunity простыми словами?');
+    expect(imm.toLowerCase(), contains('immunity'));
+    expect(imm.toLowerCase(), isNot(contains('скажите проще')));
+    final threads = cultAgent.answer('Можно ли делать RF если есть золотые нити?');
+    expect(threads.toLowerCase(), anyOf(contains('нит'), contains('допуск'), contains('врач')));
+    expect(threads.toLowerCase(), isNot(contains('меню «аппаратная»')));
+  });
+
+  test('Что взять на капельницу не сужает выбор кожи', () {
+    final reply = cultAgent.answer('Что взять с собой на капельницу?');
+    expect(reply.toLowerCase(), anyOf(contains('капель'), contains('документ'), contains('вен')));
+    expect(reply.toLowerCase(), isNot(contains('давайте сузим вместе')));
+  });
 }
