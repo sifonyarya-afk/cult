@@ -1056,4 +1056,48 @@ void main() {
     final friend = cultAgent.answer('Можно ли записаться на имя подруги?');
     expect(friend.toLowerCase(), anyOf(contains('администратор'), contains('другого'), contains('подруг'), contains('гост')));
   });
+
+  test('Капельница при анемии и нитевой лифтинг ≠ лифт здания', () {
+    final anemia = cultAgent.answer('Можно ли капельницу при анемии?');
+    expect(anemia.toLowerCase(), contains('анеми'));
+    expect(anemia.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final threads = cultAgent.answer('Делаете ли нитевой лифтинг?');
+    expect(threads.toLowerCase(), anyOf(contains('нитев'), contains('нит')));
+    expect(threads.toLowerCase(), isNot(contains('черноморск')));
+  });
+
+  test('Поцелуи после ботокса ≠ филлер; Gluta-Pure простыми словами', () {
+    final kiss = cultAgent.answer('После ботокса можно целоваться?');
+    expect(kiss.toLowerCase(), anyOf(contains('бот'), contains('поцел')));
+    expect(kiss.toLowerCase(), isNot(contains('филлера в губы')));
+    final gluta = cultAgent.answer('Что такое Liposomal Gluta-Pure простыми словами?');
+    expect(gluta.toLowerCase(), anyOf(contains('gluta'), contains('глута')));
+    expect(gluta.toLowerCase(), isNot(contains('скажите проще')));
+  });
+
+  test('Синие губы после филлера и перед ботоксом', () {
+    final blue = cultAgent.answer('После филлера губы синие — это норма?');
+    expect(blue.toLowerCase(), anyOf(contains('синев'), contains('гиалуронидаз'), contains('врач')));
+    expect(blue.toLowerCase(), isNot(contains('подбирает врач после осмотра')));
+    final prep = cultAgent.answer('Что нельзя делать перед ботоксом?');
+    expect(prep.toLowerCase(), anyOf(contains('перед'), contains('алкогол'), contains('накануне')));
+  });
+
+  test('Отёк после массажа и биоревитал рук', () {
+    final edema = cultAgent.answer('Что делать если после массажа лицо отекло?');
+    expect(edema.toLowerCase(), contains('массаж'));
+    expect(edema.toLowerCase(), isNot(contains('после филлера или уколов')));
+    final hands = cultAgent.answer('Делаете ли биоревитализацию рук?');
+    expect(hands.toLowerCase(), anyOf(contains('рук'), contains('кист')));
+    expect(hands.toLowerCase(), isNot(contains('давайте проще')));
+  });
+
+  test('HydraPure+капельница и чистка+ботокс', () {
+    final hydra = cultAgent.answer('Можно ли совместить HydraPure и капельницу?');
+    expect(hydra.toLowerCase(), anyOf(contains('hydrapure'), contains('капель')));
+    expect(hydra.toLowerCase(), isNot(contains('скажите пару процедур')));
+    final clean = cultAgent.answer('Можно ли совместить чистку и ботокс?');
+    expect(clean.toLowerCase(), anyOf(contains('чистк'), contains('бот')));
+    expect(clean.toLowerCase(), isNot(contains('скажите пару процедур')));
+  });
 }
