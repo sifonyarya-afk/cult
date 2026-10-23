@@ -197,6 +197,9 @@ class ClinicStore extends ChangeNotifier {
   var visitsLoading = false;
   var syncing = false;
 
+  /// Draft from Мира — applied only via [confirmAgentBooking] («Запись» button).
+  AgentBookingDraft? agentBookingDraft;
+
   YClientsApi yclients = YClientsApi();
 
   int get balance {
@@ -328,7 +331,7 @@ class ClinicStore extends ChangeNotifier {
   static const _chatSeeds = {
     'admin': 'Здравствуйте. Помогу с записью, трансфером и сертификатом.',
     'bot':
-        'Здравствуйте. Я из CULT — можно просто поговорить о коже, самочувствии, дате визита или записи. Я рядом.',
+        'Здравствуйте, я Мира — косметолог CULT. Расскажите, что с кожей или самочувствием: подберу наши услуги и уход. Если захотите визит — уточню детали и попрошу ваше подтверждение.',
     'specialist': 'Здравствуйте. Я на связи по уходу после процедур.',
   };
 
@@ -531,6 +534,40 @@ class ClinicStore extends ChangeNotifier {
       ),
     );
     _save();
+  }
+
+  void clearAgentBookingDraft() {
+    if (agentBookingDraft == null) return;
+    agentBookingDraft = null;
+    notifyListeners();
+  }
+
+  /// Confirm Мира's draft after the user taps «Запись».
+  String? confirmAgentBooking() {
+    final draft = agentBookingDraft;
+    if (draft == null) return null;
+    bookVisit(
+      service: draft.service,
+      doctor: draft.doctor,
+      date: draft.date,
+      time: draft.time,
+    );
+    agentBookingDraft = null;
+    final list = threads.putIfAbsent('bot', () => []);
+    final stamp = DateTime.now().microsecondsSinceEpoch;
+    list.add(
+      ChatMessage(
+        id: 'them-book-$stamp',
+        from: 'them',
+        text:
+            'Готово — визит зафиксирован: ${draft.summary}. '
+            'Карточка в «Мои записи». Если нужно перенести — напишите администратору.',
+      ),
+    );
+    chatRead['bot'] = list.last.id;
+    _save();
+    notifyListeners();
+    return list.last.text;
   }
 
   Future<String?> cancelVisit(String id) async {
@@ -914,7 +951,7 @@ class ClinicStore extends ChangeNotifier {
           .toList()
           .reversed
           .toList();
-      return cultAgent.answer(
+      final turn = cultAgent.respond(
         text,
         localServices: catalogServices,
         localProducts: products,
@@ -924,6 +961,8 @@ class ClinicStore extends ChangeNotifier {
         lastUser: lastUser,
         recentUsers: recentUsers,
       );
+      agentBookingDraft = turn.pendingBooking;
+      return turn.reply;
     }
     if (contactId == 'specialist') {
       if (q.contains('отёк') ||

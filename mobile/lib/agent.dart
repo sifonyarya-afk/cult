@@ -1,13 +1,12 @@
 import 'data.dart';
 import 'yclients.dart';
 
-/// On-device CULT assistant: FAQ + retrieval over services and shop products.
-/// Voice UI calls [answer] after speech recognition; replies can be spoken via TTS.
+/// On-device CULT cosmetologist [cultAgentName]: FAQ + services/shop + booking draft.
+/// Voice UI speaks [AgentTurn.reply]; booking only after the user taps «Запись».
 class CultAgent {
   const CultAgent();
 
-  /// Full reply for the bot contact.
-  /// Free talk → concerns → catalog/FAQ; never a cold dead-end.
+  /// Convenience: reply text only (tests / simple callers).
   String answer(
     String text, {
     List<Service> localServices = services,
@@ -20,6 +19,56 @@ class CultAgent {
     String? lastUser,
     List<String> recentUsers = const [],
   }) {
+    return respond(
+      text,
+      localServices: localServices,
+      localProducts: localProducts,
+      liveServices: liveServices,
+      localDevices: localDevices,
+      localInfusions: localInfusions,
+      gender: gender,
+      lastBot: lastBot,
+      lastUser: lastUser,
+      recentUsers: recentUsers,
+    ).reply;
+  }
+
+  /// Full turn: living reply + optional booking draft awaiting «Запись» tap.
+  AgentTurn respond(
+    String text, {
+    List<Service> localServices = services,
+    List<Product> localProducts = products,
+    List<YcService> liveServices = const [],
+    List<Device> localDevices = devices,
+    List<Infusion> localInfusions = infusions,
+    ClientGender? gender,
+    String? lastBot,
+    String? lastUser,
+    List<String> recentUsers = const [],
+  }) {
+    final q = _repairAsr(_normalize(text));
+    final book = _bookFlow(
+      q,
+      raw: text,
+      gender: gender,
+      lastBot: lastBot,
+      lastUser: lastUser,
+      recentUsers: recentUsers,
+      localServices: localServices,
+      localProducts: localProducts,
+      liveServices: liveServices,
+      localDevices: localDevices,
+      localInfusions: localInfusions,
+    );
+    if (book != null) {
+      final reply = _naturalize(
+        _dedupeClarify(book.reply, lastBot, user: text),
+        seed: '$text|${lastBot ?? ''}|${lastUser ?? ''}',
+        lastBot: lastBot,
+      );
+      return AgentTurn(reply: reply, pendingBooking: book.draft);
+    }
+
     final raw = _answerBody(
       text,
       localServices: localServices,
@@ -32,10 +81,12 @@ class CultAgent {
       lastUser: lastUser,
       recentUsers: recentUsers,
     );
-    return _naturalize(
-      _dedupeClarify(raw, lastBot, user: text),
-      seed: '$text|${lastBot ?? ''}|${lastUser ?? ''}',
-      lastBot: lastBot,
+    return AgentTurn(
+      reply: _naturalize(
+        _dedupeClarify(raw, lastBot, user: text),
+        seed: '$text|${lastBot ?? ''}|${lastUser ?? ''}',
+        lastBot: lastBot,
+      ),
     );
   }
 
@@ -54,17 +105,17 @@ class CultAgent {
     final q = _repairAsr(_normalize(text));
     if (q.isEmpty) {
       return _pick('empty', const [
-        'Я рядом. Можно про кожу в зеркале, самочувствие или запись — как удобнее начать.',
-        'Слушаю вас. Чаще всего заходят с сухостью, овалом, усталостью или просто с вопросом про запись.',
-        'Давайте с того, что сейчас важнее: лицо, энергия или визит в клинику?',
+        'Я рядом. Расскажите, что с кожей или самочувствием — как на приёме, своими словами.',
+        'Слушаю. Чаще всего начинаем с того, что видно в зеркале, или с усталости — а я уже предложу из CULT.',
+        'Давайте с главного: лицо, тело или силы? Подберу спокойный протокол из наших услуг и шопа.',
       ], text);
     }
 
     if (RegExp(r'^[.…\-\s]+$').hasMatch(q) || q == 'мм' || q == 'эм' || q == 'хм') {
       return _pick('filler', const [
-        'Пауза нормальна. Если коротко: сухость, овал, прыщи, усталость или «запись» — подхвачу.',
-        'Ничего страшного. Одного слова хватит — кожа, силы, массаж — и пойдём дальше.',
-        'Я подожду. Можно просто «сухость» или «устала» — без названий процедур.',
+        'Пауза нормальна. Можно одно слово — сухость, овал, прыщи, усталость — и я уже в теме.',
+        'Ничего страшного. Кожа, силы или массаж — с любого края зайдём.',
+        'Я подожду. Без названий процедур тоже можно: что беспокоит на ощупь или в зеркале.',
       ], text);
     }
 
@@ -106,17 +157,7 @@ class CultAgent {
     final handoff = _handoffReply(q);
     if (handoff != null) return handoff;
 
-    // «Запиши меня на…»
-    final book = _bookIntentReply(
-      q,
-      gender: gender,
-      localServices: localServices,
-      localProducts: localProducts,
-      liveServices: liveServices,
-      localDevices: localDevices,
-      localInfusions: localInfusions,
-    );
-    if (book != null) return book;
+    // Booking is handled in [respond] → [_bookFlow] (needs confirm button).
 
     // «Без уколов / только дом» preferences before catalog suggestions.
     final preference = _preferenceReply(q, gender: gender);
@@ -748,22 +789,41 @@ class CultAgent {
         'Если логика не зашла — назовите ограничение: без уколов, только дом, к дате или бюджет.';
   }
 
-  String? _bookIntentReply(
+  /// Collect service + when; ready draft only after clarifying — user must tap «Запись».
+  ({String reply, AgentBookingDraft? draft})? _bookFlow(
     String q, {
+    required String raw,
     ClientGender? gender,
+    String? lastBot,
+    String? lastUser,
+    List<String> recentUsers = const [],
     required List<Service> localServices,
     required List<Product> localProducts,
     required List<YcService> liveServices,
     required List<Device> localDevices,
     required List<Infusion> localInfusions,
   }) {
+    final prev = _normalize(lastBot ?? '');
+    final topic = _topicBlob(lastUser: lastUser, recentUsers: recentUsers);
+    final awaitingConfirm = prev.contains('нажмите кнопку «запись»') ||
+        prev.contains('голосом «да» я визит ещё не оформлю') ||
+        prev.contains('проверяем наговорённое');
+    final awaitingService = prev.contains('на какую услугу') ||
+        prev.contains('скажите услугу') ||
+        prev.contains('уточним процедуру');
+    final awaitingWhen = prev.contains('когда удобнее') ||
+        prev.contains('подскажите день') ||
+        prev.contains('осталось окно') ||
+        prev.contains('утро, день или вечер');
+    final continuing = awaitingConfirm || awaitingService || awaitingWhen;
     final wants = q.contains('запиши') ||
         q.contains('записать меня') ||
         q.contains('запишите') ||
         q.contains('давай запишемся') ||
         q.contains('давайте запишемся') ||
-        q.contains('хочу записаться на') ||
+        q.contains('хочу записаться') ||
         q.contains('хочу на процедуру') ||
+        q.contains('запишемся') ||
         (q.contains('хочу на') &&
             (q.contains('массаж') ||
                 q.contains('rf') ||
@@ -774,80 +834,361 @@ class CultAgent {
                 q.contains('консульт') ||
                 q.contains('чистка') ||
                 q.contains('лазер')));
-    if (!wants) return null;
+    final slotOnly = _extractTimeLabel(q) != null ||
+        _extractWeekday(q) != null ||
+        q.contains('завтра') ||
+        q.contains('послезавтра') ||
+        q.contains('сегодня');
+    if (!wants && !(continuing && (slotOnly || awaitingService || awaitingConfirm))) {
+      return null;
+    }
 
-    final morning = q.contains('утром') ||
+    if (continuing &&
+        (q.contains('не надо запис') ||
+            q.contains('не нужно запис') ||
+            compactCancel(q) ||
+            (q.contains('отмен') && !q.contains('отмен запис')))) {
+      return (
+        reply: 'Хорошо, запись не оформляю. Если передумаете — просто скажите, на какую услугу и когда удобнее.',
+        draft: null,
+      );
+    }
+
+    // Voice «да» after summary is not enough — need the Запись button.
+    if (awaitingConfirm && _isShortYes(q)) {
+      return (
+        reply:
+            'Чтобы я зафиксировала визит, нажмите кнопку «Запись» ниже — голосом «да» мало, нужна ваша подтверждённая отметка.',
+        draft: _draftFromConversation(
+          q: q,
+          topic: topic,
+          lastBot: lastBot,
+          gender: gender,
+          localServices: localServices,
+          localProducts: localProducts,
+          liveServices: liveServices,
+          localDevices: localDevices,
+          localInfusions: localInfusions,
+        ),
+      );
+    }
+
+    final service = _resolveBookService(
+      q: q,
+      topic: '$topic ${lastBot ?? ''}',
+      gender: gender,
+      localServices: localServices,
+      localProducts: localProducts,
+      liveServices: liveServices,
+      localDevices: localDevices,
+      localInfusions: localInfusions,
+    );
+    final whenLabel = _extractWhenLabel(q) ??
+        (continuing ? _extractWhenLabel(_normalize(lastUser ?? '')) : null);
+    final doctor = _resolveBookDoctor(q) ??
+        (gender == ClientGender.man ? doctors.last.name : doctors.first.name);
+
+    if (service == null || service.trim().length < 3) {
+      final whenHint = whenLabel == null ? '' : ' Ориентир по времени уже есть: $whenLabel.';
+      return (
+        reply: _pick('book-ask-service', [
+          'Запишем.$whenHint На какую услугу из CULT — массаж, уход, RF, пилинг, инфузия или консультация?',
+          'С удовольствием.$whenHint Скажите услугу: скульптурный массаж, HydraPure, микроигольчатый RF, пилинг или капельница?',
+          'Давайте уточним процедуру.$whenHint Что берём в кресло — массаж, уход, аппаратная, инъекции или инфузия?',
+        ], raw),
+        draft: null,
+      );
+    }
+
+    if (whenLabel == null) {
+      return (
+        reply: _pick('book-ask-when', [
+          '«$service» — хороший выбор. Когда удобнее: завтра, день недели, утро или вечер?',
+          'Беру «$service». Подскажите день и время — утро, день или вечер, можно «в пятницу вечером».',
+          'Ок, «$service». Осталось окно: завтра / день недели и утро или вечер?',
+        ], raw),
+        draft: null,
+      );
+    }
+
+    final dateIso = _resolveBookDate(q, fallbackUser: lastUser);
+    final time = _resolveBookTime(q, fallbackUser: lastUser);
+    final draft = AgentBookingDraft(
+      service: service,
+      doctor: doctor,
+      date: dateIso,
+      time: time,
+      summary: '$service · $doctor · ${_humanBookWhen(dateIso, time, whenLabel)}',
+    );
+    return (
+      reply: 'Проверяем наговорённое: ${draft.summary}. '
+          'Если всё верно — нажмите кнопку «Запись» ниже. '
+          'Голосом «да» я визит ещё не оформлю: нужна ваша отметка на кнопке. '
+          'Можем поправить услугу или время — просто скажите.',
+      draft: draft,
+    );
+  }
+
+  bool compactCancel(String q) =>
+      q == 'отмена' || q == 'не надо' || q == 'потом' || q == 'не сейчас';
+
+  bool _isShortYes(String q) {
+    final c = q.replaceAll(RegExp(r'[!?.,…]+'), ' ').trim();
+    return const {
+      'да',
+      'ага',
+      'угу',
+      'ок',
+      'окей',
+      'хорошо',
+      'давай',
+      'конечно',
+      'подтверждаю',
+      'верно',
+    }.contains(c);
+  }
+
+  String? _extractTimeLabel(String q) {
+    if (q.contains('утром') ||
         q.contains('с утра') ||
         q.contains('на утро') ||
-        q.contains('пораньше');
-    final evening = q.contains('вечером') ||
+        q.contains('пораньше') ||
+        q == 'утро') {
+      return 'утро';
+    }
+    if (q.contains('днём') || q.contains('днем') || q.contains('на день') || q == 'день') {
+      return 'день';
+    }
+    if (q.contains('вечером') ||
         q.contains('на вечер') ||
         q.contains('после работ') ||
-        q.contains('попозже');
-    final weekend = q.contains('в выходн') ||
-        q.contains('на выходн') ||
-        q.contains('в субботу') ||
-        q.contains('в воскресенье');
-    final timeNote = [
-      if (morning) 'утро',
-      if (evening) 'вечер',
-      if (weekend) 'выходные',
-    ];
+        q.contains('попозже') ||
+        q == 'вечер') {
+      return 'вечер';
+    }
+    return null;
+  }
 
+  String? _extractWeekday(String q) {
+    if (q.contains('понедельник')) return 'понедельник';
+    if (q.contains('вторник')) return 'вторник';
+    if (q.contains('сред')) return 'среда';
+    if (q.contains('четверг')) return 'четверг';
+    if (q.contains('пятниц')) return 'пятница';
+    if (q.contains('суббот')) return 'суббота';
+    if (q.contains('воскресень')) return 'воскресенье';
+    return null;
+  }
+
+  String? _extractWhenLabel(String q) {
+    final parts = <String>[
+      if (q.contains('сегодня')) 'сегодня',
+      if (q.contains('послезавтра')) 'послезавтра',
+      if (q.contains('завтра')) 'завтра',
+      if (_extractWeekday(q) != null) _extractWeekday(q)!,
+      if (q.contains('выходн')) 'выходные',
+      if (_extractTimeLabel(q) != null) _extractTimeLabel(q)!,
+    ];
+    if (parts.isEmpty) return null;
+    return parts.join(', ');
+  }
+
+  String? _resolveBookService({
+    required String q,
+    required String topic,
+    ClientGender? gender,
+    required List<Service> localServices,
+    required List<Product> localProducts,
+    required List<YcService> liveServices,
+    required List<Device> localDevices,
+    required List<Infusion> localInfusions,
+  }) {
     var rest = q
         .replaceAll('запиши меня на', ' ')
         .replaceAll('запиши на', ' ')
         .replaceAll('записать меня на', ' ')
         .replaceAll('запишите на', ' ')
         .replaceAll('хочу записаться на', ' ')
+        .replaceAll('хочу записаться', ' ')
         .replaceAll('давай запишемся на', ' ')
         .replaceAll('давайте запишемся на', ' ')
         .replaceAll('хочу на процедуру', ' ')
         .replaceAll(RegExp(r'^хочу на\s+'), ' ')
         .replaceAll('запиши меня', ' ')
         .replaceAll('запиши', ' ')
-        .replaceAll('вечером', ' ')
-        .replaceAll('утром', ' ')
-        .replaceAll('на вечер', ' ')
-        .replaceAll('на утро', ' ')
-        .replaceAll('с утра', ' ')
-        .replaceAll('после работы', ' ')
-        .replaceAll('после работ', ' ')
-        .replaceAll('в субботу', ' ')
-        .replaceAll('в воскресенье', ' ')
-        .replaceAll('на выходных', ' ')
-        .replaceAll('в выходные', ' ')
+        .replaceAll('запишемся', ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
+    for (final noise in [
+      'вечером',
+      'утром',
+      'днём',
+      'днем',
+      'на вечер',
+      'на утро',
+      'с утра',
+      'после работы',
+      'после работ',
+      'завтра',
+      'послезавтра',
+      'сегодня',
+      'в понедельник',
+      'во вторник',
+      'в среду',
+      'в четверг',
+      'в пятницу',
+      'в субботу',
+      'в воскресенье',
+      'на выходных',
+      'в выходные',
+      'пожалуйста',
+    ]) {
+      rest = rest.replaceAll(noise, ' ');
+    }
+    rest = rest.replaceAll(RegExp(r'\s+'), ' ').trim();
 
-    final when = timeNote.isEmpty
-        ? ''
-        : ' Ориентир по времени: ${timeNote.join(' / ')} (клиника 9:00–21:00).';
-
-    if (rest.isEmpty || rest.length < 3) {
-      return 'Запишем с удовольствием. Нажмите «+» на главной или «Запись» в меню — услуга, врач, время.$when '
-          'Можете голосом назвать процедуру, я подтвержу направление.';
+    if (rest.length >= 3) {
+      final hit = _catalogHit(
+        rest,
+        localServices: localServices,
+        localProducts: localProducts,
+        liveServices: liveServices,
+        localDevices: localDevices,
+        localInfusions: localInfusions,
+        gender: gender,
+      );
+      if (hit != null && hit.score >= 5) {
+        return RegExp(r'«([^»]+)»').firstMatch(hit.reply)?.group(1) ?? rest;
+      }
+      if (rest.length >= 4 &&
+          !const {'утро', 'вечер', 'день', 'завтра', 'сегодня'}.contains(rest)) {
+        final svc = _clinicService(rest, gender: gender);
+        if (svc != null) return svc.title;
+        final inf = _clinicInfusion(rest);
+        if (inf != null) return inf.title;
+      }
     }
 
-    final hit = _catalogHit(
-      rest,
+    // Recover service from prior bot/user turns («…»).
+    final named = RegExp(r'«([^»]+)»').allMatches(topic).toList();
+    for (final m in named.reversed) {
+      final title = m.group(1)?.trim() ?? '';
+      if (title.length < 3) continue;
+      if (_clinicService(title, gender: gender) != null ||
+          _clinicInfusion(title) != null ||
+          liveServices.any((s) => _normalize(s.title).contains(_normalize(title)))) {
+        return title;
+      }
+    }
+    return null;
+  }
+
+  String? _resolveBookDoctor(String q) {
+    for (final d in doctors) {
+      final n = _normalize(d.name);
+      final short = n.split(RegExp(r'\s+')).where((w) => w.length >= 4);
+      if (q.contains(n)) return d.name;
+      for (final w in short) {
+        if (q.contains(w)) return d.name;
+      }
+    }
+    return null;
+  }
+
+  String _resolveBookDate(String q, {String? fallbackUser}) {
+    final blob = '$q ${_normalize(fallbackUser ?? '')}';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    DateTime day = today.add(const Duration(days: 1));
+    if (blob.contains('сегодня')) {
+      day = today;
+    } else if (blob.contains('послезавтра')) {
+      day = today.add(const Duration(days: 2));
+    } else if (blob.contains('завтра')) {
+      day = today.add(const Duration(days: 1));
+    } else {
+      final wd = _extractWeekday(blob);
+      if (wd != null) {
+        const map = {
+          'понедельник': DateTime.monday,
+          'вторник': DateTime.tuesday,
+          'среда': DateTime.wednesday,
+          'четверг': DateTime.thursday,
+          'пятница': DateTime.friday,
+          'суббота': DateTime.saturday,
+          'воскресенье': DateTime.sunday,
+        };
+        final target = map[wd]!;
+        var probe = today.add(const Duration(days: 1));
+        while (probe.weekday != target) {
+          probe = probe.add(const Duration(days: 1));
+        }
+        day = probe;
+      } else if (blob.contains('выходн')) {
+        var probe = today.add(const Duration(days: 1));
+        while (probe.weekday != DateTime.saturday) {
+          probe = probe.add(const Duration(days: 1));
+        }
+        day = probe;
+      }
+    }
+    final m = day.month.toString().padLeft(2, '0');
+    final d = day.day.toString().padLeft(2, '0');
+    return '${day.year}-$m-$d';
+  }
+
+  String _resolveBookTime(String q, {String? fallbackUser}) {
+    final blob = '$q ${_normalize(fallbackUser ?? '')}';
+    final label = _extractTimeLabel(blob);
+    return switch (label) {
+      'утро' => '10:30',
+      'день' => '14:00',
+      'вечер' => '18:30',
+      _ => '12:00',
+    };
+  }
+
+  String _humanBookWhen(String dateIso, String time, String whenLabel) {
+    return '$whenLabel · $time';
+  }
+
+  AgentBookingDraft? _draftFromConversation({
+    required String q,
+    required String topic,
+    String? lastBot,
+    ClientGender? gender,
+    required List<Service> localServices,
+    required List<Product> localProducts,
+    required List<YcService> liveServices,
+    required List<Device> localDevices,
+    required List<Infusion> localInfusions,
+  }) {
+    final service = _resolveBookService(
+      q: q,
+      topic: '$topic ${lastBot ?? ''}',
+      gender: gender,
       localServices: localServices,
       localProducts: localProducts,
       liveServices: liveServices,
       localDevices: localDevices,
       localInfusions: localInfusions,
-      gender: gender,
     );
-    if (hit != null && hit.score >= 5) {
-      final named = RegExp(r'«([^»]+)»').firstMatch(hit.reply)?.group(1);
-      final title = named ?? rest;
-      return 'Отлично, берём курс на «$title». '
-          'Запись: откройте «+» на главной или меню «Запись» — услуга, врач и время.$when '
-          'Если слотов не видно — напишите администратору в чат, помогут вручную.\n'
-          '${_briefRestate(hit.reply)}';
-    }
-    return 'Запишем на «$rest»: откройте «+» или «Запись» и выберите ближайшее окно.$when '
-        'Если название в прайсе чуть другое — на осмотре или с администратором уточним.';
+    if (service == null) return null;
+    final when = _extractWhenLabel(q) ??
+        _extractWhenLabel(_normalize(topic)) ??
+        'ближайшее окно';
+    final dateIso = _resolveBookDate(q, fallbackUser: topic);
+    final time = _resolveBookTime(q, fallbackUser: topic);
+    final doctor =
+        _resolveBookDoctor(q) ??
+        (gender == ClientGender.man ? doctors.last.name : doctors.first.name);
+    return AgentBookingDraft(
+      service: service,
+      doctor: doctor,
+      date: dateIso,
+      time: time,
+      summary: '$service · $doctor · ${_humanBookWhen(dateIso, time, when)}',
+    );
   }
 
   String? _priceObjectionReply(String q, String? lastBot) {
@@ -1767,14 +2108,14 @@ class CultAgent {
       final man = gender == ClientGender.man;
       return man
           ? _pick('greet-m', const [
-              'Здравствуйте, рад вас слышать. Можно без названий: кожа, энергия или запись — с чего удобнее?',
-              'Здравствуйте. Я из CULT: расскажите, что сейчас важнее — вид в зеркале, силы или визит.',
-              'Здравствуйте. Давайте спокойно: кожа, энергия или запись — с чего начнём?',
+              'Здравствуйте, я Мира, косметолог CULT. Расскажите, что с кожей или самочувствием — подберу из наших протоколов.',
+              'Здравствуйте. Мира на связи: можем как на приёме — про овал, барьер, усталость или запись.',
+              'Здравствуйте. Я Мира из CULT. С чего начнём — зеркало, силы или визит?',
             ], q)
           : _pick('greet-w', const [
-              'Здравствуйте, очень приятно. Я рядом — можно просто поговорить о коже, энергии или записи.',
-              'Здравствуйте. Расскажите своими словами, что сейчас важно — подстроюсь без каталожного языка.',
-              'Здравствуйте, рада вас слышать. С чего удобнее: зеркало, самочувствие или сразу запись?',
+              'Здравствуйте, я Мира, косметолог CULT. Можно своими словами — про кожу, энергию или запись, я рядом.',
+              'Здравствуйте, рада вас слышать. Я Мира: давайте спокойно разберём, что сейчас важнее для кожи.',
+              'Здравствуйте. Меня зовут Мира — как на консультации в CULT. Зеркало, самочувствие или сразу визит?',
             ], q);
     }
     if (q.contains('как дела') ||
@@ -1829,9 +2170,9 @@ class CultAgent {
         q.contains('are you ai') ||
         q.contains('ты человек')) {
       return _pick('who-am-i', const [
-        'Я CULT Агент — голос клиники в приложении, не живой врач. Слушаю простыми словами и предлагаю мягкий шаг; осмотр — за специалистом. Кожа, энергия или запись?',
-        'Я помощник CULT, не заменяю врача. Могу сориентировать по прайсу, шопу и записи; клинические решения — очно. О чём подумаем?',
-        'Зовите CULT Агентом: рядом как на спокойной консультации. Врачебный вердикт — у специалиста, а я помогу сформулировать следующий шаг.',
+        'Я Мира — косметолог-консультант CULT в приложении. Не заменяю очный осмотр, но могу разобрать задачу и предложить наши услуги или шоп. О чём подумаем?',
+        'Меня зовут Мира. Я из команды CULT: говорю как на приёме, опираюсь на наш прайс и формулы. Клинический вердикт — за врачом очно. Чем помочь?',
+        'Я Мира, эксперт CULT по уходу и эстетике. Рядом голосом: кожа, энергия, запись — без роботского сценария.',
       ], q);
     }
     if (q.contains('на английском') ||
@@ -3803,7 +4144,34 @@ class CultAgent {
   }
 }
 
-/// Catalog card for the voice agent push rail.
+/// Pending visit collected by Мира — applied only after the user taps «Запись».
+class AgentBookingDraft {
+  const AgentBookingDraft({
+    required this.service,
+    required this.doctor,
+    required this.date,
+    required this.time,
+    required this.summary,
+  });
+
+  final String service;
+  final String doctor;
+  final String date;
+  final String time;
+  final String summary;
+}
+
+class AgentTurn {
+  const AgentTurn({required this.reply, this.pendingBooking});
+
+  final String reply;
+  final AgentBookingDraft? pendingBooking;
+}
+
+/// Display name of the on-device cosmetologist agent.
+const cultAgentName = 'Мира';
+
+/// Catalog card helper (kept for tests; voice UI no longer pushes suggestions).
 class AgentOffer {
   const AgentOffer({
     required this.title,

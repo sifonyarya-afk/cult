@@ -723,9 +723,9 @@ class _CultDockBar extends StatelessWidget {
                 child: Semantics(
                   button: true,
                   selected: agentSelected,
-                  label: 'Агент',
+                  label: 'Мира',
                   child: Tooltip(
-                    message: 'Агент',
+                    message: 'Мира',
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(

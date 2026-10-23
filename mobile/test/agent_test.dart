@@ -135,6 +135,21 @@ void main() {
     expect(reply.toLowerCase(), isNot(contains('лицо, тело, энергия или запись')));
   });
 
+  test('Запись требует кнопку подтверждения после уточнений', () {
+    final ask = cultAgent.respond('Запиши меня на массаж');
+    expect(ask.pendingBooking, isNull);
+    expect(ask.reply.toLowerCase(), anyOf(contains('когда'), contains('утро')));
+    final ready = cultAgent.respond(
+      'вечером в пятницу',
+      lastBot: ask.reply,
+      lastUser: 'Запиши меня на массаж',
+      recentUsers: ['Запиши меня на массаж'],
+    );
+    expect(ready.pendingBooking, isNotNull);
+    expect(ready.reply.toLowerCase(), contains('кнопк'));
+    expect(ready.pendingBooking!.service.toLowerCase(), contains('массаж'));
+  });
+
   test('Событие завтра — без тяжёлой реабилитации', () {
     final reply = cultAgent.answer('Завтра свадьба, что можно сделать с лицом?');
     expect(reply.toLowerCase(), anyOf(contains('массаж'), contains('уход')));
@@ -239,7 +254,7 @@ void main() {
   test('Запись вечером принимает слот', () {
     final reply = cultAgent.answer('Хочу записаться вечером');
     expect(reply.toLowerCase(), contains('вечер'));
-    expect(reply, contains('9:00'));
+    expect(reply.toLowerCase(), anyOf(contains('услуг'), contains('массаж')));
   });
 
   test('Агент знает врача Элара', () {
@@ -268,8 +283,8 @@ void main() {
 
   test('Запиши на массаж ведёт к записи', () {
     final reply = cultAgent.answer('Запиши меня на массаж');
-    expect(reply.toLowerCase(), contains('запис'));
-    expect(reply.toLowerCase(), anyOf(contains('массаж'), contains('«+»'), contains('+')));
+    expect(reply.toLowerCase(), anyOf(contains('массаж'), contains('услуг')));
+    expect(reply.toLowerCase(), anyOf(contains('когда'), contains('утро'), contains('вечер')));
   });
 
   test('Сессия помнит без уколов', () {
@@ -283,9 +298,11 @@ void main() {
   });
 
   test('Запиши на массаж вечером учитывает время', () {
-    final reply = cultAgent.answer('Запиши меня на массаж вечером');
-    expect(reply.toLowerCase(), contains('массаж'));
-    expect(reply.toLowerCase(), contains('вечер'));
+    final turn = cultAgent.respond('Запиши меня на массаж вечером');
+    expect(turn.reply.toLowerCase(), contains('массаж'));
+    expect(turn.reply.toLowerCase(), contains('вечер'));
+    expect(turn.pendingBooking, isNotNull);
+    expect(turn.reply.toLowerCase(), contains('кнопк'));
   });
 
   test('Дорого после цены предлагает мягче', () {
@@ -362,7 +379,7 @@ void main() {
   test('Запись в пятницу', () {
     final reply = cultAgent.answer('Хочу записаться в пятницу');
     expect(reply.toLowerCase(), contains('пятниц'));
-    expect(reply, contains('9:00'));
+    expect(reply.toLowerCase(), anyOf(contains('услуг'), contains('массаж')));
   });
 
   test('Напомни собирает якоря диалога', () {
@@ -405,10 +422,10 @@ void main() {
     expect(reply.toLowerCase(), isNot(contains('лицо или тело')));
   });
 
-  test('Ты робот — отвечает про CULT Агент', () {
+  test('Ты робот — отвечает про Миру', () {
     final reply = cultAgent.answer('ты робот?');
-    expect(reply.toLowerCase(), contains('cult'));
-    expect(reply.toLowerCase(), anyOf(contains('агент'), contains('помощ')));
+    expect(reply.toLowerCase(), contains('мира'));
+    expect(reply.toLowerCase(), anyOf(contains('cult'), contains('косметолог')));
   });
 
   test('Подробнее дополняет lastBot', () {
@@ -558,7 +575,7 @@ void main() {
     expect(reply.toLowerCase(), anyOf(contains('назовите'), contains('прайс')));
   });
 
-  test('Старое приветствие бота обновляется на CULT Агент', () async {
+  test('Старое приветствие бота обновляется на Миру', () async {
     SharedPreferences.setMockInitialValues({
       'cult-flutter':
           '{"threads":{"bot":[{"id":"old","from":"them","text":"Я ассистент CULT. Спросите про услуги."}]},"chatRead":{"bot":"old"},"cart":[],"appointments":[],"orders":[],"gifts":[],"favorites":[],"spent":0,"welcomeBonus":0,"welcomeGranted":false,"notices":{},"profileName":"","profilePhone":"","profileEmail":""}',
@@ -567,11 +584,11 @@ void main() {
     await store.load();
     final bot = store.threads['bot']!;
     expect(bot.length, 1);
-    expect(bot.first.text, contains('CULT'));
-    expect(bot.first.text.toLowerCase(), contains('говор'));
+    expect(bot.first.text, contains('Мира'));
+    expect(bot.first.text.toLowerCase(), contains('кож'));
     expect(
       bot.first.text.toLowerCase(),
-      anyOf(contains('кож'), contains('запис'), contains('визит')),
+      anyOf(contains('запис'), contains('услуг'), contains('уход')),
     );
   });
 
@@ -583,13 +600,17 @@ void main() {
     expect(reply.toLowerCase(), isNot(contains('одного ориентира достаточно')));
   });
 
-  test('suggestOffers даёт карточки услуг или шопа', () {
-    final offers = cultAgent.suggestOffers(
-      'Понимаю: стянутость и сухость часто про барьер. Дома — барьерный крем Lumen Barrier.',
-      lastUser: 'сухость лица',
-    );
-    expect(offers, isNotEmpty);
-    expect(offers.first.title, isNotEmpty);
-    expect(offers.first.priceLabel, isNotEmpty);
+  test('Кнопка Запись фиксирует визит из черновика Миры', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    store.sendMessage('bot', 'Запиши меня на скульптурный массаж вечером в пятницу');
+    expect(store.agentBookingDraft, isNotNull);
+    final before = store.upcoming.length;
+    final line = store.confirmAgentBooking();
+    expect(line, isNotNull);
+    expect(store.agentBookingDraft, isNull);
+    expect(store.upcoming.length, before + 1);
+    expect(store.upcoming.first.service.toLowerCase(), contains('массаж'));
   });
 }

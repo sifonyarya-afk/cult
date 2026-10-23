@@ -830,15 +830,15 @@ class Contact {
 }
 
 /// Bump when shipping a user-visible feature so a Mac pull proves the build is fresh.
-const cultBuildTag = 'pearl-agent-v25';
+const cultBuildTag = 'mira-book-v26';
 
 const contacts = <Contact>[
   Contact(
     id: 'bot',
-    name: 'CULT Агент',
-    role: 'Как на приёме · голосом',
+    name: 'Мира',
+    role: 'Косметолог CULT · голосом',
     seed:
-        'Здравствуйте. Я из CULT — можно просто поговорить о коже, самочувствии, дате визита или записи. Я рядом.',
+        'Здравствуйте, я Мира — косметолог CULT. Расскажите, что с кожей или самочувствием: подберу наши услуги и уход. Если захотите визит — уточню детали и попрошу ваше подтверждение.',
   ),
   Contact(
     id: 'admin',

@@ -8,7 +8,7 @@ import '../store.dart';
 import '../theme.dart';
 import '../tts.dart';
 import '../widgets.dart';
-/// Voice-first CULT Агент: pearl orb in the center, living consultation.
+/// Voice-first Мира: pearl orb, living consult, booking only via «Запись».
 class AgentVoicePage extends StatefulWidget {
   const AgentVoicePage({super.key, this.active = true});
 
@@ -33,7 +33,6 @@ class _AgentVoicePageState extends State<AgentVoicePage>
   var _busy = false;
   var _partial = '';
   var _status = 'Коснитесь жемчужины — и говорите';
-  List<AgentOffer> _offers = const [];
 
   late final AnimationController _pulse;
 
@@ -269,21 +268,8 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     store.markChatRead('bot');
     final reply = store.threads['bot']?.lastOrNull;
     final line = (reply != null && reply.from == 'them') ? reply.text : '';
-    final offers = line.isEmpty
-        ? <AgentOffer>[]
-        : cultAgent.suggestOffers(
-            line,
-            lastUser: text,
-            localServices: store.catalogServices,
-            localProducts: products,
-            localInfusions: infusions,
-            gender: store.gender,
-          );
     if (!mounted) return;
-    setState(() {
-      _offers = offers;
-      _status = 'Отвечаю…';
-    });
+    setState(() => _status = 'Отвечаю…');
     _syncPulse();
     _scrollToEnd();
     if (line.isNotEmpty) {
@@ -296,24 +282,50 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     if (!mounted) return;
     setState(() {
       _speaking = false;
-      _status = 'Слушаю вас';
+      _status = store.agentBookingDraft != null
+          ? 'Проверьте детали и нажмите «Запись»'
+          : 'Слушаю вас';
     });
     _syncPulse();
     _busy = false;
+    if (store.agentBookingDraft != null) return;
     await Future<void>.delayed(const Duration(milliseconds: 280));
     if (!mounted || _listening || _speaking) return;
     await _startListen(store, auto: true);
   }
 
-  Future<void> _askOffer(ClinicStore store, AgentOffer offer) async {
-    if (_busy) return;
+  Future<void> _confirmBooking(ClinicStore store) async {
+    if (_busy || store.agentBookingDraft == null) return;
+    _busy = true;
+    cultTapFeedback();
     try {
       await _speech.stop();
     } catch (_) {}
     try {
       await _tts.stop();
     } catch (_) {}
-    await _finishUtterance(store, offer.ask);
+    final line = store.confirmAgentBooking();
+    if (!mounted) return;
+    setState(() {
+      _speaking = true;
+      _status = 'Записываю…';
+    });
+    _syncPulse();
+    HapticFeedback.mediumImpact();
+    if (line != null && line.isNotEmpty) {
+      await _tts.speak(line, complete: true);
+    }
+    if (!mounted) return;
+    setState(() {
+      _speaking = false;
+      _status = 'Слушаю вас';
+    });
+    _syncPulse();
+    _busy = false;
+    showCultSnack(context, 'Визит в «Мои записи»');
+    await Future<void>.delayed(const Duration(milliseconds: 280));
+    if (!mounted || _listening || _speaking) return;
+    await _startListen(store, auto: true);
   }
 
   void _scrollToEnd() {
@@ -333,7 +345,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
       builder: (dialogContext) => AlertDialog(
         title: const Text('Очистить разговор?'),
         content: const Text(
-          'История с CULT Агентом на этом телефоне сбросится к приветствию.',
+          'История с Мирой на этом телефоне сбросится к приветствию.',
         ),
         actions: [
           TextButton(
@@ -349,8 +361,8 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     );
     if (ok != true || !mounted) return;
     store.clearChat('bot');
+    store.clearAgentBookingDraft();
     setState(() {
-      _offers = const [];
       _partial = '';
       _status = 'Коснитесь жемчужины — и говорите';
     });
@@ -402,7 +414,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'CULT Агент',
+              cultAgentName,
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 17,
@@ -411,7 +423,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
               ),
             ),
             Text(
-              'Живой разговор',
+              'Косметолог CULT',
               style: TextStyle(color: Color(0xFFC4B49A), fontSize: 11),
             ),
           ],
@@ -457,35 +469,17 @@ class _AgentVoicePageState extends State<AgentVoicePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (_offers.isNotEmpty)
-                  SizedBox(
-                    height: 96,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _offers.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 10),
-                      itemBuilder: (context, index) {
-                        final offer = _offers[index];
-                        return _SuggestCard(
-                          offer: offer,
-                          onTap: () => _askOffer(store, offer),
-                          onBook: offer.kind == 'service' ||
-                                  offer.kind == 'infusion'
-                              ? () {
-                                  cultTapFeedback();
-                                  _askOffer(
-                                    store,
-                                    AgentOffer(
-                                      title: offer.title,
-                                      subtitle: offer.subtitle,
-                                      priceLabel: offer.priceLabel,
-                                      kind: offer.kind,
-                                      ask: 'Запиши меня на ${offer.title}',
-                                    ),
-                                  );
-                                }
-                              : null,
+                if (store.agentBookingDraft != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                    child: _BookingConfirmBar(
+                      draft: store.agentBookingDraft!,
+                      onConfirm: () => _confirmBooking(store),
+                      onEdit: () {
+                        cultTapFeedback();
+                        store.clearAgentBookingDraft();
+                        setState(
+                          () => _status = 'Скажите, что поправить — услугу или время',
                         );
                       },
                     ),
@@ -557,7 +551,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
                                   ? 'Остановить прослушивание'
                                   : (_speaking
                                       ? 'Остановить речь'
-                                      : 'Говорить с CULT Агентом'),
+                                      : 'Говорить с Мирой'),
                               child: GestureDetector(
                                 onTap: () => _onMainButton(store),
                                 child: _PearlOrb(
@@ -785,112 +779,68 @@ class _PearlOrb extends StatelessWidget {
   }
 }
 
-class _SuggestCard extends StatelessWidget {
-  const _SuggestCard({
-    required this.offer,
-    required this.onTap,
-    this.onBook,
+class _BookingConfirmBar extends StatelessWidget {
+  const _BookingConfirmBar({
+    required this.draft,
+    required this.onConfirm,
+    required this.onEdit,
   });
 
-  final AgentOffer offer;
-  final VoidCallback onTap;
-  final VoidCallback? onBook;
+  final AgentBookingDraft draft;
+  final VoidCallback onConfirm;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
-    final kindLabel = switch (offer.kind) {
-      'product' => 'Из шопа',
-      'infusion' => 'Инфузия',
-      _ => 'Услуга',
-    };
     return Material(
-      color: const Color(0xCC241E16),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: SizedBox(
-          width: 228,
-          height: 96,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
+      color: const Color(0xE6282218),
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Подтверждение визита',
+              style: TextStyle(
+                color: Color(0xFFB9A990),
+                fontSize: 11,
+                letterSpacing: 0.4,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              draft.summary,
+              style: const TextStyle(
+                color: Color(0xFFF6F0E6),
+                fontSize: 14,
+                height: 1.35,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        kindLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFFB9A990),
-                          fontSize: 11,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      offer.priceLabel,
-                      style: const TextStyle(
-                        color: Color(0xFFF6EFE3),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                TextButton(
+                  onPressed: onEdit,
+                  child: const Text('Изменить'),
                 ),
-                Text(
-                  offer.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                const Spacer(),
+                FilledButton(
+                  onPressed: onConfirm,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFE8D4B8),
+                    foregroundColor: const Color(0xFF1B1408),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22,
+                      vertical: 12,
+                    ),
                   ),
-                ),
-                Text(
-                  offer.subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFFC9BBA5),
-                    fontSize: 11,
-                  ),
-                ),
-                Row(
-                  children: [
-                    const Text(
-                      'Рассказать',
-                      style: TextStyle(
-                        color: Cult.sand,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (onBook != null) ...[
-                      const SizedBox(width: 14),
-                      GestureDetector(
-                        onTap: onBook,
-                        child: const Text(
-                          'Запись',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+                  child: const Text('Запись'),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );

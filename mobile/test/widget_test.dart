@@ -26,7 +26,7 @@ void main() {
     expect(find.text('Онлайн запись'), findsOneWidget);
     expect(find.text('Магазин биохакинга'), findsOneWidget);
     expect(find.text('Чат с врачом'), findsOneWidget);
-    expect(find.byTooltip('Агент'), findsOneWidget);
+    expect(find.byTooltip('Мира'), findsOneWidget);
     expect(find.text('CULT Агент'), findsNothing);
 
     await tester.ensureVisible(find.text('Мои анализы'));
@@ -73,12 +73,12 @@ void main() {
     await store.setGender(ClientGender.woman);
     await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Агент'));
+    await tester.tap(find.byTooltip('Мира'));
     // Agent pulse animation runs forever — don't pumpAndSettle.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 80));
-    expect(find.text('CULT Агент'), findsWidgets);
-    expect(find.text('Живой разговор'), findsOneWidget);
+    expect(find.text('Мира'), findsWidgets);
+    expect(find.text('Косметолог CULT'), findsOneWidget);
   });
 
   testWidgets('Чат из меню без карточки агента', (tester) async {
@@ -99,7 +99,7 @@ void main() {
     await tester.tap(find.text('Чат'));
     await tester.pumpAndSettle();
     expect(find.text('Центр поддержки'), findsOneWidget);
-    expect(find.textContaining('Живой разговор'), findsNothing);
+    expect(find.textContaining('Косметолог CULT'), findsNothing);
     expect(find.text('Настройки'), findsNothing);
   });
 
@@ -205,7 +205,10 @@ void main() {
     expect(thread.length, before + 2);
     expect(thread[thread.length - 2].from, 'me');
     expect(thread.last.from, 'them');
-    expect(thread.last.text.toLowerCase(), contains('запись'));
+    expect(
+      thread.last.text.toLowerCase(),
+      anyOf(contains('услуг'), contains('запиш'), contains('массаж')),
+    );
   });
 
   test('Корзина оформляет заказ и очищается', () async {
@@ -718,7 +721,7 @@ void main() {
     final text = store.chatTranscript('bot');
     expect(text, contains('CULT'));
     expect(text, contains('Вы:'));
-    expect(text.toLowerCase(), contains('запись'));
+    expect(text.toLowerCase(), anyOf(contains('мира'), contains('запиш')));
   });
 
   test('Бот отвечает про эпиляцию и мезотерапию', () async {

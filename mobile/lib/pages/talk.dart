@@ -31,7 +31,7 @@ class ChatPage extends StatelessWidget {
           Text('Центр поддержки', style: cultHeadline(30)),
           const SizedBox(height: 6),
           const Text(
-            'Администратор и врач клиники. CULT Агент — в нижней панели по центру.',
+            'Администратор и врач клиники. Мира — в нижней панели по центру.',
             style: TextStyle(color: Cult.muted),
           ),
           if (store.hasUnreadChat) ...[
