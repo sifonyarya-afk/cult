@@ -969,4 +969,46 @@ void main() {
     expect(reply.toLowerCase(), anyOf(contains('капель'), contains('документ'), contains('вен')));
     expect(reply.toLowerCase(), isNot(contains('давайте сузим вместе')));
   });
+
+  test('Носослёзная борозда не уходит в сужение носа', () {
+    final reply = cultAgent.answer('Хочу убрать носослёзную борозду без филлера');
+    expect(reply.toLowerCase(), anyOf(contains('носослёз'), contains('носослез'), contains('борозд')));
+    expect(reply.toLowerCase(), isNot(contains('сузить нос')));
+  });
+
+  test('Плацентарная терапия и папилломы не generic', () {
+    final plac = cultAgent.answer('Делаете ли плацентарную терапию?');
+    expect(plac.toLowerCase(), contains('плацентар'));
+    expect(plac.toLowerCase(), isNot(contains('меню «прайс»')));
+    final pap = cultAgent.answer('Делаете ли удаление папиллом?');
+    expect(pap.toLowerCase(), contains('папиллом'));
+    expect(pap.toLowerCase(), isNot(contains('если сложно сформулировать')));
+  });
+
+  test('RF при эндометриозе и страх ожога RF', () {
+    final endo = cultAgent.answer('Можно ли делать RF при эндометриозе?');
+    expect(endo.toLowerCase(), anyOf(contains('эндометр'), contains('допуск'), contains('врач')));
+    expect(endo.toLowerCase(), isNot(contains('меню «аппаратная»')));
+    final burn = cultAgent.answer('Боюсь что RF сожжёт кожу');
+    expect(burn.toLowerCase(), anyOf(contains('сжига'), contains('мощност'), contains('врач')));
+    expect(burn.toLowerCase(), isNot(contains('кислоты или ретинола')));
+  });
+
+  test('Вино после ботокса не прайс; Cellular Catalyst простыми словами', () {
+    final wine = cultAgent.answer('Сколько нельзя пить вино после ботокса?');
+    expect(wine.toLowerCase(), anyOf(contains('алкогол'), contains('вино'), contains('сутк')));
+    expect(wine, isNot(contains('₽')));
+    final cat = cultAgent.answer('Что такое Cellular Catalyst простыми словами?');
+    expect(cat.toLowerCase(), contains('catalyst'));
+    expect(cat.toLowerCase(), isNot(contains('скажите проще')));
+  });
+
+  test('Пилинг+биоревитал и умывание после чистки', () {
+    final combo = cultAgent.answer('Можно ли совместить пилинг и биоревитализацию?');
+    expect(combo.toLowerCase(), anyOf(contains('биоревитал'), contains('пилинг')));
+    expect(combo.toLowerCase(), isNot(contains('без сауны и бассейна пару дней')));
+    final wash = cultAgent.answer('После чистки можно умываться водой?');
+    expect(wash.toLowerCase(), anyOf(contains('умыв'), contains('вод'), contains('барьер')));
+    expect(wash.toLowerCase(), isNot(contains('если сложно сформулировать')));
+  });
 }
