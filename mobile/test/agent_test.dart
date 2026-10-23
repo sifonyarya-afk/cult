@@ -309,6 +309,32 @@ void main() {
     expect(reply.toLowerCase(), contains('ресепшен'));
   });
 
+  test('Возьму это после рекомендации', () {
+    final reply = cultAgent.answer(
+      'возьму это',
+      lastBot: 'Посмотрела Veil Peptide Serum. Стоит 12 500 ₽.',
+    );
+    expect(reply.toLowerCase(), contains('veil'));
+    expect(reply.toLowerCase(), contains('магазин'));
+  });
+
+  test('Хочу живого врача — handoff', () {
+    final reply = cultAgent.answer('Хочу живого врача');
+    expect(reply.toLowerCase(), anyOf(contains('врач'), contains('чат')));
+    expect(reply.toLowerCase(), contains('специалист'));
+  });
+
+  test('Кейсы до и после', () {
+    final reply = cultAgent.answer('Покажи результаты до и после');
+    expect(reply.toLowerCase(), contains('кейс'));
+  });
+
+  test('Сначала потом — последовательность', () {
+    final reply = cultAgent.answer('Что сначала, что потом?');
+    expect(reply.toLowerCase(), contains('сначала'));
+    expect(reply.toLowerCase(), contains('потом'));
+  });
+
   test('Мужской профиль не предлагает женский массаж первым', () {
     final reply = cultAgent.answer(
       'скульптурный массаж лица',

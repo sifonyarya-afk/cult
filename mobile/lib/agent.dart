@@ -49,6 +49,14 @@ class CultAgent {
     final care = _careFlowReply(q, gender: gender);
     if (care != null) return care;
 
+    // «Возьму это» after a named recommendation.
+    final take = _takeItReply(q, lastBot);
+    if (take != null) return take;
+
+    // Живой врач / администратор.
+    final handoff = _handoffReply(q);
+    if (handoff != null) return handoff;
+
     // «Запиши меня на…»
     final book = _bookIntentReply(
       q,
@@ -155,7 +163,7 @@ class CultAgent {
     }
     if (faq != null) return faq;
     if (hit != null && hit.score >= 5) {
-      return _withCatalogWarmth(q, hit.reply);
+      return _withCatalogWarmth(q, hit.reply, soft: true);
     }
 
     // Resume from previous user concern if this turn is vague.
@@ -714,7 +722,101 @@ class CultAgent {
       return 'Реактивной коже сначала возвращаем барьер, а не «мощный эффект». '
           'Старт: мягкий уход без кислот и барьерный крем; аппаратные и пилинги — только после осмотра. Запишем спокойную консультацию?';
     }
+    if (q.contains('до и после') ||
+        q.contains('до/после') ||
+        q.contains('результаты есть') ||
+        q.contains('есть результаты') ||
+        q.contains('покажи результат') ||
+        q.contains('покажите результат') ||
+        q.contains('фото работ') ||
+        (q.contains('кейс') && !q.contains('чемодан'))) {
+      return 'Живые клинические кейсы — в меню «Кейсы»: процедура, врач и комментарий. '
+          'Это не обещание идентичного результата, а ориентир. С карточки кейса можно перейти к записи на похожий протокол.';
+    }
+    if (q.contains('сначала') &&
+        (q.contains('потом') || q.contains('затем') || q.contains('после этого'))) {
+      return 'Логичная последовательность обычно такая: сначала осмотр и мягкий вход (уход/массаж), '
+          'потом при необходимости курс — аппаратная или инъекции — уже после согласия и без спешки. '
+          'Назовите цель и срок: соберу порядок под вас в двух шагах.';
+    }
+    if (q.contains('после моря') ||
+        q.contains('после пляж') ||
+        q.contains('после отпуск') ||
+        q.contains('обгорела') ||
+        q.contains('обгорел') ||
+        (q.contains('сочи') && (q.contains('кожа') || q.contains('влажн') || q.contains('солнц')))) {
+      return 'После моря и солнца в Сочи кожа часто обезвожена и чувствительна: сначала барьер и SPF, без агрессивных протоколов сразу. '
+          'Через несколько спокойных дней — уход или массаж; пилинг/IPL только после оценки. Могу подсказать крем или запись на мягкий уход.';
+    }
+    if (q.contains('не сейчас') ||
+        q.contains('потом как-нибудь') ||
+        q.contains('отложим') ||
+        q.contains('не готова') ||
+        q.contains('не готов')) {
+      return 'Хорошо, без спешки. Когда будете готовы — напишите или нажмите «Голос»: продолжим с того же места. '
+          'Могу коротко оставить домашний шаг (барьерный уход), если хотите не терять ритм.';
+    }
     return null;
+  }
+
+  String? _takeItReply(String q, String? lastBot) {
+    final compact = q
+        .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final hit = compact == 'возьму' ||
+        compact == 'беру' ||
+        compact == 'оформляй' ||
+        compact == 'оформляем' ||
+        compact == 'давай это' ||
+        compact == 'давайте это' ||
+        compact == 'согласна на это' ||
+        compact == 'согласен на это' ||
+        compact.contains('возьму это') ||
+        compact.contains('беру это') ||
+        compact.contains('давай его') ||
+        compact.contains('давай её') ||
+        compact.contains('давай ее');
+    if (!hit) return null;
+    if (lastBot == null || lastBot.isEmpty) {
+      return 'Отлично. Уточните, что берём — услугу через «+» или формулу в «Магазин» — и оформлю следующий шаг.';
+    }
+    final named = RegExp(r'«([^»]+)»').firstMatch(lastBot)?.group(1) ??
+        RegExp(r'Посмотрела ([^.]+)\.').firstMatch(lastBot)?.group(1)?.trim();
+    final shop = lastBot.toLowerCase().contains('магазин') ||
+        lastBot.toLowerCase().contains('корзин') ||
+        lastBot.contains('Посмотрела') ||
+        (lastBot.contains('₽') && lastBot.toLowerCase().contains('состав'));
+    if (named != null && named.isNotEmpty) {
+      if (shop) {
+        return 'Супер, берём «$named». Откройте карточку в «Магазин» и положите в корзину — или скажите администратору в чат для самовывоза. '
+            'На консультации при необходимости скорректируем.';
+      }
+      return 'Супер, остаёмся на «$named». Запись: «+» на главной или меню «Запись» — врач и время. '
+          'Если слот не находится, напишите администратору в чат.';
+    }
+    return 'Приняла. Откройте «+» для записи или «Магазин» для формулы — и завершите шаг. '
+        'Если нужно, коротко назовите ещё раз, что именно берём.';
+  }
+
+  String? _handoffReply(String q) {
+    final wantsHuman = q.contains('живого врача') ||
+        q.contains('настоящего врача') ||
+        q.contains('живого человека') ||
+        q.contains('реального человека') ||
+        q.contains('переведи на врача') ||
+        q.contains('соедини с врачом') ||
+        q.contains('позови врача') ||
+        q.contains('хочу к врачу') ||
+        q.contains('нужен врач не бот') ||
+        q.contains('хватит бота') ||
+        q.contains('оператор') ||
+        (q.contains('администратор') &&
+            (q.contains('напиш') || q.contains('позов') || q.contains('соеди')));
+    if (!wantsHuman) return null;
+    return 'Конечно — я только помощник, решение и осмотр за специалистом. '
+        'Откройте чат «Врач» или «Администратор» в разделе Чат, либо запишитесь через «+» / меню «Врачи». '
+        'Могу перед этим коротко сузить задачу, чтобы врачу было проще.';
   }
 
   String? _correctionReply(String q) {
@@ -863,16 +965,22 @@ class CultAgent {
     return null;
   }
 
-  String _withCatalogWarmth(String q, String reply) {
+  String _withCatalogWarmth(String q, String reply, {bool soft = false}) {
+    var out = reply;
     if (q.contains('боюсь') ||
         q.contains('страшно') ||
         q.contains('пережива')) {
-      return 'Понимаю осторожность — вот по делу, без давления. $reply';
+      out = 'Понимаю осторожность — вот по делу, без давления. $reply';
+    } else if (q.contains('не знаю') ||
+        q.contains('подскажи') ||
+        q.contains('посоветуй')) {
+      out = 'Давайте мягко. $reply';
     }
-    if (q.contains('не знаю') || q.contains('подскажи') || q.contains('посоветуй')) {
-      return 'Давайте мягко. $reply';
+    if (soft) {
+      return 'Если правильно поняла запрос — вот ближайшее. $out '
+          'Если мимо — скажите «не то» или уточните название.';
     }
-    return reply;
+    return out;
   }
 
   String? _metaReply(String q, String? lastBot) {
