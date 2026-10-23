@@ -27,11 +27,23 @@ class CultAgent {
           'или какой результат хотите к дате. Подскажу мягкий следующий шаг.';
     }
 
+    if (RegExp(r'^[.…\-\s]+$').hasMatch(q) || q == 'мм' || q == 'эм' || q == 'хм') {
+      return 'Я здесь. Можно просто сказать, что смущает — или нажать «Голос», если удобнее говорить.';
+    }
+
     final topic = _topicBlob(lastUser: lastUser, recentUsers: recentUsers);
 
-    // «Повтори / не поняла» — briefly restate last bot line.
+    // «Повтори / короче / не поняла».
     final meta = _metaReply(q, lastBot);
     if (meta != null) return meta;
+
+    // «Помогло / не помогло».
+    final feedback = _feedbackReply(q);
+    if (feedback != null) return feedback;
+
+    // «Напомни» / «о чём говорили».
+    final remind = _remindReply(q, topic: topic, lastBot: lastBot, lastUser: lastUser);
+    if (remind != null) return remind;
 
     // «Не то / мимо» — reset without arguing.
     final correction = _correctionReply(q);
@@ -206,6 +218,19 @@ class CultAgent {
       ['лимфо дренаж', 'лимфодренаж'],
       ['айпиэль', 'ipl'],
       ['ай пи эль', 'ipl'],
+      ['ботокс', 'ботокс'],
+      ['ботулинотерапи', 'ботулинотерапи'],
+      ['мезо терап', 'мезотерап'],
+      ['био ревитал', 'биоревитал'],
+      ['смас', 'smas'],
+      ['с мас', 'smas'],
+      ['ультразвуков', 'smas'],
+      ['контурн пластик', 'контурная пластика'],
+      ['липофилинг', 'липофилинг'],
+      ['beauty and glow', 'beauty & glow'],
+      ['бьюти глоу', 'beauty & glow'],
+      ['иммунити', 'immunity'],
+      ['имьюнити', 'immunity'],
     ];
     for (final pair in pairs) {
       t = t.replaceAll(pair[0], pair[1]);
@@ -393,7 +418,13 @@ class CultAgent {
     return null;
   }
 
-  ({bool noInject, bool noDevice, bool onlyHome, bool noInfus}) _sessionPrefs(
+  ({
+    bool noInject,
+    bool noDevice,
+    bool onlyHome,
+    bool noInfus,
+    bool allergy,
+  }) _sessionPrefs(
     String topic,
   ) {
     final t = topic;
@@ -414,12 +445,21 @@ class CultAgent {
       noInfus: t.contains('без капель') ||
           t.contains('без инфуз') ||
           t.contains('не хочу капель'),
+      allergy: t.contains('аллерг') ||
+          t.contains('не переношу') ||
+          t.contains('реакция на'),
     );
   }
 
   String _withSessionPrefs(
     String reply,
-    ({bool noInject, bool noDevice, bool onlyHome, bool noInfus}) prefs,
+    ({
+      bool noInject,
+      bool noDevice,
+      bool onlyHome,
+      bool noInfus,
+      bool allergy,
+    }) prefs,
   ) {
     if (prefs.onlyHome) {
       return 'Учитывая, что хотите домашний формат: $reply '
@@ -446,6 +486,10 @@ class CultAgent {
         (reply.contains('инфуз') || reply.contains('капель') || reply.contains('NAD'))) {
       return 'Помню: без капельниц. Давайте через уход, массаж или шоп — без инфузий. '
           'Что смущает в коже или самочувствии без капельниц?';
+    }
+    if (prefs.allergy) {
+      return '$reply '
+          'Важно: вы упоминали аллергию — на осмотре обязательно скажите врачу про реакции на анестезию, металлы или косметику; я не заменяю сбор анамнеза.';
     }
     return reply;
   }
@@ -819,6 +863,36 @@ class CultAgent {
         'Могу перед этим коротко сузить задачу, чтобы врачу было проще.';
   }
 
+  String? _remindReply(
+    String q, {
+    required String topic,
+    String? lastBot,
+    String? lastUser,
+  }) {
+    final asks = q.contains('напомни') ||
+        q.contains('о чём мы') ||
+        q.contains('о чем мы') ||
+        q.contains('что мы обсужд') ||
+        q.contains('к чему пришли') ||
+        q.contains('на чём останови') ||
+        q.contains('на чем останови');
+    if (!asks) return null;
+    final bits = <String>[];
+    if (lastUser != null && lastUser.trim().isNotEmpty) {
+      bits.add('вы говорили: «${_briefRestate(lastUser)}»');
+    }
+    if (lastBot != null && lastBot.trim().isNotEmpty) {
+      bits.add('я отвечала: «${_briefRestate(lastBot)}»');
+    }
+    if (topic.contains('без укол')) bits.add('ограничение: без уколов');
+    if (topic.contains('аллерг')) bits.add('важно: аллергия в анамнезе разговора');
+    if (bits.isEmpty) {
+      return 'Пока мало якорей в диалоге. Скажите зону или цель — зафиксируем и пойдём дальше.';
+    }
+    return 'Коротко, где мы: ${bits.join('; ')}. '
+        'Продолжим с этого или сбросим через «не то».';
+  }
+
   String? _correctionReply(String q) {
     final compact = q
         .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
@@ -916,6 +990,13 @@ class CultAgent {
         q.contains('на выходн') ||
         q.contains('в субботу') ||
         q.contains('в воскресенье');
+    final weekday = <String>[
+      if (q.contains('в понедельник') || q.contains('на понедельник')) 'понедельник',
+      if (q.contains('во вторник') || q.contains('на вторник')) 'вторник',
+      if (q.contains('в среду') || q.contains('на среду')) 'среда',
+      if (q.contains('в четверг') || q.contains('на четверг')) 'четверг',
+      if (q.contains('в пятницу') || q.contains('на пятницу')) 'пятница',
+    ];
     final bookingCue = q.contains('запис') ||
         q.contains('приех') ||
         q.contains('прийт') ||
@@ -924,13 +1005,14 @@ class CultAgent {
         q.contains('хочу на') ||
         q.contains('можно на') ||
         q.contains('давайте на');
-    if (!(morning || evening || weekend)) return null;
-    if (!bookingCue && !(morning || evening)) return null;
-    if (!bookingCue && weekend) return null;
+    if (!(morning || evening || weekend || weekday.isNotEmpty)) return null;
+    if (!bookingCue && !(morning || evening) && weekday.isEmpty) return null;
+    if (!bookingCue && weekend && weekday.isEmpty) return null;
     final when = [
       if (morning) 'утро',
       if (evening) 'вечер',
       if (weekend) 'выходные',
+      ...weekday,
     ].join(' / ');
     return 'Ориентир по времени приняла: $when. Клиника ежедневно 9:00–21:00. '
         'Откройте «+» или «Запись» и выберите окно; если нужен конкретный врач — напишите имя. '
@@ -984,6 +1066,17 @@ class CultAgent {
   }
 
   String? _metaReply(String q, String? lastBot) {
+    final compact = q
+        .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final wantsShort = compact == 'короче' ||
+        compact == 'покороче' ||
+        compact == 'кратко' ||
+        compact == 'в двух словах' ||
+        q.contains('скажи короче') ||
+        q.contains('можно короче') ||
+        q.contains('покороче пожалуйста');
     final wantsRepeat = q.contains('повтори') ||
         q.contains('повтор') ||
         q.contains('еще раз') ||
@@ -993,13 +1086,48 @@ class CultAgent {
         q.contains('не расслыша') ||
         q.contains('что ты сказа') ||
         q.contains('что вы сказа');
-    if (!wantsRepeat) return null;
+    if (!wantsRepeat && !wantsShort) return null;
     if (lastBot == null || lastBot.trim().isEmpty) {
-      return 'Конечно. Скажите ещё раз вопрос своими словами — отвечу короче и по шагам.';
+      return wantsShort
+          ? 'Хорошо, буду короче. Сформулируйте вопрос одним предложением — отвечу в двух фразах.'
+          : 'Конечно. Скажите ещё раз вопрос своими словами — отвечу короче и по шагам.';
     }
     final brief = _briefRestate(lastBot);
+    if (wantsShort) {
+      final one = brief.split(RegExp(r'(?<=[.!?])\s+')).first.trim();
+      return 'Короче: $one '
+          'Если нужно действие — скажите «запись», «крем» или «не то».';
+    }
     return 'Коротко повторю: $brief '
         'Если удобнее иначе — уточните зону или цель одним словом.';
+  }
+
+  String? _feedbackReply(String q) {
+    final compact = q
+        .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final good = compact == 'помогло' ||
+        compact == 'помогла' ||
+        compact.contains('очень помогло') ||
+        compact.contains('стало яснее') ||
+        compact.contains('теперь понятно') ||
+        compact.contains('супер спасибо') ||
+        (compact.contains('полезно') && compact.length <= 24);
+    final bad = compact == 'не помогло' ||
+        compact == 'не помогла' ||
+        compact.contains('вообще не то') ||
+        compact.contains('ерунда') ||
+        compact.contains('бесполезно') ||
+        compact.contains('не понятнее');
+    if (good) {
+      return 'Рада, что стало яснее. Если захотите следующий шаг — запись через «+», формула в «Магазин» или просто продолжим голосом.';
+    }
+    if (bad) {
+      return 'Спасибо, что сказали честно. Давайте иначе: одно слово — лицо, энергия, уход или запись — и я отвечу короче, без лишнего. '
+          'Или откройте чат врача, если нужен человек.';
+    }
+    return null;
   }
 
   String _briefRestate(String raw) {

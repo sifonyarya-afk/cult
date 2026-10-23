@@ -335,6 +335,47 @@ void main() {
     expect(reply.toLowerCase(), contains('потом'));
   });
 
+  test('Короче сжимает lastBot', () {
+    final reply = cultAgent.answer(
+      'короче',
+      lastBot:
+          'По услуге «Микроигольчатый RF»: 45 000 ₽, занимает 1 ч. Длинный текст про кожу и консультацию.',
+    );
+    expect(reply.toLowerCase(), contains('короче'));
+    expect(reply.toLowerCase(), contains('rf'));
+  });
+
+  test('Помогло — тёплый feedback', () {
+    final reply = cultAgent.answer('помогло');
+    expect(reply.toLowerCase(), anyOf(contains('рада'), contains('ясн')));
+  });
+
+  test('Аллергия в сессии добавляет caution', () {
+    final reply = cultAgent.answer(
+      'кожа сухая',
+      lastUser: 'У меня аллергия на анестезию',
+      recentUsers: ['У меня аллергия на анестезию'],
+    );
+    expect(reply.toLowerCase(), contains('аллерг'));
+  });
+
+  test('Запись в пятницу', () {
+    final reply = cultAgent.answer('Хочу записаться в пятницу');
+    expect(reply.toLowerCase(), contains('пятниц'));
+    expect(reply, contains('9:00'));
+  });
+
+  test('Напомни собирает якоря диалога', () {
+    final reply = cultAgent.answer(
+      'напомни о чём говорили',
+      lastUser: 'Кожа сухая',
+      lastBot: 'Попробуйте барьерный крем Lumen Barrier.',
+      recentUsers: ['Хочу без уколов', 'Кожа сухая'],
+    );
+    expect(reply.toLowerCase(), contains('говорили'));
+    expect(reply.toLowerCase(), anyOf(contains('сух'), contains('барьер'), contains('укол')));
+  });
+
   test('Мужской профиль не предлагает женский массаж первым', () {
     final reply = cultAgent.answer(
       'скульптурный массаж лица',

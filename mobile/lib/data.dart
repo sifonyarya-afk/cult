@@ -816,7 +816,7 @@ class Contact {
 }
 
 /// Bump when shipping a user-visible feature so Settings proves the Mac build is fresh.
-const cultBuildTag = 'agent-replies-v8';
+const cultBuildTag = 'agent-replies-v9';
 
 const contacts = <Contact>[
   Contact(
