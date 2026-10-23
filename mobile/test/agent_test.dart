@@ -446,6 +446,56 @@ void main() {
     expect(reply, contains('₽'));
   });
 
+  test('Для мамы предлагает сертификат или запись', () {
+    final reply = cultAgent.answer('для мамы');
+    expect(reply.toLowerCase(), anyOf(contains('сертификат'), contains('запис')));
+  });
+
+  test('Выпадение волос не уходит в generic', () {
+    final reply = cultAgent.answer('выпадение волос');
+    expect(reply.toLowerCase(), anyOf(contains('волос'), contains('мезо'), contains('голов')));
+    expect(reply.toLowerCase(), isNot(contains('слышу вас — давайте сузим')));
+  });
+
+  test('VIP / консьерж отвечает по делу', () {
+    final reply = cultAgent.answer('консьерж');
+    expect(reply.toLowerCase(), anyOf(contains('vip'), contains('администратор'), contains('трансфер')));
+  });
+
+  test('ok после thanks не generic', () {
+    final reply = cultAgent.answer(
+      'ok',
+      lastBot: 'И вам спасибо за доверие. Я рядом — можно продолжить голосом или текстом, без спешки.',
+    );
+    expect(reply.toLowerCase(), contains('хорошо'));
+    expect(reply.toLowerCase(), isNot(contains('слышу вас — давайте сузим')));
+  });
+
+  test('Что делать после опоздания', () {
+    final reply = cultAgent.answer(
+      'что делать',
+      lastBot: 'Если опаздываете — напишите администратору в чат с запасом 10–15 минут.',
+      lastUser: 'опоздаю на 15 минут',
+    );
+    expect(reply.toLowerCase(), contains('администратор'));
+  });
+
+  test('Что тогда после без уколов', () {
+    final pref = cultAgent.answer('без уколов', lastUser: 'морщины');
+    final reply = cultAgent.answer(
+      'что тогда',
+      lastBot: pref,
+      lastUser: 'без уколов',
+      recentUsers: ['морщины', 'без уколов'],
+    );
+    expect(reply.toLowerCase(), anyOf(contains('массаж'), contains('уход')));
+  });
+
+  test('Apple Pay FAQ', () {
+    final reply = cultAgent.answer('apple pay');
+    expect(reply.toLowerCase(), anyOf(contains('оплат'), contains('pay'), contains('карт')));
+  });
+
   test('Старое приветствие бота обновляется на CULT Агент', () async {
     SharedPreferences.setMockInitialValues({
       'cult-flutter':
