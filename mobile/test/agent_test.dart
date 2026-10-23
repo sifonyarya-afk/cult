@@ -1143,4 +1143,49 @@ void main() {
     final bath = cultAgent.answer('После капельницы можно в баню в тот же день?');
     expect(bath.toLowerCase(), anyOf(contains('капель'), contains('бан'), contains('саун')));
   });
+
+  test('Гастрит/эпилепсия + капельница не меню инфузий', () {
+    final gas = cultAgent.answer('Можно ли капельницу при гастрите?');
+    expect(gas.toLowerCase(), contains('гастрит'));
+    expect(gas.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final ep = cultAgent.answer('У меня эпилепсия — капельницу можно?');
+    expect(ep.toLowerCase(), contains('эпилепс'));
+    expect(ep.toLowerCase(), isNot(contains('меню «инфузии»')));
+  });
+
+  test('Блеск на лбу и пора на биоревитализацию', () {
+    final shine = cultAgent.answer('Кожа блестит только на лбу');
+    expect(shine.toLowerCase(), anyOf(contains('блеск'), contains('т-зон'), contains('лбу'), contains('себум')));
+    expect(shine.toLowerCase(), isNot(contains('не уверена')));
+    final bio = cultAgent.answer('Как понять что пора на биоревитализацию?');
+    expect(bio.toLowerCase(), contains('биоревитал'));
+    expect(bio.toLowerCase(), isNot(contains('меню «инъекции»')));
+  });
+
+  test('RF+спираль и NAD+ Micro-Patch простыми словами', () {
+    final iud = cultAgent.answer('Можно ли делать RF если стоит спираль?');
+    expect(iud.toLowerCase(), anyOf(contains('спирал'), contains('вмс'), contains('допуск')));
+    expect(iud.toLowerCase(), isNot(contains('меню «аппаратная»')));
+    final patch = cultAgent.answer('Что такое NAD+ Micro-Patch простыми словами?');
+    expect(patch.toLowerCase(), anyOf(contains('патч'), contains('patch'), contains('пластыр')));
+    expect(patch.toLowerCase(), isNot(contains('капельница из блока')));
+  });
+
+  test('Купить крем без консультации не кладёт в корзину; барбер-цена', () {
+    final turn = cultAgent.respond('Можно ли купить крем без консультации?');
+    expect(turn.cartAdd, isNull);
+    expect(turn.reply.toLowerCase(), anyOf(contains('без процедур'), contains('шоп'), contains('корзин')));
+    final barber = cultAgent.answer('Сколько стоит барбер-массаж лица?');
+    expect(barber, contains('12'));
+    expect(barber.toLowerCase(), contains('барбер'));
+  });
+
+  test('Розацеа+Beauty Glow и очки после ботокса', () {
+    final ros = cultAgent.answer('У меня розацеа — капельницу Beauty & Glow можно?');
+    expect(ros.toLowerCase(), anyOf(contains('розацеа'), contains('beauty'), contains('капель')));
+    expect(ros.toLowerCase(), isNot(contains('сначала крем из шопа')));
+    final glasses = cultAgent.answer('После ботокса можно носить очки?');
+    expect(glasses.toLowerCase(), anyOf(contains('очк'), contains('бот')));
+    expect(glasses.toLowerCase(), isNot(contains('подбирает врач после осмотра')));
+  });
 }
