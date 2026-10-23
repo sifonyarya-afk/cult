@@ -850,4 +850,33 @@ void main() {
     expect(reply.toLowerCase(), contains('филлер'));
     expect(reply.toLowerCase(), anyOf(contains('увлажн'), contains('объём'), contains('объем')));
   });
+
+  test('SMAS и RF летом не уходят в меню-дамп', () {
+    final smas = cultAgent.answer('Делаете ли SMAS-лифтинг?');
+    expect(smas.toLowerCase(), contains('smas'));
+    expect(smas.toLowerCase(), isNot(contains('меню «аппаратная»')));
+    final rf = cultAgent.answer('Можно ли делать RF летом?');
+    expect(rf.toLowerCase(), anyOf(contains('spf'), contains('лет'), contains('загар')));
+  });
+
+  test('HydraPure простыми словами и нос без операции', () {
+    final hp = cultAgent.answer('Что такое HydraPure простыми словами?');
+    expect(hp.toLowerCase(), contains('hydrapure'));
+    expect(hp.toLowerCase(), isNot(contains('скажите проще')));
+    final nose = cultAgent.answer('Хочу сузить нос без операции');
+    expect(nose.toLowerCase(), anyOf(contains('нос'), contains('консульт'), contains('операц')));
+    expect(nose.toLowerCase(), isNot(contains('если сложно сформулировать')));
+  });
+
+  test('Мигрень + ботокс — не постпроцедурная головная боль', () {
+    final reply = cultAgent.answer('У меня мигрени часто — ботокс поможет?');
+    expect(reply.toLowerCase(), contains('мигрен'));
+    expect(reply.toLowerCase(), isNot(contains('после ботулинотерапии бывает')));
+  });
+
+  test('Ребёнка с собой на процедуру — не подростковый протокол', () {
+    final reply = cultAgent.answer('Можно ли брать ребёнка с собой на процедуру?');
+    expect(reply.toLowerCase(), anyOf(contains('кабинет'), contains('не берут'), contains('снаружи')));
+    expect(reply.toLowerCase(), isNot(contains('согласие родителя')));
+  });
 }
