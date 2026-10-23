@@ -1263,4 +1263,39 @@ void main() {
     expect(bruise.toLowerCase(), anyOf(contains('съёмк'), contains('съемк'), contains('фотосесс'), contains('запас')));
     expect(bruise.toLowerCase(), isNot(contains('анестезией')));
   });
+
+  test('Тромбоз/онкология + капельница; коррекция ушей', () {
+    final throm = cultAgent.answer('У меня тромбоз в анамнезе — капельницу можно?');
+    expect(throm.toLowerCase(), contains('тромбоз'));
+    expect(throm.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final onco = cultAgent.answer('Можно ли капельницу при онкологии в ремиссии?');
+    expect(onco.toLowerCase(), contains('онколог'));
+    expect(onco.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final ears = cultAgent.answer('Делаете ли коррекцию ушей?');
+    expect(ears.toLowerCase(), anyOf(contains('уш'), contains('не делаем'), contains('отопласт')));
+    expect(ears.toLowerCase(), isNot(contains('давайте проще')));
+  });
+
+  test('Вино после NAD+, пигмент без лазера, SMAS с собой', () {
+    final wine = cultAgent.answer('После капельницы NAD+ можно пить вино вечером?');
+    expect(wine.toLowerCase(), anyOf(contains('после'), contains('вечером'), contains('алкогол'), contains('вино')));
+    expect(wine.toLowerCase(), isNot(contains('накануне')));
+    final pigment = cultAgent.answer('Хочу убрать пигмент кремом без лазера');
+    expect(pigment.toLowerCase(), anyOf(contains('пигмент'), contains('spf'), contains('барьер')));
+    expect(pigment.toLowerCase(), isNot(contains('без аппаратной — тоже рабочий')));
+    final smas = cultAgent.answer('Что взять с собой на SMAS?');
+    expect(smas.toLowerCase(), contains('smas'));
+    expect(smas.toLowerCase(), isNot(contains('на первый визит')));
+  });
+
+  test('Мигрень+ботокс страх, пляж после массажа, без отдушки', () {
+    final mig = cultAgent.answer('Боюсь мигрени после ботокса в лоб');
+    expect(mig.toLowerCase(), anyOf(contains('мигрен'), contains('головн'), contains('лоб')));
+    expect(mig.toLowerCase(), isNot(contains('анестезией')));
+    final beach = cultAgent.answer('После массажа можно сразу на пляж?');
+    expect(beach.toLowerCase(), contains('пляж'));
+    expect(beach.toLowerCase(), isNot(contains('ужин')));
+    final scent = cultAgent.answer('Хочу домашний уход без отдушки для чувствительной кожи');
+    expect(scent.toLowerCase(), anyOf(contains('отдуш'), contains('lumen'), contains('барьер')));
+  });
 }
