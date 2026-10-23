@@ -1,17 +1,57 @@
-import 'package:flutter_tts/flutter_tts.dart';
+import 'dart:io';
 
-/// On-device speech for CULT Агент: natural RU voice + short spoken lines.
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// On-device + optional Yandex neural speech for CULT Агент.
+///
+/// System AVSpeech always sounds somewhat synthetic. For a human Russian voice
+/// set a Yandex SpeechKit API key (voice «alena») in Settings, or download
+/// Apple Premium Milena for the local fallback.
 class CultTts {
-  CultTts({FlutterTts? engine}) : _tts = engine ?? FlutterTts();
+  CultTts({FlutterTts? engine, AudioPlayer? player})
+    : _tts = engine ?? FlutterTts(),
+      _player = player ?? AudioPlayer();
+
+  static const prefsKey = 'cult-yandex-tts-key';
 
   final FlutterTts _tts;
+  final AudioPlayer _player;
   var _ready = false;
   var _speakGen = 0;
   String? selectedVoiceLabel;
-  var _rate = 0.49;
-  var _pitch = 1.03;
+  String? yandexApiKey;
+  var _useNeural = false;
+  var _rate = 0.47;
+  var _pitch = 1.04;
+
+  bool get usingNeural => _useNeural && (yandexApiKey?.trim().isNotEmpty ?? false);
+
+  Future<void> loadKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    yandexApiKey = prefs.getString(prefsKey);
+  }
+
+  static Future<void> saveKey(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    final trimmed = key.trim();
+    if (trimmed.isEmpty) {
+      await prefs.remove(prefsKey);
+    } else {
+      await prefs.setString(prefsKey, trimmed);
+    }
+  }
+
+  static Future<String?> readKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(prefsKey);
+  }
 
   Future<void> prepare() async {
+    await loadKey();
     if (_ready) return;
     try {
       await _tts.awaitSpeakCompletion(true);
@@ -48,7 +88,6 @@ class CultTts {
     await _tts.setPitch(_pitch);
   }
 
-  /// Prefer Premium / Enhanced Milena — try known Apple ids first.
   Future<String?> _pickHumanVoice() async {
     const preferredIds = <String>[
       'com.apple.voice.premium.ru-RU.Milena',
@@ -113,16 +152,14 @@ class CultTts {
   void _tuneForQuality(String hint) {
     final h = hint.toLowerCase();
     if (h.contains('premium')) {
-      // Premium carries emotion best a touch under default speed.
-      _rate = 0.48;
-      _pitch = 1.02;
-    } else if (h.contains('enhanced')) {
-      _rate = 0.47;
+      _rate = 0.46;
       _pitch = 1.03;
+    } else if (h.contains('enhanced')) {
+      _rate = 0.45;
+      _pitch = 1.04;
     } else {
-      // Compact: slightly slower + warmer pitch reads less robotic.
-      _rate = 0.44;
-      _pitch = 1.06;
+      _rate = 0.42;
+      _pitch = 1.07;
     }
   }
 
@@ -148,39 +185,123 @@ class CultTts {
     try {
       await _tts.stop();
     } catch (_) {}
+    try {
+      await _player.stop();
+    } catch (_) {}
   }
 
   Future<void> speak(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
     await prepare();
-    if (!_ready) return;
-    final spoken = toSpokenBrief(trimmed);
+    final spoken = toSpokenBrief(humanize(trimmed));
     if (spoken.isEmpty) return;
     final gen = ++_speakGen;
+
+    // Neural Yandex Alena — human Russian voice when key is set.
+    final key = yandexApiKey?.trim() ?? '';
+    if (key.isNotEmpty) {
+      try {
+        await _speakYandex(spoken, key, gen);
+        if (gen == _speakGen) {
+          _useNeural = true;
+          selectedVoiceLabel = 'Yandex Alena (neural)';
+        }
+        return;
+      } catch (_) {
+        _useNeural = false;
+        // Fall through to system voice.
+      }
+    }
+
+    if (!_ready) return;
+    await _speakSystem(spoken, gen);
+  }
+
+  Future<void> _speakYandex(String text, String apiKey, int gen) async {
+    await _player.stop();
+    final uri = Uri.https('tts.api.cloud.yandex.net', '/speech/v1/tts:synthesize');
+    final response = await http
+        .post(
+          uri,
+          headers: {'Authorization': 'Api-Key $apiKey'},
+          body: {
+            'text': text,
+            'lang': 'ru-RU',
+            'voice': 'alena',
+            'emotion': 'good',
+            'speed': '0.95',
+            'format': 'mp3',
+          },
+        )
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw StateError('Yandex TTS ${response.statusCode}');
+    }
+    if (gen != _speakGen) return;
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/cult_tts_$gen.mp3');
+    await file.writeAsBytes(response.bodyBytes, flush: true);
+    if (gen != _speakGen) return;
+    await _player.setReleaseMode(ReleaseMode.stop);
+    await _player.play(DeviceFileSource(file.path));
+    try {
+      await _player.onPlayerComplete.first.timeout(const Duration(minutes: 2));
+    } catch (_) {}
+  }
+
+  Future<void> _speakSystem(String spoken, int gen) async {
     try {
       await _tts.stop();
       await _applyProsody();
-      await Future<void>.delayed(const Duration(milliseconds: 160));
+      await Future<void>.delayed(const Duration(milliseconds: 140));
       if (gen != _speakGen) return;
 
-      // Prefer one calm utterance — sounds like a person, not a slideshow.
-      if (spoken.length <= 300) {
-        await _tts.speak(spoken);
-        return;
-      }
-      for (final chunk in speechChunks(spoken)) {
+      // Breath groups with tiny pitch sway — breaks flat “robot” monotone.
+      final groups = breathGroups(spoken);
+      for (var i = 0; i < groups.length; i++) {
         if (gen != _speakGen) return;
-        await _tts.speak(chunk);
-        await Future<void>.delayed(const Duration(milliseconds: 140));
+        final sway = (i % 2 == 0) ? 0.025 : -0.02;
+        await _tts.setPitch((_pitch + sway).clamp(0.9, 1.2));
+        await _tts.setSpeechRate(_rate);
+        await _tts.speak(groups[i]);
+        if (i < groups.length - 1) {
+          await Future<void>.delayed(const Duration(milliseconds: 110));
+        }
       }
+      await _applyProsody();
     } catch (_) {}
+  }
+
+  /// Rewrite stiff clinic copy into spoken Russian.
+  static String humanize(String text) {
+    var s = text;
+    const swaps = <String, String>{
+      'Обратите внимание на': 'Посмотрите,',
+      'Ориентир по цене —': 'Стоит примерно',
+      'Ориентир по цене': 'Цена примерно',
+      'По протоколу': 'По процедуре',
+      'Точного совпадения в каталоге пока не вижу.':
+          'Давайте подберём вместе, без сложных названий.',
+      'Хорошо, давайте разберём без каталога.': 'Хорошо, давайте разберёмся.',
+      'Я CULT Агент — голосовой консультант клиники.':
+          'Я консультант клиники Культ.',
+      'окончательное решение по протоколу всегда за очным специалистом':
+          'окончательное решение всегда за врачом на приёме',
+      'Нажмите «Голос»': 'Нажмите голос',
+      'через «+»': 'через плюс на главной',
+      'через плюс на главной на главной': 'через плюс на главной',
+    };
+    for (final e in swaps.entries) {
+      s = s.replaceAll(e.key, e.value);
+    }
+    return s;
   }
 
   /// Short spoken form for TTS; full reply stays in the chat bubble.
   static String toSpokenBrief(String text) {
     final full = forSpeech(text);
-    if (full.length <= 280) return full;
+    if (full.length <= 240) return full;
     final sentences = full
         .split(RegExp(r'(?<=[.!?…])\s+'))
         .map((s) => s.trim())
@@ -191,10 +312,10 @@ class CultTts {
     for (var i = 0; i < sentences.length; i++) {
       final sentence = sentences[i];
       final next = buf.isEmpty ? sentence : '$buf $sentence';
-      if (buf.isNotEmpty && next.length > 280) break;
+      if (buf.isNotEmpty && next.length > 240) break;
       if (buf.isNotEmpty) buf.write(' ');
       buf.write(sentence);
-      if (buf.length >= 200 && i >= 1) break;
+      if (buf.length >= 160 && i >= 1) break;
     }
     var out = buf.toString().trim();
     if (out.isEmpty) out = sentences.first;
@@ -202,9 +323,31 @@ class CultTts {
     return out;
   }
 
-  /// Flatten punctuation and pronounce English catalog names in Russian.
+  /// Split into short breath groups for more human rhythm.
+  static List<String> breathGroups(String spoken) {
+    final words = spoken.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    if (words.length <= 10) return [spoken];
+    final groups = <String>[];
+    var buf = <String>[];
+    for (final word in words) {
+      buf.add(word);
+      final endClause = word.endsWith(',') ||
+          word.endsWith(';') ||
+          word.endsWith('.') ||
+          word.endsWith('!') ||
+          word.endsWith('?') ||
+          word.endsWith('…');
+      if (buf.length >= 9 || (endClause && buf.length >= 5)) {
+        groups.add(buf.join(' '));
+        buf = [];
+      }
+    }
+    if (buf.isNotEmpty) groups.add(buf.join(' '));
+    return groups;
+  }
+
   static String forSpeech(String text) {
-    var s = text;
+    var s = humanize(text);
     for (final entry in _phonetics.entries) {
       s = s.replaceAllMapped(
         RegExp(RegExp.escape(entry.key), caseSensitive: false),
@@ -225,19 +368,14 @@ class CultTts {
 
     s = s
         .replaceAll('меню Прайс', 'раздел прайс')
-        .replaceAll('меню «Прайс»', 'раздел прайс')
         .replaceAll('«Прайс»', 'прайс')
-        .replaceAll('Прайс', 'прайс')
         .replaceAll('«Магазин»', 'магазин')
         .replaceAll('«Услуги»', 'услуги')
         .replaceAll('«Голос»', 'голос')
         .replaceAll('«+»', 'плюс')
         .replaceAll('«Инфузии»', 'инфузии')
-        .replaceAll('«Аппаратная»', 'аппаратная')
-        .replaceAll('«Врачи»', 'врачи')
-        .replaceAll('«Мои записи»', 'мои записи');
+        .replaceAll('«Аппаратная»', 'аппаратная');
 
-    // 45 000 / 14 200 → «45 тысяч» / «14 тысяч 200» — Premium reads this smoothly.
     s = s.replaceAllMapped(RegExp(r'\b(\d{1,3})\s(\d{3})\b'), (m) {
       final hi = m.group(1)!;
       final lo = m.group(2)!;
@@ -245,7 +383,6 @@ class CultTts {
       return '$hi тысяч $lo';
     });
 
-    // Breath-friendly pauses after clauses.
     s = s
         .replaceAll(RegExp(r',\s*'), ', ')
         .replaceAll(RegExp(r';\s*'), '; ')
@@ -253,38 +390,13 @@ class CultTts {
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
 
-    // Soften stacked questions / exclamations for TTS.
-    s = s.replaceAll('?.', '?').replaceAll('!.', '!');
-
     if (s.isEmpty) return s;
     if (!RegExp(r'[.!?…]$').hasMatch(s)) s = '$s.';
     return s;
   }
 
-  static List<String> speechChunks(String spoken) {
-    final parts = spoken
-        .split(RegExp(r'(?<=[.!?…])\s+'))
-        .map((c) => c.trim())
-        .where((c) => c.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) return [spoken];
-    final merged = <String>[];
-    var buf = '';
-    for (final part in parts) {
-      if (buf.isEmpty) {
-        buf = part;
-      } else if (buf.length + part.length < 180) {
-        buf = '$buf $part';
-      } else {
-        merged.add(buf);
-        buf = part;
-      }
-    }
-    if (buf.isNotEmpty) merged.add(buf);
-    return merged;
-  }
+  static List<String> speechChunks(String spoken) => breathGroups(spoken);
 
-  /// Short line spoken on chat open (full seed stays on screen).
   static const spokenGreeting =
       'Здравствуйте. Я рядом. Нажмите голос — спокойно вас слушаю.';
 

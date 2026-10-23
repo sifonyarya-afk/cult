@@ -9,6 +9,7 @@ import '../tts.dart';
 import '../widgets.dart';
 import '../yclients.dart';
 import 'cabinet.dart';
+import 'voice_settings.dart';
 
 class ChatPage extends StatelessWidget {
   const ChatPage({super.key});
@@ -387,6 +388,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
   Future<void> _bootAgentVoice() async {
     if (!_isAgent || _bootedVoice) return;
     _bootedVoice = true;
+    await _tts.loadKey();
     await _tts.prepare();
     // Asks iOS for Microphone + Speech Recognition as soon as the chat opens.
     final ok = await _ensureSpeech();
@@ -397,13 +399,16 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
         'Разрешите Микрофон и «Распознавание речи» в Настройках → CULT.',
       );
     }
-    final voice = _tts.selectedVoiceLabel;
-    if (voice != null &&
-        !voice.toLowerCase().contains('premium') &&
-        !voice.toLowerCase().contains('enhanced')) {
+    final hasNeural = _tts.yandexApiKey?.trim().isNotEmpty ?? false;
+    final voice = (_tts.selectedVoiceLabel ?? '').toLowerCase();
+    final softSystem = !hasNeural &&
+        !voice.contains('premium') &&
+        !voice.contains('enhanced') &&
+        !voice.contains('alena');
+    if (softSystem) {
       showCultSnack(
         context,
-        'Для живого голоса: Настройки → Универсальный доступ → Spoken Content → Голоса → русский → Premium/Enhanced.',
+        'Чтобы голос был как у человека: Профиль → Живой голос агента',
       );
     }
     if (_speakReplies) {
@@ -637,6 +642,13 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () {
+                        cultTapFeedback();
+                        pushPage(context, const VoiceSettingsPage());
+                      },
+                      child: const Text('Живой'),
+                    ),
                     FilledButton.tonal(
                       onPressed: () => _toggleListen(store),
                       style: FilledButton.styleFrom(

@@ -26,10 +26,23 @@ void main() {
   });
 
   test('toSpokenBrief сжимает длинный каталожный ответ', () {
-    final long = List.filled(8, 'Это длинное предложение про услугу и уход.').join(' ');
+    final long =
+        List.filled(8, 'Это длинное предложение про услугу и уход.').join(' ');
     final brief = CultTts.toSpokenBrief(long);
     expect(brief.length, lessThan(long.length));
     expect(brief.length, lessThanOrEqualTo(320));
     expect(brief.toLowerCase(), contains('длинное'));
+  });
+
+  test('humanize смягчает канцелярит для озвучки', () {
+    final h = CultTts.humanize('Обратите внимание на крем. Ориентир по цене — 100.');
+    expect(h.toLowerCase(), contains('посмотрите'));
+    expect(h.toLowerCase(), contains('стоит примерно'));
+  });
+
+  test('breathGroups дробит длинную фразу', () {
+    final words = List.filled(24, 'слово').join(' ');
+    final groups = CultTts.breathGroups(words);
+    expect(groups.length, greaterThan(1));
   });
 }

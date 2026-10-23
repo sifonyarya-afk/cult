@@ -11,6 +11,7 @@ import 'gender_page.dart';
 import 'info.dart';
 import 'shop.dart';
 import 'talk.dart';
+import 'voice_settings.dart';
 
 class CabinetPage extends StatelessWidget {
   const CabinetPage({super.key});
@@ -2100,6 +2101,16 @@ class _SettingsPageState extends State<SettingsPage> {
               Clipboard.setData(const ClipboardData(text: cultBuildTag));
               cultTapFeedback();
               showCultSnack(context, 'Метка сборки скопирована');
+            },
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.record_voice_over_outlined),
+            title: const Text('Живой голос агента'),
+            subtitle: const Text('Нейроголос Alena или Premium Милена'),
+            onTap: () {
+              cultTapFeedback();
+              pushPage(context, const VoiceSettingsPage());
             },
           ),
           ListTile(

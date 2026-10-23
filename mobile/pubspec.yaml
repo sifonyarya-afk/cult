@@ -42,6 +42,8 @@ dependencies:
   # 7.5+ needs Dart 3.12; Mac Flutter with Dart 3.11.5 stays on 7.4.0.
   speech_to_text: 7.4.0
   flutter_tts: ^4.2.5
+  audioplayers: ^6.8.1
+  path_provider: ^2.1.6
 
 # Эти реализации тянут Dart 3.12 и Flutter 3.44. На Mac с Dart 3.11.5
 # остаются последние версии, которые ещё ставятся.
