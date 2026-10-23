@@ -879,4 +879,34 @@ void main() {
     expect(reply.toLowerCase(), anyOf(contains('кабинет'), contains('не берут'), contains('снаружи')));
     expect(reply.toLowerCase(), isNot(contains('согласие родителя')));
   });
+
+  test('Веки без операции и руль после капельницы', () {
+    final lids = cultAgent.answer('Хочу подтянуть веки без операции');
+    expect(lids.toLowerCase(), contains('век'));
+    expect(lids.toLowerCase(), isNot(contains('если сложно сформулировать')));
+    final drive = cultAgent.answer('После капельницы можно за руль?');
+    expect(drive.toLowerCase(), anyOf(contains('руль'), contains('такси'), contains('самочувств')));
+    expect(drive.toLowerCase(), isNot(contains('меню «инфузии»')));
+  });
+
+  test('Перелёт ≠ лето; милиумы ≠ мили лояльности', () {
+    final flight = cultAgent.answer('Лицо отекло после перелёта — что поможет быстро?');
+    expect(flight.toLowerCase(), anyOf(contains('перелёт'), contains('перелет'), contains('массаж')));
+    expect(flight.toLowerCase(), isNot(contains('летом бережём')));
+    final milia = cultAgent.answer('Делаете ли удаление милиумов?');
+    expect(milia.toLowerCase(), contains('милиум'));
+    expect(milia.toLowerCase(), isNot(contains('кэшбек')));
+  });
+
+  test('Кисетные морщины не уходят в губы-уточку', () {
+    final reply = cultAgent.answer('Хочу убрать кисетные морщины над губой');
+    expect(reply.toLowerCase(), contains('кисет'));
+    expect(reply.toLowerCase(), isNot(contains('уточк')));
+  });
+
+  test('Единицы ботокса на лоб — не прайс', () {
+    final reply = cultAgent.answer('Сколько единиц ботокса нужно на лоб?');
+    expect(reply.toLowerCase(), contains('единиц'));
+    expect(reply, isNot(contains('₽')));
+  });
 }
