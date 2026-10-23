@@ -830,7 +830,7 @@ class Contact {
 }
 
 /// Bump when shipping a user-visible feature so a Mac pull proves the build is fresh.
-const cultBuildTag = 'human-shop-v24';
+const cultBuildTag = 'pearl-agent-v25';
 
 const contacts = <Contact>[
   Contact(

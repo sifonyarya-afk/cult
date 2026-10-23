@@ -733,35 +733,67 @@ class _CultDockBar extends StatelessWidget {
                         onTap: () => onSelect(
                           agentSelected ? _tabHome : _tabAgent,
                         ),
-                        child: Ink(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: agentSelected
-                                  ? const [
-                                      Color(0xFFE8D9C0),
-                                      Color(0xFFB9A07A),
-                                    ]
-                                  : const [
-                                      Color(0xFFD7BEA0),
-                                      Color(0xFFC4A882),
+                        child: SizedBox(
+                          width: 68,
+                          height: 68,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 64,
+                                height: 64,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFFE8D4B8)
+                                          .withValues(alpha: 0.45),
+                                      blurRadius: agentSelected ? 16 : 10,
+                                    ),
+                                  ],
+                                  gradient: const RadialGradient(
+                                    center: Alignment(-0.35, -0.4),
+                                    radius: 1.05,
+                                    colors: [
+                                      Color(0xFFFFFEFA),
+                                      Color(0xFFF4E8D8),
+                                      Color(0xFFD8C0A4),
+                                      Color(0xFFB89878),
                                     ],
-                            ),
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 3,
-                            ),
-                          ),
-                          child: Icon(
-                            agentSelected
-                                ? Icons.close_rounded
-                                : Icons.mic_rounded,
-                            color: const Color(0xFF1B1408),
-                            size: 28,
+                                    stops: [0, 0.35, 0.72, 1],
+                                  ),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2.5,
+                                  ),
+                                ),
+                              ),
+                              // Specular glint
+                              Positioned(
+                                top: 16,
+                                left: 18,
+                                child: Container(
+                                  width: 18,
+                                  height: 12,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        Colors.white.withValues(alpha: 0.85),
+                                        Colors.white.withValues(alpha: 0),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              if (agentSelected)
+                                Icon(
+                                  Icons.close_rounded,
+                                  color: const Color(0xFF1B1408)
+                                      .withValues(alpha: 0.55),
+                                  size: 22,
+                                ),
+                            ],
                           ),
                         ),
                       ),

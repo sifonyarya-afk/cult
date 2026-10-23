@@ -8,7 +8,7 @@ import '../store.dart';
 import '../theme.dart';
 import '../tts.dart';
 import '../widgets.dart';
-/// Voice-first CULT Агент: one mic button, living consultation layout.
+/// Voice-first CULT Агент: pearl orb in the center, living consultation.
 class AgentVoicePage extends StatefulWidget {
   const AgentVoicePage({super.key, this.active = true});
 
@@ -32,7 +32,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
   var _booted = false;
   var _busy = false;
   var _partial = '';
-  var _status = 'Нажмите — и говорите своими словами';
+  var _status = 'Коснитесь жемчужины — и говорите';
   List<AgentOffer> _offers = const [];
 
   late final AnimationController _pulse;
@@ -42,19 +42,30 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     super.initState();
     _pulse = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1600),
+      duration: const Duration(milliseconds: 2200),
     );
     _syncPulse();
   }
 
   void _syncPulse() {
-    if (widget.active) {
-      if (!_pulse.isAnimating) _pulse.repeat(reverse: true);
-    } else if (_pulse.isAnimating) {
+    if (!widget.active) {
+      if (_pulse.isAnimating) {
+        _pulse
+          ..stop()
+          ..value = 0;
+      }
+      return;
+    }
+    final talk = _listening || _speaking;
+    final next = Duration(milliseconds: talk ? (_listening ? 900 : 1200) : 2400);
+    if (_pulse.duration != next) {
+      final v = _pulse.value;
       _pulse
         ..stop()
-        ..value = 0;
+        ..duration = next
+        ..value = v;
     }
+    if (!_pulse.isAnimating) _pulse.repeat(reverse: true);
   }
 
   @override
@@ -83,7 +94,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
           ClinicScope.of(context).markChatRead('bot');
           _boot();
         } else {
-          setState(() => _status = 'Нажмите — и говорите своими словами');
+          setState(() => _status = 'Коснитесь жемчужины — и говорите');
         }
       });
     }
@@ -102,8 +113,9 @@ class _AgentVoicePageState extends State<AgentVoicePage>
       _speaking = false;
       _busy = false;
       _partial = '';
-      _status = 'Нажмите — и говорите своими словами';
+      _status = 'Коснитесь жемчужины — и говорите';
     });
+    _syncPulse();
   }
 
   Future<void> _boot() async {
@@ -123,12 +135,14 @@ class _AgentVoicePageState extends State<AgentVoicePage>
       _speaking = true;
       _status = 'Отвечаю…';
     });
+    _syncPulse();
     await _tts.speak(CultTts.spokenGreeting, complete: true);
     if (!mounted) return;
     setState(() {
       _speaking = false;
       _status = 'Слушаю вас';
     });
+    _syncPulse();
     await _startListen(ClinicScope.of(context), auto: true);
   }
 
@@ -173,8 +187,9 @@ class _AgentVoicePageState extends State<AgentVoicePage>
       if (mounted) {
         setState(() {
           _speaking = false;
-          _status = 'Нажмите — и говорите своими словами';
+          _status = 'Коснитесь жемчужины — и говорите';
         });
+        _syncPulse();
       }
       return;
     }
@@ -184,8 +199,9 @@ class _AgentVoicePageState extends State<AgentVoicePage>
         setState(() {
           _listening = false;
           _partial = '';
-          _status = 'Нажмите — и говорите своими словами';
+          _status = 'Коснитесь жемчужины — и говорите';
         });
+        _syncPulse();
       }
       return;
     }
@@ -211,8 +227,9 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     setState(() {
       _listening = true;
       _partial = '';
-      _status = auto ? 'Слушаю…' : 'Говорите до конца фразы';
+      _status = auto ? 'Слушаю…' : 'Говорите — жемчужина вас слышит';
     });
+    _syncPulse();
     HapticFeedback.mediumImpact();
     await _speech.listen(
       onResult: (result) {
@@ -246,6 +263,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
       _speaking = true;
       _status = 'Думаю…';
     });
+    _syncPulse();
     HapticFeedback.selectionClick();
     store.sendMessage('bot', text);
     store.markChatRead('bot');
@@ -266,6 +284,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
       _offers = offers;
       _status = 'Отвечаю…';
     });
+    _syncPulse();
     _scrollToEnd();
     if (line.isNotEmpty) {
       try {
@@ -279,6 +298,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
       _speaking = false;
       _status = 'Слушаю вас';
     });
+    _syncPulse();
     _busy = false;
     await Future<void>.delayed(const Duration(milliseconds: 280));
     if (!mounted || _listening || _speaking) return;
@@ -332,7 +352,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     setState(() {
       _offers = const [];
       _partial = '';
-      _status = 'Нажмите — и говорите своими словами';
+      _status = 'Коснитесь жемчужины — и говорите';
     });
     HapticFeedback.mediumImpact();
   }
@@ -372,9 +392,9 @@ class _AgentVoicePageState extends State<AgentVoicePage>
 
     // Embedded above shell bottom nav — no extra SafeArea (that caused Column overflow).
     return Scaffold(
-      backgroundColor: const Color(0xFF100E0C),
+      backgroundColor: const Color(0xFF0C0B0A),
       appBar: AppBar(
-        toolbarHeight: 56,
+        toolbarHeight: 52,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -385,14 +405,14 @@ class _AgentVoicePageState extends State<AgentVoicePage>
               'CULT Агент',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 18,
-                letterSpacing: 2.4,
-                fontWeight: FontWeight.w500,
+                fontSize: 17,
+                letterSpacing: 3.2,
+                fontWeight: FontWeight.w400,
               ),
             ),
             Text(
               'Живой разговор',
-              style: TextStyle(color: Color(0xFFB9A990), fontSize: 11),
+              style: TextStyle(color: Color(0xFFC4B49A), fontSize: 11),
             ),
           ],
         ),
@@ -408,24 +428,30 @@ class _AgentVoicePageState extends State<AgentVoicePage>
       body: AnimatedBuilder(
         animation: _pulse,
         builder: (context, _) {
+          final talk = _listening || _speaking;
+          final t = _pulse.value;
           final ambient = _listening
-              ? 0.55 + _pulse.value * 0.35
-              : (_speaking ? 0.4 + _pulse.value * 0.25 : 0.22);
+              ? 0.62 + t * 0.38
+              : (_speaking ? 0.48 + t * 0.3 : 0.2 + t * 0.08);
           return Container(
             decoration: BoxDecoration(
               gradient: RadialGradient(
-                center: const Alignment(0, -0.55),
-                radius: 1.15,
+                center: Alignment(0, talk ? -0.05 : -0.2),
+                radius: talk ? 1.35 : 1.2,
                 colors: [
                   Color.lerp(
-                    const Color(0xFF3A2E1C),
-                    const Color(0xFF5A4630),
+                    const Color(0xFF2C2418),
+                    const Color(0xFF4A3A28),
                     ambient,
                   )!,
-                  const Color(0xFF1A1510),
-                  const Color(0xFF100E0C),
+                  Color.lerp(
+                    const Color(0xFF15120E),
+                    const Color(0xFF1C1812),
+                    ambient * 0.5,
+                  )!,
+                  const Color(0xFF0C0B0A),
                 ],
-                stops: const [0, 0.45, 1],
+                stops: const [0, 0.42, 1],
               ),
             ),
             child: Column(
@@ -433,9 +459,9 @@ class _AgentVoicePageState extends State<AgentVoicePage>
               children: [
                 if (_offers.isNotEmpty)
                   SizedBox(
-                    height: 104,
+                    height: 96,
                     child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                      padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
                       scrollDirection: Axis.horizontal,
                       itemCount: _offers.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 10),
@@ -465,191 +491,295 @@ class _AgentVoicePageState extends State<AgentVoicePage>
                     ),
                   ),
                 Expanded(
-                  child: ListView(
-                    controller: _scroll,
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+                  child: Column(
                     children: [
-                      if (lastUser != null && lastUser.isNotEmpty) ...[
-                        Text(
-                          'Вы · $lastUser',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0x99C9BBA5),
-                            fontSize: 13,
-                            height: 1.35,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                      ],
-                      AnimatedOpacity(
-                        duration: const Duration(milliseconds: 280),
-                        opacity: _speaking ? 1 : 0.96,
-                        child: Text(
-                          hero,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: const Color(0xFFF3EBDD),
-                            fontSize: hero.length > 160 ? 16 : 19,
-                            height: 1.4,
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: 0.15,
-                          ),
-                        ),
-                      ),
-                      if (_partial.isNotEmpty) ...[
-                        const SizedBox(height: 20),
-                        Text(
-                          _partial,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Color.lerp(
-                              const Color(0xFFE8D8BE),
-                              Cult.sand,
-                              _pulse.value,
-                            ),
-                            fontSize: 16,
-                            height: 1.35,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
-                      if (messages.length > 2) ...[
-                        const SizedBox(height: 20),
-                        ...messages
-                            .where((m) => m.from == 'them')
-                            .toList()
-                            .reversed
-                            .skip(1)
-                            .take(2)
-                            .toList()
-                            .reversed
-                            .map(
-                              (m) => Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: Text(
-                                  m.text,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Color(0x66D9CBB5),
-                                    fontSize: 13,
-                                    height: 1.35,
-                                  ),
-                                ),
-                              ),
-                            ),
-                      ],
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 6),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
-                    child: Text(
-                      _status,
-                      key: ValueKey(_status),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: _speechDenied
-                            ? const Color(0xFFFFB4A8)
-                            : const Color(0xFFD9CBB5),
-                        fontSize: 13,
-                        height: 1.3,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  height: 120,
-                  child: Center(
-                    child: Builder(
-                      builder: (context) {
-                        final active = _listening || _speaking;
-                        final scale = active ? 1 + (_pulse.value * 0.06) : 1.0;
-                        final ring = active ? 8 + (_pulse.value * 10) : 0.0;
-                        return Stack(
-                          alignment: Alignment.center,
-                          clipBehavior: Clip.none,
+                      Expanded(
+                        flex: 3,
+                        child: ListView(
+                          controller: _scroll,
+                          padding: const EdgeInsets.fromLTRB(28, 8, 28, 8),
                           children: [
-                            if (active)
-                              Container(
-                                width: 88 + ring,
-                                height: 88 + ring,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Cult.sand.withValues(
-                                      alpha: 0.28 + _pulse.value * 0.22,
-                                    ),
-                                    width: 1.2,
-                                  ),
+                            if (lastUser != null && lastUser.isNotEmpty) ...[
+                              Text(
+                                'Вы · $lastUser',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Color(0x88C9BBA5),
+                                  fontSize: 12,
+                                  height: 1.35,
                                 ),
                               ),
-                            Transform.scale(
-                              scale: scale,
-                              child: Semantics(
-                                button: true,
-                                label: _listening
-                                    ? 'Остановить прослушивание'
-                                    : (_speaking
-                                        ? 'Остановить речь'
-                                        : 'Говорить с CULT Агентом'),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    customBorder: const CircleBorder(),
-                                    onTap: () => _onMainButton(store),
-                                    child: Ink(
-                                      width: 88,
-                                      height: 88,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: _listening
-                                              ? const [
-                                                  Color(0xFFE8D9C0),
-                                                  Color(0xFFB9A07A),
-                                                ]
-                                              : (_speaking
-                                                  ? const [
-                                                      Color(0xFFC9B496),
-                                                      Color(0xFF6E5B43),
-                                                    ]
-                                                  : const [
-                                                      Color(0xFFD7BEA0),
-                                                      Color(0xFF8A7355),
-                                                    ]),
-                                        ),
-                                      ),
-                                      child: Icon(
-                                        _listening
-                                            ? Icons.stop_rounded
-                                            : (_speaking
-                                                ? Icons.volume_up_rounded
-                                                : Icons.mic_rounded),
-                                        size: 36,
-                                        color: const Color(0xFF1B1408),
-                                      ),
-                                    ),
+                              const SizedBox(height: 12),
+                            ],
+                            AnimatedOpacity(
+                              duration: const Duration(milliseconds: 280),
+                              opacity: _speaking ? 1 : 0.94,
+                              child: Text(
+                                hero,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: const Color(0xFFF6F0E6),
+                                  fontSize: hero.length > 160 ? 15.5 : 18,
+                                  height: 1.42,
+                                  fontWeight: FontWeight.w400,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                            if (_partial.isNotEmpty) ...[
+                              const SizedBox(height: 16),
+                              Text(
+                                _partial,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Color.lerp(
+                                    const Color(0xFFE8D8BE),
+                                    const Color(0xFFD4C4A8),
+                                    t,
                                   ),
+                                  fontSize: 15,
+                                  height: 1.35,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        flex: 4,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Semantics(
+                              button: true,
+                              label: _listening
+                                  ? 'Остановить прослушивание'
+                                  : (_speaking
+                                      ? 'Остановить речь'
+                                      : 'Говорить с CULT Агентом'),
+                              child: GestureDetector(
+                                onTap: () => _onMainButton(store),
+                                child: _PearlOrb(
+                                  pulse: t,
+                                  listening: _listening,
+                                  speaking: _speaking,
+                                  size: 168,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 220),
+                              child: Text(
+                                _status,
+                                key: ValueKey(_status),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: _speechDenied
+                                      ? const Color(0xFFFFB4A8)
+                                      : Color.lerp(
+                                          const Color(0xFFC4B49A),
+                                          const Color(0xFFE8DCC8),
+                                          talk ? t : 0.35,
+                                        ),
+                                  fontSize: 13,
+                                  height: 1.3,
+                                  letterSpacing: 0.35,
                                 ),
                               ),
                             ),
                           ],
-                        );
-                      },
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Iridescent pearl — idle shimmer; stronger pulse while listening / speaking.
+class _PearlOrb extends StatelessWidget {
+  const _PearlOrb({
+    required this.pulse,
+    required this.listening,
+    required this.speaking,
+    this.size = 168,
+  });
+
+  final double pulse;
+  final bool listening;
+  final bool speaking;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final talk = listening || speaking;
+    final breath = talk ? 0.08 + pulse * 0.14 : 0.02 + pulse * 0.04;
+    final scale = 1 + breath;
+    final glow = talk ? 0.35 + pulse * 0.45 : 0.16 + pulse * 0.12;
+    final ringSpread = talk ? 28.0 + pulse * 36 : 10.0 + pulse * 8;
+
+    return SizedBox(
+      width: size + ringSpread * 1.4,
+      height: size + ringSpread * 1.4,
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          // Outer aurora haze — mother-of-pearl glow
+          Container(
+            width: size + ringSpread * 1.35,
+            height: size + ringSpread * 1.35,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  Color.fromRGBO(
+                    255,
+                    listening ? 236 : 228,
+                    speaking ? 210 : 220,
+                    glow * 0.5,
+                  ),
+                  Color.fromRGBO(210, 190, 170, glow * 0.16),
+                  Colors.transparent,
+                ],
+                stops: const [0.2, 0.55, 1],
+              ),
+            ),
+          ),
+          // Soft halo ring
+          Container(
+            width: size + ringSpread * 0.55,
+            height: size + ringSpread * 0.55,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Color.fromRGBO(255, 248, 240, 0.14 + pulse * 0.22),
+                width: talk ? 1.4 : 0.8,
+              ),
+            ),
+          ),
+          Transform.scale(
+            scale: scale,
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Color.fromRGBO(
+                      255,
+                      236,
+                      210,
+                      talk ? 0.32 + pulse * 0.24 : 0.14,
+                    ),
+                    blurRadius: talk ? 40 + pulse * 20 : 24,
+                    spreadRadius: talk ? 2 : 0,
+                  ),
+                  BoxShadow(
+                    color: Color.fromRGBO(20, 14, 10, 0.55),
+                    blurRadius: 18,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+                gradient: RadialGradient(
+                  center: const Alignment(-0.35, -0.42),
+                  radius: 1.05,
+                  colors: listening
+                      ? const [
+                          Color(0xFFFFFEFA),
+                          Color(0xFFF8F0E6),
+                          Color(0xFFE8D4C0),
+                          Color(0xFFD0B498),
+                          Color(0xFFA88870),
+                        ]
+                      : speaking
+                      ? const [
+                          Color(0xFFFFFAF2),
+                          Color(0xFFF5E8D4),
+                          Color(0xFFE0C8A8),
+                          Color(0xFFC4A070),
+                          Color(0xFF8A6E48),
+                        ]
+                      : const [
+                          Color(0xFFFFFEFC),
+                          Color(0xFFF7F2EC),
+                          Color(0xFFE8DCD0),
+                          Color(0xFFCDB8A4),
+                          Color(0xFF9A8474),
+                        ],
+                  stops: const [0, 0.22, 0.48, 0.78, 1],
+                ),
+              ),
+              child: Stack(
+                children: [
+                  // Iridescent mother-of-pearl veil
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: SweepGradient(
+                        colors: [
+                          Color.fromRGBO(255, 230, 220, 0.0),
+                          Color.fromRGBO(210, 235, 245, 0.16 + pulse * 0.1),
+                          Color.fromRGBO(255, 236, 200, 0.18),
+                          Color.fromRGBO(235, 220, 240, 0.12),
+                          Color.fromRGBO(255, 230, 220, 0.0),
+                        ],
+                        transform: GradientRotation(pulse * 0.9),
+                      ),
+                    ),
+                    child: const SizedBox.expand(),
+                  ),
+                  // Specular highlight
+                  Align(
+                    alignment: const Alignment(-0.38, -0.42),
+                    child: Container(
+                      width: size * 0.38,
+                      height: size * 0.28,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(size),
+                        gradient: RadialGradient(
+                          colors: [
+                            Color.fromRGBO(255, 255, 255, 0.9),
+                            Color.fromRGBO(255, 255, 255, 0.22),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Soft underside shade
+                  Align(
+                    alignment: const Alignment(0.15, 0.55),
+                    child: Container(
+                      width: size * 0.55,
+                      height: size * 0.35,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(size),
+                        gradient: RadialGradient(
+                          colors: [
+                            Color.fromRGBO(70, 50, 35, talk ? 0.2 : 0.14),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
