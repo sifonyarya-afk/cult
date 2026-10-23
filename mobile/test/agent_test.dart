@@ -1334,4 +1334,40 @@ void main() {
     expect(men.toLowerCase(), anyOf(contains('блеск'), contains('барбер'), contains('мат')));
     expect(men.toLowerCase(), isNot(contains('кому подбираем')));
   });
+
+  test('Печень+IV, блефаропластика, аспирин+ботокс', () {
+    final liver = cultAgent.answer('Можно ли капельницу при заболеваниях печени?');
+    expect(liver.toLowerCase(), contains('печен'));
+    expect(liver.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final bleph = cultAgent.answer('Делаете ли блефаропластику?');
+    expect(bleph.toLowerCase(), anyOf(contains('блефаропласт'), contains('не делаем'), contains('хирург')));
+    expect(bleph.toLowerCase(), isNot(contains('давайте проще')));
+    final asp = cultAgent.answer('Можно ли делать ботокс если пью аспирин?');
+    expect(asp.toLowerCase(), contains('аспирин'));
+    expect(asp.toLowerCase(), isNot(contains('подбирает врач после осмотра')));
+  });
+
+  test('Глаз выше, Beauty+массаж, подарок коллеге-женщине', () {
+    final eye = cultAgent.answer('Что делать если после ботокса один глаз выше другого?');
+    expect(eye.toLowerCase(), anyOf(contains('выше'), contains('асимметр'), contains('бров')));
+    expect(eye.toLowerCase(), isNot(contains('мезотерап')));
+    final glow = cultAgent.answer('Можно ли совместить Beauty & Glow и массаж в один день?');
+    expect(glow.toLowerCase(), anyOf(contains('массаж'), contains('beauty'), contains('капель')));
+    expect(glow.toLowerCase(), isNot(contains('две капельницы')));
+    final gift = cultAgent.answer('Хочу подарок коллеге-женщине до 15000');
+    expect(gift.toLowerCase(), contains('женщин'));
+    expect(gift.toLowerCase(), isNot(contains('барбер')));
+  });
+
+  test('Витамин C после пилинга, йод+IV, сон на животе', () {
+    final vit = cultAgent.answer('После пилинга можно наносить сыворотку с витамином C через неделю?');
+    expect(vit.toLowerCase(), anyOf(contains('витамин'), contains('пилинг'), contains('пауз')));
+    expect(vit.toLowerCase(), isNot(contains('под дату')));
+    final iodine = cultAgent.answer('У меня аллергия на йод — капельницу можно?');
+    expect(iodine.toLowerCase(), contains('йод'));
+    expect(iodine.toLowerCase(), isNot(contains('металлы или косметику')));
+    final sleep = cultAgent.answer('После ботокса можно спать на животе через два дня?');
+    expect(sleep.toLowerCase(), contains('живот'));
+    expect(sleep.toLowerCase(), isNot(contains('на боку спать обычно можно ближе к вечеру')));
+  });
 }
