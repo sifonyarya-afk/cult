@@ -39,6 +39,7 @@ dependencies:
   http: ^1.4.0
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.2
+  # 7.5+ needs Dart 3.12; Mac Flutter with Dart 3.11.5 stays on 7.4.0.
   speech_to_text: 7.4.0
   flutter_tts: ^4.2.5
 
