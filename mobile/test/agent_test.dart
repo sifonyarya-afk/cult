@@ -778,4 +778,43 @@ void main() {
     expect(store.upcoming.length, before + 1);
     expect(store.upcoming.first.service.toLowerCase(), contains('массаж'));
   });
+
+  test('Второй подбородок не уходит в мужской барбер-сценарий', () {
+    final reply = cultAgent.answer('Хочу убрать второй подбородок без операции');
+    expect(reply.toLowerCase(), anyOf(contains('овал'), contains('массаж'), contains('rf')));
+    expect(reply.toLowerCase(), isNot(contains('барбер')));
+  });
+
+  test('Боюсь игл + лифтинг — безъинекционный путь, не только анестезия', () {
+    final reply = cultAgent.answer('Боюсь иглы, есть безъинекционный лифтинг?');
+    expect(reply.toLowerCase(), anyOf(contains('без укол'), contains('массаж'), contains('rf')));
+    expect(reply.toLowerCase(), isNot(contains('аппликационной анестезией')));
+  });
+
+  test('Срок гиалуронки и ботокса — не прайс', () {
+    final hya = cultAgent.answer('Через сколько рассосётся гиалуронка?');
+    expect(hya.toLowerCase(), anyOf(contains('месяц'), contains('год')));
+    expect(hya, isNot(contains('₽')));
+    final botox = cultAgent.answer('На сколько хватает ботокса?');
+    expect(botox.toLowerCase(), contains('месяц'));
+    expect(botox, isNot(contains('₽')));
+  });
+
+  test('Загар после пилинга и спорт после пилинга', () {
+    final sun = cultAgent.answer('Можно ли загорать после пилинга?');
+    expect(sun.toLowerCase(), anyOf(contains('spf'), contains('загар'), contains('пауз')));
+    final sport = cultAgent.answer('После пилинга можно спорт?');
+    expect(sport.toLowerCase(), anyOf(contains('пилинг'), contains('спорт'), contains('пауз')));
+  });
+
+  test('Мира не заменяет врача', () {
+    final reply = cultAgent.answer('Мира, ты заменишь врача?');
+    expect(reply.toLowerCase(), contains('не заменя'));
+  });
+
+  test('Биоревитализация простыми словами', () {
+    final reply = cultAgent.answer('Что такое биоревитализация простыми словами?');
+    expect(reply.toLowerCase(), contains('биоревитал'));
+    expect(reply.toLowerCase(), isNot(contains('скажите проще')));
+  });
 }
