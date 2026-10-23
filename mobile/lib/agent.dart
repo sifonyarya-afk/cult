@@ -37,9 +37,31 @@ class CultAgent {
     final correction = _correctionReply(q);
     if (correction != null) return correction;
 
+    // «Первый / второй» after a two-option bot reply.
+    final choice = _choiceIndexReply(q, lastBot);
+    if (choice != null) return choice;
+
+    // «Почему?» about the last recommendation.
+    final why = _whyReply(q, lastBot);
+    if (why != null) return why;
+
+    // «Запиши меня на…»
+    final book = _bookIntentReply(
+      q,
+      gender: gender,
+      localServices: localServices,
+      localProducts: localProducts,
+      liveServices: liveServices,
+      localDevices: localDevices,
+      localInfusions: localInfusions,
+    );
+    if (book != null) return book;
+
     // «Без уколов / только дом» preferences before catalog suggestions.
     final preference = _preferenceReply(q, gender: gender);
     if (preference != null) return preference;
+
+    final sessionPrefs = _sessionPrefs(topic);
 
     // Утро / вечер / выходные для записи.
     final slot = _slotReply(q);
@@ -92,15 +114,21 @@ class CultAgent {
 
     // Topic from earlier turns + short symptom now («сухость» after «лицо»).
     final grounded = _groundedConcern(q, topic, gender: gender);
-    if (grounded != null) return grounded;
+    if (grounded != null) {
+      return _withSessionPrefs(grounded, sessionPrefs);
+    }
 
     // Two concerns in one phrase (dry + tired…).
     final blend = _blendConcernReply(q, gender: gender);
-    if (blend != null) return blend;
+    if (blend != null) {
+      return _withSessionPrefs(blend, sessionPrefs);
+    }
 
     // Free-form concerns / goals without exact catalog names.
     final concern = _concernReply(q, gender: gender);
-    if (concern != null) return concern;
+    if (concern != null) {
+      return _withSessionPrefs(concern, sessionPrefs);
+    }
 
     final hit = _catalogHit(
       q,
@@ -269,6 +297,28 @@ class CultAgent {
               'Что важнее — свежий вид или плотность?'
           : 'Могу сориентировать и по мужским протоколам: массаж, уход, RF без перегруза. Кому подбираем — вам или в подарок?';
     }
+    if (q.contains('сколько восстанавли') ||
+        q.contains('как быстро сойдет') ||
+        q.contains('как быстро сойдёт') ||
+        q.contains('синяк сколько') ||
+        q.contains('отек сколько') ||
+        q.contains('отёк сколько') ||
+        q.contains('когда выходить в люди') ||
+        q.contains('реабилитация сколько') ||
+        q.contains('даунтайм') ||
+        q.contains('downtime')) {
+      return 'Сроки разные: после массажа и мягкого ухода часто можно сразу; после инъекций и части аппаратных — день–несколько с возможным отёком или синяком. '
+          'Точный даунтайм скажет врач по протоколу. Назовите процедуру — ориентирую мягче или строже.';
+    }
+    if (q.contains('сравни капель') ||
+        q.contains('сравни инфуз') ||
+        q.contains('какие капельниц') ||
+        q.contains('какие инфуз') ||
+        (q.contains('nad') && q.contains('immunity')) ||
+        (q.contains('капельниц') && q.contains('сравни'))) {
+      return 'Коротко по трём: NAD+ — энергия и ясность; Immunity — поддержка; Beauty & Glow — кожа и «свежий» вид. '
+          'Перед капельницей врач уточнит показания. Могу помочь записаться через «+» или открыть меню «Инфузии».';
+    }
     return null;
   }
 
@@ -320,6 +370,217 @@ class CultAgent {
       return 'Про тело: $base';
     }
     return null;
+  }
+
+  ({bool noInject, bool noDevice, bool onlyHome, bool noInfus}) _sessionPrefs(
+    String topic,
+  ) {
+    final t = topic;
+    return (
+      noInject: t.contains('без укол') ||
+          t.contains('не хочу укол') ||
+          t.contains('без инъек') ||
+          t.contains('без ботокс') ||
+          t.contains('без филлер'),
+      noDevice: t.contains('без аппарат') ||
+          t.contains('не хочу аппарат') ||
+          t.contains('без лазера') ||
+          t.contains('без rf'),
+      onlyHome: t.contains('только дом') ||
+          t.contains('только дома') ||
+          t.contains('без клиник') ||
+          t.contains('только крем'),
+      noInfus: t.contains('без капель') ||
+          t.contains('без инфуз') ||
+          t.contains('не хочу капель'),
+    );
+  }
+
+  String _withSessionPrefs(
+    String reply,
+    ({bool noInject, bool noDevice, bool onlyHome, bool noInfus}) prefs,
+  ) {
+    if (prefs.onlyHome) {
+      return 'Учитывая, что хотите домашний формат: $reply '
+          'Если уводим в кресло — скажите, иначе остаёмся в шопе и домашних ритуалах.';
+    }
+    if (prefs.noInject &&
+        (reply.contains('инъек') ||
+            reply.contains('ботокс') ||
+            reply.contains('ботулин') ||
+            reply.contains('филлер'))) {
+      return 'Помню про «без уколов». Морщины и плотность можно начать с массажа, ухода и домашнего барьера; '
+          'инъекции не предлагаю, пока сами не попросите. Что ближе — массаж или крем?';
+    }
+    if (prefs.noDevice &&
+        (reply.contains('аппарат') ||
+            reply.contains('RF') ||
+            reply.contains('rf') ||
+            reply.contains('IPL') ||
+            reply.contains('лазер'))) {
+      return 'Помню: без аппаратной. $reply '
+          'Аппаратные протоколы пропускаем, пока не попросите иначе.';
+    }
+    if (prefs.noInfus &&
+        (reply.contains('инфуз') || reply.contains('капель') || reply.contains('NAD'))) {
+      return 'Помню: без капельниц. Давайте через уход, массаж или шоп — без инфузий. '
+          'Что смущает в коже или самочувствии без капельниц?';
+    }
+    return reply;
+  }
+
+  String? _choiceIndexReply(String q, String? lastBot) {
+    if (lastBot == null || lastBot.isEmpty) return null;
+    final compact = q
+        .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    int? idx;
+    if (compact == 'первый' ||
+        compact == 'первая' ||
+        compact == 'первое' ||
+        compact == '1' ||
+        compact == 'вариант 1' ||
+        compact == 'первый вариант' ||
+        compact == 'давай первый') {
+      idx = 0;
+    } else if (compact == 'второй' ||
+        compact == 'вторая' ||
+        compact == 'второе' ||
+        compact == '2' ||
+        compact == 'вариант 2' ||
+        compact == 'второй вариант' ||
+        compact == 'давай второй') {
+      idx = 1;
+    } else if (compact == 'оба' ||
+        compact == 'оба варианта' ||
+        compact == 'и то и то' ||
+        compact == 'оба давай') {
+      idx = -1;
+    } else {
+      return null;
+    }
+
+    final named = RegExp(r'«([^»]+)»')
+        .allMatches(lastBot)
+        .map((m) => m.group(1)!.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    final differ = RegExp(
+      r'Чем отличаются:\s*([^.]+)\s*—\s*([^;]+);\s*([^.]+)\s*—\s*([^.]+)',
+    ).firstMatch(lastBot);
+
+    if (idx == -1) {
+      if (named.length >= 2) {
+        return 'Можно и связку: «${named[0]}» и «${named[1]}» — часто так и делают, если задачи разные. '
+            'Откройте «Магазин» или «+» для записи; на консультации подтвердим порядок.';
+      }
+      return 'Оба пути рабочие — можно начать с более мягкого, а второй оставить на курс после осмотра. '
+          'Скажите, что мягче для вас, или откройте «+» для записи.';
+    }
+
+    String? label;
+    if (named.length > idx) {
+      label = named[idx];
+    } else if (differ != null) {
+      label = idx == 0 ? differ.group(1)!.trim() : differ.group(3)!.trim();
+    }
+    if (label == null || label.isEmpty) {
+      return idx == 0
+          ? 'Беру первый путь. Откройте «+» или карточку в меню — оформлю следующий шаг; если назовёте точнее, подтвержу цену.'
+          : 'Беру второй путь. Откройте «+» или карточку в меню — оформлю следующий шаг; если назовёте точнее, подтвержу цену.';
+    }
+    return 'Отлично, остаёмся на «$label». '
+        'Можно открыть карточку в приложении или нажать «+» для записи. '
+        'Если нужна цена ещё раз — спросите «сколько стоит».';
+  }
+
+  String? _whyReply(String q, String? lastBot) {
+    final asks = q == 'почему' ||
+        q == 'а почему' ||
+        q == 'зачем' ||
+        q == 'а зачем' ||
+        q.startsWith('почему ') ||
+        q.startsWith('зачем ') ||
+        q.contains('почему именно') ||
+        q.contains('почему так') ||
+        q.contains('на каком основании');
+    if (!asks) return null;
+    if (lastBot == null || lastBot.trim().isEmpty) {
+      return 'Чтобы не гадать: опишите зону или цель — объясню, почему один шаг спокойнее другого.';
+    }
+    final brief = _briefRestate(lastBot);
+    return 'Потому что из вашего запроса это самый спокойный следующий шаг. Кратко: $brief '
+        'Если логика не зашла — назовите ограничение: без уколов, только дом, к дате или бюджет.';
+  }
+
+  String? _bookIntentReply(
+    String q, {
+    ClientGender? gender,
+    required List<Service> localServices,
+    required List<Product> localProducts,
+    required List<YcService> liveServices,
+    required List<Device> localDevices,
+    required List<Infusion> localInfusions,
+  }) {
+    final wants = q.contains('запиши') ||
+        q.contains('записать меня') ||
+        q.contains('запишите') ||
+        q.contains('давай запишемся') ||
+        q.contains('давайте запишемся') ||
+        q.contains('хочу записаться на') ||
+        q.contains('хочу на процедуру') ||
+        (q.contains('хочу на') &&
+            (q.contains('массаж') ||
+                q.contains('rf') ||
+                q.contains('уход') ||
+                q.contains('пилинг') ||
+                q.contains('инфуз') ||
+                q.contains('капель') ||
+                q.contains('консульт') ||
+                q.contains('чистка') ||
+                q.contains('лазер')));
+    if (!wants) return null;
+
+    var rest = q
+        .replaceAll('запиши меня на', ' ')
+        .replaceAll('запиши на', ' ')
+        .replaceAll('записать меня на', ' ')
+        .replaceAll('запишите на', ' ')
+        .replaceAll('хочу записаться на', ' ')
+        .replaceAll('давай запишемся на', ' ')
+        .replaceAll('давайте запишемся на', ' ')
+        .replaceAll('хочу на процедуру', ' ')
+        .replaceAll(RegExp(r'^хочу на\s+'), ' ')
+        .replaceAll('запиши меня', ' ')
+        .replaceAll('запиши', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    if (rest.isEmpty || rest.length < 3) {
+      return 'Запишем с удовольствием. Нажмите «+» на главной или «Запись» в меню — услуга, врач, время. '
+          'Можете голосом назвать процедуру, я подтвержу направление.';
+    }
+
+    final hit = _catalogHit(
+      rest,
+      localServices: localServices,
+      localProducts: localProducts,
+      liveServices: liveServices,
+      localDevices: localDevices,
+      localInfusions: localInfusions,
+      gender: gender,
+    );
+    if (hit != null && hit.score >= 5) {
+      final named = RegExp(r'«([^»]+)»').firstMatch(hit.reply)?.group(1);
+      final title = named ?? rest;
+      return 'Отлично, берём курс на «$title». '
+          'Запись: откройте «+» на главной или меню «Запись» — услуга, врач и время. '
+          'Если слотов не видно — напишите администратору в чат, помогут вручную.\n'
+          '${_briefRestate(hit.reply)}';
+    }
+    return 'Запишем на «$rest»: откройте «+» или «Запись» и выберите ближайшее окно. '
+        'Если название в прайсе чуть другое — на осмотре или с администратором уточним.';
   }
 
   String? _correctionReply(String q) {

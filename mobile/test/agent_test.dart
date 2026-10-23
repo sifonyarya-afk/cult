@@ -248,6 +248,40 @@ void main() {
     expect(reply.toLowerCase(), anyOf(contains('врач'), contains('инфуз'), contains('холист')));
   });
 
+  test('Первый вариант после двух опций', () {
+    final reply = cultAgent.answer(
+      'первый',
+      lastBot:
+          'Нашла два близких варианта. Чем отличаются: Veil Peptide Serum — пептиды; Lumen Barrier Cream — барьер.',
+    );
+    expect(reply.toLowerCase(), contains('veil'));
+  });
+
+  test('Почему объясняет lastBot', () {
+    final reply = cultAgent.answer(
+      'почему',
+      lastBot: 'Для сухости мягко заходит барьерный крем Lumen Barrier.',
+    );
+    expect(reply.toLowerCase(), contains('потому'));
+    expect(reply.toLowerCase(), contains('барьер'));
+  });
+
+  test('Запиши на массаж ведёт к записи', () {
+    final reply = cultAgent.answer('Запиши меня на массаж');
+    expect(reply.toLowerCase(), contains('запис'));
+    expect(reply.toLowerCase(), anyOf(contains('массаж'), contains('«+»'), contains('+')));
+  });
+
+  test('Сессия помнит без уколов', () {
+    final reply = cultAgent.answer(
+      'морщины на лбу',
+      recentUsers: ['Хочу без уколов'],
+      lastUser: 'Хочу без уколов',
+    );
+    expect(reply.toLowerCase(), contains('без укол'));
+    expect(reply.toLowerCase(), isNot(contains('ботулин')));
+  });
+
   test('Мужской профиль не предлагает женский массаж первым', () {
     final reply = cultAgent.answer(
       'скульптурный массаж лица',
