@@ -41,7 +41,7 @@ cd ..
 flutter run
 ```
 
-В `flutter pub get` должны появиться `speech_to_text 7.4.0` и `flutter_tts` (не 7.5 — он требует Dart 3.12). В приложении: Чат → чёрная кнопка **CULT Агент**; Настройки → Сборка = `voice-agent-visible`.
+В `flutter pub get` должны появиться `speech_to_text 7.4.0` и `flutter_tts` (не 7.5 — он требует Dart 3.12). В приложении: Чат → чёрная кнопка **CULT Агент**; Настройки → Сборка = `agent-voice-doctor`.
 
 Нужны Mac, Xcode и Flutter.
 
