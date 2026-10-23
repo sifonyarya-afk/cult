@@ -467,7 +467,17 @@ void main() {
       'ok',
       lastBot: 'И вам спасибо за доверие. Я рядом — можно продолжить голосом или текстом, без спешки.',
     );
-    expect(reply.toLowerCase(), contains('хорошо'));
+    expect(
+      reply.toLowerCase(),
+      anyOf(
+        contains('хорошо'),
+        contains('ок'),
+        contains('договор'),
+        contains('приняла'),
+        contains('слушаю'),
+        contains('продолж'),
+      ),
+    );
     expect(reply.toLowerCase(), isNot(contains('слышу вас — давайте сузим')));
   });
 

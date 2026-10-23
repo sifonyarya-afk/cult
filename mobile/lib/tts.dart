@@ -548,7 +548,7 @@ class CultTts {
   static List<String> speechChunks(String spoken) => breathGroups(spoken);
 
   static const spokenGreeting =
-      'Здравствуйте. Я рядом. Нажмите кнопку и говорите — слушаю и отвечу до конца, без клавиатуры.';
+      'Здравствуйте. Я рядом — нажмите кнопку и говорите своими словами, я отвечу до конца.';
 
   static const _phonetics = <String, String>{
     'Veil Peptide Serum': 'Вейл Пептайд Сёрум',

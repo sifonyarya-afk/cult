@@ -10,7 +10,7 @@ import '../tts.dart';
 import '../widgets.dart';
 import 'voice_settings.dart';
 
-/// Voice-first CULT Агент: one mic button, no typing, push-style offers.
+/// Voice-first CULT Агент: one mic button, living consultation layout.
 class AgentVoicePage extends StatefulWidget {
   const AgentVoicePage({super.key});
 
@@ -31,7 +31,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
   var _booted = false;
   var _busy = false;
   var _partial = '';
-  var _status = 'Нажмите кнопку — говорите';
+  var _status = 'Нажмите — и говорите своими словами';
   List<AgentOffer> _offers = const [];
 
   late final AnimationController _pulse;
@@ -41,7 +41,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     super.initState();
     _pulse = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 1600),
     )..repeat(reverse: true);
   }
 
@@ -72,13 +72,13 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     }
     setState(() {
       _speaking = true;
-      _status = 'Говорю…';
+      _status = 'Отвечаю…';
     });
     await _tts.speak(CultTts.spokenGreeting, complete: true);
     if (!mounted) return;
     setState(() {
       _speaking = false;
-      _status = 'Слушаю — говорите';
+      _status = 'Слушаю вас';
     });
     await _startListen(ClinicScope.of(context), auto: true);
   }
@@ -124,7 +124,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
       if (mounted) {
         setState(() {
           _speaking = false;
-          _status = 'Нажмите кнопку — говорите';
+          _status = 'Нажмите — и говорите своими словами';
         });
       }
       return;
@@ -135,7 +135,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
         setState(() {
           _listening = false;
           _partial = '';
-          _status = 'Нажмите кнопку — говорите';
+          _status = 'Нажмите — и говорите своими словами';
         });
       }
       return;
@@ -162,7 +162,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     setState(() {
       _listening = true;
       _partial = '';
-      _status = auto ? 'Слушаю…' : 'Слушаю — говорите до конца фразы';
+      _status = auto ? 'Слушаю…' : 'Говорите до конца фразы';
     });
     HapticFeedback.mediumImpact();
     await _speech.listen(
@@ -215,7 +215,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     if (!mounted) return;
     setState(() {
       _offers = offers;
-      _status = 'Говорю до конца…';
+      _status = 'Отвечаю…';
     });
     _scrollToEnd();
     if (line.isNotEmpty) {
@@ -228,10 +228,9 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     if (!mounted) return;
     setState(() {
       _speaking = false;
-      _status = 'Слушаю — говорите';
+      _status = 'Слушаю вас';
     });
     _busy = false;
-    // Hands-free loop: listen again without typing.
     await Future<void>.delayed(const Duration(milliseconds: 280));
     if (!mounted || _listening || _speaking) return;
     await _startListen(store, auto: true);
@@ -253,7 +252,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
       if (!_scroll.hasClients) return;
       _scroll.animateTo(
         _scroll.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 280),
+        duration: const Duration(milliseconds: 320),
         curve: Curves.easeOutCubic,
       );
     });
@@ -284,7 +283,7 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     setState(() {
       _offers = const [];
       _partial = '';
-      _status = 'Нажмите кнопку — говорите';
+      _status = 'Нажмите — и говорите своими словами';
     });
     HapticFeedback.mediumImpact();
   }
@@ -298,17 +297,36 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     super.dispose();
   }
 
+  String? get _heroReply {
+    final messages = ClinicScope.of(context).threads['bot'] ?? [];
+    for (var i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].from == 'them') return messages[i].text;
+    }
+    return null;
+  }
+
+  String? get _lastUserLine {
+    final messages = ClinicScope.of(context).threads['bot'] ?? [];
+    for (var i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].from == 'me') return messages[i].text;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
     final messages = store.threads['bot'] ?? [];
     final canClear = messages.any((m) => m.from == 'me');
+    final hero = _heroReply ?? contacts.firstWhere((c) => c.id == 'bot').seed;
+    final lastUser = _lastUserLine;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF141210),
+      backgroundColor: const Color(0xFF100E0C),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF141210),
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
+        elevation: 0,
         title: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -317,12 +335,12 @@ class _AgentVoicePageState extends State<AgentVoicePage>
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 18,
-                letterSpacing: 2,
+                letterSpacing: 2.4,
                 fontWeight: FontWeight.w500,
               ),
             ),
             Text(
-              'Одна кнопка · без клавиатуры',
+              'Живой разговор',
               style: TextStyle(color: Color(0xFFB9A990), fontSize: 11),
             ),
           ],
@@ -344,16 +362,27 @@ class _AgentVoicePageState extends State<AgentVoicePage>
             ),
         ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      body: AnimatedBuilder(
+        animation: _pulse,
+        builder: (context, _) {
+          final ambient = _listening
+              ? 0.55 + _pulse.value * 0.35
+              : (_speaking ? 0.4 + _pulse.value * 0.25 : 0.22);
+          return Container(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: const Alignment(0, -0.55),
+            radius: 1.15,
             colors: [
-              Color(0xFF141210),
-              Color(0xFF2A2318),
-              Color(0xFF1A1712),
+              Color.lerp(
+                const Color(0xFF3A2E1C),
+                const Color(0xFF5A4630),
+                ambient,
+              )!,
+              const Color(0xFF1A1510),
+              const Color(0xFF100E0C),
             ],
+            stops: const [0, 0.45, 1],
           ),
         ),
         child: SafeArea(
@@ -361,15 +390,15 @@ class _AgentVoicePageState extends State<AgentVoicePage>
             children: [
               if (_offers.isNotEmpty)
                 SizedBox(
-                  height: 118,
+                  height: 112,
                   child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                     scrollDirection: Axis.horizontal,
                     itemCount: _offers.length,
                     separatorBuilder: (_, _) => const SizedBox(width: 10),
                     itemBuilder: (context, index) {
                       final offer = _offers[index];
-                      return _PushOfferCard(
+                      return _SuggestCard(
                         offer: offer,
                         onTap: () => _askOffer(store, offer),
                         onBook: offer.kind == 'service' ||
@@ -395,130 +424,201 @@ class _AgentVoicePageState extends State<AgentVoicePage>
               Expanded(
                 child: ListView(
                   controller: _scroll,
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
                   children: [
-                    if (messages.isEmpty)
-                      _VoiceLine(
-                        text: contacts.firstWhere((c) => c.id == 'bot').seed,
-                        mine: false,
+                    if (lastUser != null && lastUser.isNotEmpty) ...[
+                      Text(
+                        'Вы · $lastUser',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0x99C9BBA5),
+                          fontSize: 13,
+                          height: 1.35,
+                        ),
                       ),
-                    for (final message in messages.takeLast(12))
-                      _VoiceLine(
-                        text: message.text,
-                        mine: message.from == 'me',
+                      const SizedBox(height: 18),
+                    ],
+                    AnimatedOpacity(
+                      duration: const Duration(milliseconds: 280),
+                      opacity: _speaking ? 1 : 0.96,
+                      child: Text(
+                        hero,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: const Color(0xFFF3EBDD),
+                          fontSize: hero.length > 160 ? 17 : 20,
+                          height: 1.45,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 0.15,
+                        ),
                       ),
+                    ),
                     if (_partial.isNotEmpty) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 28),
                       Text(
                         _partial,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFFE8D8BE),
+                        style: TextStyle(
+                          color: Color.lerp(
+                            const Color(0xFFE8D8BE),
+                            const Color(0xFFFED488),
+                            _pulse.value,
+                          ),
                           fontSize: 16,
-                          height: 1.35,
+                          height: 1.4,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
+                    ],
+                    if (messages.length > 2) ...[
+                      const SizedBox(height: 28),
+                      ...messages
+                          .where((m) => m.from == 'them')
+                          .toList()
+                          .reversed
+                          .skip(1)
+                          .take(2)
+                          .toList()
+                          .reversed
+                          .map(
+                            (m) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(
+                                m.text,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Color(0x66D9CBB5),
+                                  fontSize: 13,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ),
                     ],
                   ],
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-                child: Text(
-                  _status,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: _speechDenied
-                        ? const Color(0xFFFFB4A8)
-                        : const Color(0xFFD9CBB5),
-                    fontSize: 14,
-                    height: 1.3,
+                padding: const EdgeInsets.fromLTRB(28, 0, 28, 10),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: Text(
+                    _status,
+                    key: ValueKey(_status),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _speechDenied
+                          ? const Color(0xFFFFB4A8)
+                          : const Color(0xFFD9CBB5),
+                      fontSize: 13,
+                      height: 1.3,
+                      letterSpacing: 0.2,
+                    ),
                   ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(bottom: 28),
-                child: AnimatedBuilder(
-                  animation: _pulse,
-                  builder: (context, child) {
+                padding: const EdgeInsets.only(bottom: 30),
+                child: Builder(
+                  builder: (context) {
                     final active = _listening || _speaking;
-                    final scale = active ? 1 + (_pulse.value * 0.06) : 1.0;
-                    return Transform.scale(scale: scale, child: child);
-                  },
-                  child: Semantics(
-                    button: true,
-                    label: _listening
-                        ? 'Остановить прослушивание'
-                        : (_speaking
-                            ? 'Остановить речь'
-                            : 'Говорить с CULT Агентом'),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () => _onMainButton(store),
-                        child: Ink(
-                          width: 96,
-                          height: 96,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: _listening
-                                  ? const [
-                                      Color(0xFFFED488),
-                                      Color(0xFFC4A35A),
-                                    ]
-                                  : (_speaking
-                                      ? const [
-                                          Color(0xFFB8955A),
-                                          Color(0xFF775A19),
-                                        ]
-                                      : const [
-                                          Color(0xFFE7C98A),
-                                          Color(0xFF8A6A2E),
-                                        ]),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
+                    final scale = active ? 1 + (_pulse.value * 0.07) : 1.0;
+                    final ring = active ? 10 + (_pulse.value * 14) : 0.0;
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (active)
+                          Container(
+                            width: 96 + ring,
+                            height: 96 + ring,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
                                 color: const Color(0xFFFED488)
-                                    .withValues(alpha: _listening ? 0.45 : 0.2),
-                                blurRadius: _listening ? 28 : 16,
-                                spreadRadius: _listening ? 2 : 0,
+                                    .withValues(alpha: 0.22 + _pulse.value * 0.2),
+                                width: 1.2,
                               ),
-                            ],
+                            ),
                           ),
-                          child: Icon(
-                            _listening
-                                ? Icons.stop_rounded
+                        Transform.scale(
+                          scale: scale,
+                          child: Semantics(
+                            button: true,
+                            label: _listening
+                                ? 'Остановить прослушивание'
                                 : (_speaking
-                                    ? Icons.volume_up_rounded
-                                    : Icons.mic_rounded),
-                            size: 40,
-                            color: const Color(0xFF1B1408),
+                                    ? 'Остановить речь'
+                                    : 'Говорить с CULT Агентом'),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: () => _onMainButton(store),
+                                child: Ink(
+                                  width: 96,
+                                  height: 96,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: _listening
+                                          ? const [
+                                              Color(0xFFFFE2A8),
+                                              Color(0xFFC4A35A),
+                                            ]
+                                          : (_speaking
+                                              ? const [
+                                                  Color(0xFFC4A06A),
+                                                  Color(0xFF6E5320),
+                                                ]
+                                              : const [
+                                                  Color(0xFFE7C98A),
+                                                  Color(0xFF8A6A2E),
+                                                ]),
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFFED488)
+                                            .withValues(
+                                          alpha: _listening ? 0.4 : 0.18,
+                                        ),
+                                        blurRadius: _listening ? 32 : 18,
+                                        spreadRadius: _listening ? 1 : 0,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    _listening
+                                        ? Icons.stop_rounded
+                                        : (_speaking
+                                            ? Icons.volume_up_rounded
+                                            : Icons.mic_rounded),
+                                    size: 40,
+                                    color: const Color(0xFF1B1408),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ],
           ),
         ),
+      );
+        },
       ),
     );
   }
 }
 
-extension _TakeLast<E> on List<E> {
-  Iterable<E> takeLast(int n) => skip(length < n ? 0 : length - n);
-}
-
-class _PushOfferCard extends StatelessWidget {
-  const _PushOfferCard({
+class _SuggestCard extends StatelessWidget {
+  const _SuggestCard({
     required this.offer,
     required this.onTap,
     this.onBook,
@@ -531,53 +631,41 @@ class _PushOfferCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final kindLabel = switch (offer.kind) {
-      'product' => 'Шоп',
+      'product' => 'Из шопа',
       'infusion' => 'Инфузия',
       _ => 'Услуга',
     };
     return Material(
-      color: const Color(0xFF2C261C),
-      elevation: 8,
-      shadowColor: const Color(0x66000000),
-      borderRadius: BorderRadius.circular(18),
+      color: const Color(0xCC241E16),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
-          width: 250,
+          width: 236,
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0x55FED488)),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0x33FED488)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0x33FED488),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Пуш · $kindLabel',
-                      style: const TextStyle(
-                        color: Color(0xFFFED488),
-                        fontSize: 10,
-                        letterSpacing: 0.4,
-                      ),
+                  Text(
+                    kindLabel,
+                    style: const TextStyle(
+                      color: Color(0xFFB9A990),
+                      fontSize: 11,
+                      letterSpacing: 0.3,
                     ),
                   ),
                   const Spacer(),
                   Text(
                     offer.priceLabel,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFFF6EFE3),
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
@@ -609,7 +697,7 @@ class _PushOfferCard extends StatelessWidget {
               Row(
                 children: [
                   const Text(
-                    'Спросить',
+                    'Рассказать',
                     style: TextStyle(
                       color: Color(0xFFFED488),
                       fontSize: 12,
@@ -633,49 +721,6 @@ class _PushOfferCard extends StatelessWidget {
                 ],
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _VoiceLine extends StatelessWidget {
-  const _VoiceLine({required this.text, required this.mine});
-
-  final String text;
-  final bool mine;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        constraints: const BoxConstraints(maxWidth: 320),
-        decoration: BoxDecoration(
-          color: mine
-              ? const Color(0xFF3A3226)
-              : const Color(0xCC1E1A14),
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(18),
-            topRight: const Radius.circular(18),
-            bottomLeft: Radius.circular(mine ? 18 : 6),
-            bottomRight: Radius.circular(mine ? 6 : 18),
-          ),
-          border: Border.all(
-            color: mine
-                ? const Color(0x33FED488)
-                : const Color(0x22FFFFFF),
-          ),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: mine ? const Color(0xFFF6EFE3) : const Color(0xFFEDE4D6),
-            height: 1.35,
-            fontSize: 14.5,
           ),
         ),
       ),

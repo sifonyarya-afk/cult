@@ -816,15 +816,15 @@ class Contact {
 }
 
 /// Bump when shipping a user-visible feature so Settings proves the Mac build is fresh.
-const cultBuildTag = 'agent-voice-v17';
+const cultBuildTag = 'agent-voice-v18';
 
 const contacts = <Contact>[
   Contact(
     id: 'bot',
     name: 'CULT Агент',
-    role: 'Одна кнопка · слушаю и отвечаю',
+    role: 'Живой разговор · одна кнопка',
     seed:
-        'Здравствуйте. Я CULT Агент — говорите в одну кнопку, без клавиатуры. Слушаю и отвечаю голосом до конца фразы; сверху предложу услуги и товары. Если длинно — скажите «короче».',
+        'Здравствуйте. Говорите как на консультации — одной кнопкой, без сценария. Я подстроюсь под ваши слова и при необходимости предложу услугу или средство из шопа.',
   ),
   Contact(
     id: 'admin',
