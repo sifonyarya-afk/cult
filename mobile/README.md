@@ -41,7 +41,7 @@ cd ..
 flutter run
 ```
 
-В `flutter pub get` должны появиться `speech_to_text 7.4.0` и `flutter_tts` (не 7.5 — он требует Dart 3.12). В приложении: Чат → чёрная кнопка **CULT Агент**; Настройки → Сборка = `agent-replies-v14`.
+В `flutter pub get` должны появиться `speech_to_text 7.4.0` и `flutter_tts` (не 7.5 — он требует Dart 3.12). В приложении: Чат → чёрная кнопка **CULT Агент**; Настройки → Сборка = `agent-replies-v15`.
 
 **Живой голос (не робот):** системный TTS iPhone всегда слегка синтетический. Чтобы звучало как человек:
 1. **Лучший вариант** — Профиль → **Живой голос агента** → API-ключ [Yandex SpeechKit](https://cloud.yandex.ru/services/speechkit) (голос Alena). Кнопка «Прослушать тест».

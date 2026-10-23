@@ -496,6 +496,32 @@ void main() {
     expect(reply.toLowerCase(), anyOf(contains('оплат'), contains('pay'), contains('карт')));
   });
 
+  test('Отёк с буквой ё не падает в generic', () {
+    final reply = cultAgent.answer('отёк');
+    expect(reply.toLowerCase(), anyOf(contains('отёк'), contains('отек'), contains('массаж')));
+    expect(reply.toLowerCase(), isNot(contains('слышу вас — давайте сузим')));
+  });
+
+  test('Каменное лицо — про натуральность', () {
+    final reply = cultAgent.answer('лицо не будет каменным');
+    expect(reply.toLowerCase(), anyOf(contains('натураль'), contains('мимик'), contains('массаж')));
+  });
+
+  test('Диабет уводит к врачу', () {
+    final reply = cultAgent.answer('диабет');
+    expect(reply.toLowerCase(), anyOf(contains('врач'), contains('чат'), contains('консультац')));
+  });
+
+  test('English parking hits FAQ', () {
+    final reply = cultAgent.answer('parking');
+    expect(reply.toLowerCase(), contains('парков'));
+  });
+
+  test('how to book на английском', () {
+    final reply = cultAgent.answer('how to book');
+    expect(reply.toLowerCase(), anyOf(contains('запис'), contains('+')));
+  });
+
   test('Старое приветствие бота обновляется на CULT Агент', () async {
     SharedPreferences.setMockInitialValues({
       'cult-flutter':
