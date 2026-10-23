@@ -29,334 +29,353 @@ class CabinetPage extends StatelessWidget {
         }
         return false;
       },
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-        children: [
-          Center(
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: SizedBox(
-                    width: 108,
-                    height: 108,
-                    child: CultImage('avatar', aspect: 1, radius: 0),
-                  ),
-                ),
-              Positioned(
-                right: -4,
-                bottom: -4,
-                child: Material(
-                  color: Cult.ink,
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: () {
-                      cultTapFeedback();
-                      pushPage(
-                        context,
-                        store.signedIn
-                            ? const SettingsPage()
-                            : const AuthPage(allowSkip: false),
-                      );
-                    },
-                    child: const SizedBox(
-                      width: 34,
-                      height: 34,
-                      child: Icon(
-                        Icons.edit_outlined,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
+      child: RefreshIndicator(
+        color: Cult.primary,
+        onRefresh: () => store.syncClinic(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+          children: [
+            if (store.syncing)
+              const CultLoading(label: 'Синхронизация с филиалом…'),
+            if (store.liveError.isNotEmpty)
+              CultErrorBanner(
+                message: store.liveError,
+                onRetry: () => store.syncClinic(),
+                retryLabel: 'Обновить',
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        Center(
-          child: GestureDetector(
-            onLongPress: () {
-              Clipboard.setData(ClipboardData(text: name));
-              cultTapFeedback();
-              showCultSnack(context, 'Имя скопировано');
-            },
-            child: Text(name, style: cultHeadline(28)),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Center(
-          child: Text(
-            store.signedIn
-                ? 'ПЛАТИНОВЫЙ СТАТУС'
-                : (store.gender?.label.toUpperCase() ?? 'ГОСТЕВОЙ ПРОФИЛЬ'),
-            style: const TextStyle(
-              letterSpacing: 1.6,
-              color: Cult.muted,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        if (store.signedIn && store.profilePhone.trim().isNotEmpty) ...[
-          const SizedBox(height: 6),
-          Center(
-            child: InkWell(
-              onLongPress: () {
-                final label = _phoneLabel(store.profilePhone);
-                Clipboard.setData(ClipboardData(text: label));
-                cultTapFeedback();
-                showCultSnack(context, 'Телефон скопирован');
-              },
-              child: Text(
-                _phoneLabel(store.profilePhone),
-                style: const TextStyle(color: Cult.muted, fontSize: 13),
-              ),
-            ),
-          ),
-        ],
-        if (!store.signedIn) ...[
-          const SizedBox(height: 16),
-          CultCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Войдите по телефону', style: cultHeadline(22)),
-                const SizedBox(height: 6),
-                const Text(
-                  'Сохраним профиль в филиале CULT Сочи.',
-                  style: TextStyle(color: Cult.muted),
-                ),
-                const SizedBox(height: 12),
-                CultButton(
-                  label: 'Войти',
-                  onPressed: () =>
-                      pushPage(context, const AuthPage(allowSkip: false)),
-                ),
-              ],
-            ),
-          ),
-        ],
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFFE8CB8E), Color(0xFFC49A4E)],
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+            Center(
+              child: Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  const Expanded(
-                    child: Text(
-                      'БОНУСНЫЙ БАЛАНС',
-                      style: TextStyle(
-                        letterSpacing: 1.1,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: SizedBox(
+                      width: 108,
+                      height: 108,
+                      child: CultImage('avatar', aspect: 1, radius: 0),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.28),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'VIP СТАТУС',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
+                  Positioned(
+                    right: -4,
+                    bottom: -4,
+                    child: Material(
+                      color: Cult.ink,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () {
+                          cultTapFeedback();
+                          pushPage(
+                            context,
+                            store.signedIn
+                                ? const SettingsPage()
+                                : const AuthPage(allowSkip: false),
+                          );
+                        },
+                        child: const SizedBox(
+                          width: 34,
+                          height: 34,
+                          child: Icon(
+                            Icons.edit_outlined,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              GestureDetector(
+            ),
+            const SizedBox(height: 14),
+            Center(
+              child: GestureDetector(
                 onLongPress: () {
-                  Clipboard.setData(
-                    ClipboardData(text: 'Бонусный баланс CULT: ${rub(store.balance)}'),
-                  );
+                  Clipboard.setData(ClipboardData(text: name));
                   cultTapFeedback();
-                  showCultSnack(context, 'Баланс скопирован');
+                  showCultSnack(context, 'Имя скопировано');
                 },
-                child: Text(rub(store.balance), style: cultHeadline(36)),
+                child: Text(name, style: cultHeadline(28)),
               ),
-              if (store.welcomeGranted) ...[
-                const SizedBox(height: 6),
-                Text(
-                  'включая welcome-бонус ${rub(store.welcomeBonus)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Cult.ink.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 4),
+            Center(
+              child: Text(
+                store.signedIn
+                    ? 'ПЛАТИНОВЫЙ СТАТУС'
+                    : (store.gender?.label.toUpperCase() ?? 'ГОСТЕВОЙ ПРОФИЛЬ'),
+                style: const TextStyle(
+                  letterSpacing: 1.6,
+                  color: Cult.muted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            if (store.signedIn && store.profilePhone.trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Center(
+                child: InkWell(
+                  onLongPress: () {
+                    final label = _phoneLabel(store.profilePhone);
+                    Clipboard.setData(ClipboardData(text: label));
+                    cultTapFeedback();
+                    showCultSnack(context, 'Телефон скопирован');
+                  },
+                  child: Text(
+                    _phoneLabel(store.profilePhone),
+                    style: const TextStyle(color: Cult.muted, fontSize: 13),
                   ),
                 ),
-              ],
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(
-                            text: 'В клубе с  ',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                          TextSpan(
-                            text: 'ЯНВ 2023',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    Icons.auto_awesome,
-                    color: Cult.ink.withValues(alpha: 0.55),
-                    size: 20,
-                  ),
-                ],
               ),
             ],
-          ),
-        ),
-        const SizedBox(height: 22),
-        const CultSectionLabel('Обзор аккаунта'),
-        const SizedBox(height: 10),
-        _AccountRow(
-          icon: Icons.calendar_today_outlined,
-          title: 'Мои записи',
-          note: next == null
-              ? 'Предстоящих нет'
-              : () {
-                  final weekday = formatVisitWeekday(next.date);
-                  return 'След: ${formatVisitDate(next.date)}'
-                      '${weekday.isEmpty ? '' : ', $weekday'}, ${next.time}';
-                }(),
-          onTap: () => pushPage(context, const VisitsPage()),
-        ),
-        _AccountRow(
-          icon: Icons.history,
-          title: 'История визитов',
-          note: store.past.isEmpty ? 'Пусто' : '${store.past.length} в архиве',
-          onTap: () => pushPage(context, const VisitsPage()),
-        ),
-        _AccountRow(
-          icon: Icons.biotech_outlined,
-          title: 'Мои анализы',
-          note: '',
-          onTap: () => pushPage(context, const AnalysesPage()),
-        ),
-        _AccountRow(
-          icon: Icons.shopping_bag_outlined,
-          title: 'Мои заказы',
-          note: store.orders.isEmpty
-              ? 'Пока пусто'
-              : '${store.orders.length} заказ(ов)',
-          onTap: () => pushPage(context, const OrdersPage()),
-        ),
-        _AccountRow(
-          icon: Icons.favorite_border,
-          title: 'Избранное',
-          note: store.favorites.isEmpty
-              ? 'Пока пусто'
-              : '${store.favorites.length} формул',
-          onTap: () => pushPage(context, const FavoritesPage()),
-        ),
-        _AccountRow(
-          icon: Icons.directions_car_outlined,
-          title: 'Заказ трансфера',
-          note: '',
-          onTap: () => pushPage(context, const TransferPage()),
-        ),
-        _AccountRow(
-          icon: Icons.card_giftcard_outlined,
-          title: 'Купить сертификат',
-          note: '',
-          onTap: () => pushPage(context, const CertificatesPage()),
-        ),
-        _AccountRow(
-          icon: Icons.medical_information_outlined,
-          title: 'Рекомендации врача',
-          note: 'Аптека и уход',
-          onTap: () => pushPage(context, const PharmacyPage()),
-        ),
-        _AccountRow(
-          icon: Icons.rule_outlined,
-          title: 'Правила лояльности',
-          note: '',
-          onTap: () => pushPage(context, const LoyaltyPage()),
-        ),
-        _AccountRow(
-          icon: Icons.wc_outlined,
-          title: 'Профиль услуг',
-          note: store.gender?.servicesTitle ?? 'Не выбран',
-          onTap: () => pushPage(context, const GenderPage()),
-        ),
-        if (store.signedIn) ...[
-          const SizedBox(height: 16),
-          Center(
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Cult.error,
-                side: BorderSide(color: Cult.error.withValues(alpha: 0.35)),
-              ),
-              onPressed: () async {
-                final ok = await showDialog<bool>(
-                  context: context,
-                  builder: (dialogContext) => AlertDialog(
-                    title: const Text('Выйти из профиля?'),
-                    content: const Text(
-                      'Записи филиала скроются, пока снова не войдёте по телефону. Корзина и избранное останутся на устройстве.',
+            if (!store.signedIn) ...[
+              const SizedBox(height: 16),
+              CultCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Войдите по телефону', style: cultHeadline(22)),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Сохраним профиль в филиале CULT Сочи.',
+                      style: TextStyle(color: Cult.muted),
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(dialogContext, false),
-                        child: const Text('Остаться'),
+                    const SizedBox(height: 12),
+                    CultButton(
+                      label: 'Войти',
+                      onPressed: () =>
+                          pushPage(context, const AuthPage(allowSkip: false)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFE8CB8E), Color(0xFFC49A4E)],
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'БОНУСНЫЙ БАЛАНС',
+                          style: TextStyle(
+                            letterSpacing: 1.1,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(dialogContext, true),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.28),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                         child: const Text(
-                          'Выйти',
-                          style: TextStyle(color: Cult.error),
+                          'VIP СТАТУС',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                );
-                if (ok == true) {
-                  store.signOut();
-                  if (context.mounted) {
-                    showCultSnack(context, 'Вы вышли из профиля');
-                  }
-                }
-              },
-              child: const Text('ВЫЙТИ'),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onLongPress: () {
+                      Clipboard.setData(
+                        ClipboardData(
+                          text: 'Бонусный баланс CULT: ${rub(store.balance)}',
+                        ),
+                      );
+                      cultTapFeedback();
+                      showCultSnack(context, 'Баланс скопирован');
+                    },
+                    child: Text(rub(store.balance), style: cultHeadline(36)),
+                  ),
+                  if (store.welcomeGranted) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'включая welcome-бонус ${rub(store.welcomeBonus)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Cult.ink.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'В клубе с  ',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              TextSpan(
+                                text: 'ЯНВ 2023',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.auto_awesome,
+                        color: Cult.ink.withValues(alpha: 0.55),
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-        ],
+            const SizedBox(height: 22),
+            const CultSectionLabel('Обзор аккаунта'),
+            const SizedBox(height: 10),
+            _AccountRow(
+              icon: Icons.calendar_today_outlined,
+              title: 'Мои записи',
+              note: next == null
+                  ? 'Предстоящих нет'
+                  : () {
+                      final weekday = formatVisitWeekday(next.date);
+                      return 'След: ${formatVisitDate(next.date)}'
+                          '${weekday.isEmpty ? '' : ', $weekday'}, ${next.time}';
+                    }(),
+              onTap: () => pushPage(context, const VisitsPage()),
+            ),
+            _AccountRow(
+              icon: Icons.history,
+              title: 'История визитов',
+              note: store.past.isEmpty
+                  ? 'Пусто'
+                  : '${store.past.length} в архиве',
+              onTap: () => pushPage(context, const VisitsPage()),
+            ),
+            _AccountRow(
+              icon: Icons.biotech_outlined,
+              title: 'Мои анализы',
+              note: '',
+              onTap: () => pushPage(context, const AnalysesPage()),
+            ),
+            _AccountRow(
+              icon: Icons.shopping_bag_outlined,
+              title: 'Мои заказы',
+              note: store.orders.isEmpty
+                  ? 'Пока пусто'
+                  : '${store.orders.length} заказ(ов)',
+              onTap: () => pushPage(context, const OrdersPage()),
+            ),
+            _AccountRow(
+              icon: Icons.favorite_border,
+              title: 'Избранное',
+              note: store.favorites.isEmpty
+                  ? 'Пока пусто'
+                  : '${store.favorites.length} формул',
+              onTap: () => pushPage(context, const FavoritesPage()),
+            ),
+            _AccountRow(
+              icon: Icons.directions_car_outlined,
+              title: 'Заказ трансфера',
+              note: '',
+              onTap: () => pushPage(context, const TransferPage()),
+            ),
+            _AccountRow(
+              icon: Icons.card_giftcard_outlined,
+              title: 'Купить сертификат',
+              note: '',
+              onTap: () => pushPage(context, const CertificatesPage()),
+            ),
+            _AccountRow(
+              icon: Icons.medical_information_outlined,
+              title: 'Рекомендации врача',
+              note: 'Аптека и уход',
+              onTap: () => pushPage(context, const PharmacyPage()),
+            ),
+            _AccountRow(
+              icon: Icons.rule_outlined,
+              title: 'Правила лояльности',
+              note: '',
+              onTap: () => pushPage(context, const LoyaltyPage()),
+            ),
+            _AccountRow(
+              icon: Icons.wc_outlined,
+              title: 'Профиль услуг',
+              note: store.gender?.servicesTitle ?? 'Не выбран',
+              onTap: () => pushPage(context, const GenderPage()),
+            ),
+            if (store.signedIn) ...[
+              const SizedBox(height: 16),
+              Center(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Cult.error,
+                    side: BorderSide(color: Cult.error.withValues(alpha: 0.35)),
+                  ),
+                  onPressed: () async {
+                    final ok = await showDialog<bool>(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        title: const Text('Выйти из профиля?'),
+                        content: const Text(
+                          'Записи филиала скроются, пока снова не войдёте по телефону. Корзина и избранное останутся на устройстве.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pop(dialogContext, false),
+                            child: const Text('Остаться'),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pop(dialogContext, true),
+                            child: const Text(
+                              'Выйти',
+                              style: TextStyle(color: Cult.error),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (ok == true) {
+                      store.signOut();
+                      if (context.mounted) {
+                        showCultSnack(context, 'Вы вышли из профиля');
+                      }
+                    }
+                  },
+                  child: const Text('ВЫЙТИ'),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -2015,6 +2034,63 @@ class _SettingsPageState extends State<SettingsPage> {
               child: const Text('Скопировать профиль'),
             ),
           ],
+          const SizedBox(height: 22),
+          const CultSectionLabel('Клиника'),
+          const SizedBox(height: 8),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.sync),
+            title: Text(
+              store.syncing ? 'Синхронизация…' : 'Обновить данные филиала',
+            ),
+            subtitle: Text(
+              store.liveError.isEmpty
+                  ? 'Визиты, врачи и прайс из YClients'
+                  : store.liveError,
+              style: TextStyle(
+                color: store.liveError.isEmpty ? Cult.muted : Cult.error,
+              ),
+            ),
+            onTap: store.syncing
+                ? null
+                : () async {
+                    cultTapFeedback();
+                    await store.syncClinic();
+                    if (!context.mounted) return;
+                    showCultSnack(
+                      context,
+                      store.liveError.isEmpty
+                          ? 'Филиал обновлён'
+                          : 'Не удалось обновить филиал',
+                    );
+                  },
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.place_outlined),
+            title: const Text('Сочи, Черноморская, 6'),
+            subtitle: const Text('CULT Clinic'),
+            onTap: () {
+              Clipboard.setData(
+                const ClipboardData(text: 'CULT Clinic · Сочи, Черноморская, 6'),
+              );
+              cultTapFeedback();
+              showCultSnack(context, 'Адрес скопирован');
+            },
+            onLongPress: () {
+              cultTapFeedback();
+              openExternal('tel:+74950000007', context: context);
+            },
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.info_outline),
+            title: const Text('О клинике'),
+            onTap: () {
+              cultTapFeedback();
+              pushPage(context, const AboutPage());
+            },
+          ),
         ],
       ),
     );

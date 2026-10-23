@@ -117,6 +117,57 @@ class HomePage extends StatelessWidget {
                   },
                   child: Text(next == null ? 'Записаться →' : 'Мои записи →'),
                 ),
+                if (next != null) ...[
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: Cult.ink,
+                          padding: EdgeInsets.zero,
+                        ),
+                        onPressed: () {
+                          cultTapFeedback();
+                          openExternal(
+                            'tel:+74950000007',
+                            context: context,
+                          );
+                        },
+                        icon: const Icon(Icons.phone_outlined, size: 18),
+                        label: const Text('Позвонить'),
+                      ),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: Cult.ink,
+                          padding: EdgeInsets.zero,
+                        ),
+                        onPressed: () {
+                          cultTapFeedback();
+                          pushPage(
+                            context,
+                            const ChatThreadPage(contactId: 'admin'),
+                          );
+                        },
+                        icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                        label: const Text('Администратор'),
+                      ),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: Cult.ink,
+                          padding: EdgeInsets.zero,
+                        ),
+                        onPressed: () {
+                          cultTapFeedback();
+                          pushPage(context, const TransferPage());
+                        },
+                        icon: const Icon(Icons.directions_car_outlined, size: 18),
+                        label: const Text('Трансфер'),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

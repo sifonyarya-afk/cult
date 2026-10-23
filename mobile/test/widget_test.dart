@@ -42,6 +42,50 @@ void main() {
     expect(find.text('Home Bio-Scan Kit'), findsOneWidget);
   });
 
+  testWidgets('На главной у ближайшего визита есть быстрые действия', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    await store.setGender(ClientGender.woman);
+    store.bookVisit(
+      service: 'Анализ крови',
+      doctor: 'AlethiaPro',
+      date: '2030-06-15',
+      time: '11:00',
+    );
+    await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
+    await tester.pumpAndSettle();
+    expect(find.text('Позвонить'), findsOneWidget);
+    expect(find.text('Администратор'), findsOneWidget);
+    expect(find.text('Трансфер'), findsWidgets);
+  });
+
+  testWidgets('Профиль тянется вниз для синхронизации', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    await store.setGender(ClientGender.woman);
+    await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Профиль'));
+    await tester.pumpAndSettle();
+    expect(find.byType(RefreshIndicator), findsWidgets);
+    expect(find.text('Войдите по телефону'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Мои записи'),
+      120,
+      scrollable: find
+          .descendant(
+            of: find.byType(RefreshIndicator).first,
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(find.text('Мои записи'), findsOneWidget);
+  });
+
   testWidgets('После сплэша спрашивает пол', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
