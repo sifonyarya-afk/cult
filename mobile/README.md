@@ -42,6 +42,25 @@ open ios/Runner.xcworkspace
 
 Предупреждение CocoaPods про `platform iOS 15.0` можно игнорировать, если в конце есть `Pod installation complete!`.
 
+### `module 'Flutter' not found` / `shared_preferences_foundation` / VerifyModule
+
+Xcode 15+/16 проверяет pod-модули отдельно от Flutter и падает на `shared_preferences_foundation` (`VerifyModule` → `module 'Flutter' not found`). В `ios/Podfile` уже отключён `ENABLE_MODULE_VERIFIER` и стоит `use_frameworks! :linkage => :static`.
+
+Закройте Xcode и из `mobile` пересоберите pods:
+
+```bash
+cd ~/Desktop/cult/cult/mobile
+flutter pub get
+rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
+rm -rf ~/Library/Developer/Xcode/DerivedData/Runner-*
+(cd ios && pod install)
+open ios/Runner.xcworkspace
+```
+
+В Xcode: Product → Clean Build Folder, затем Run. Открывайте именно **`Runner.xcworkspace`**.
+
+Если снова белый экран без ошибок — плагин SharedPreferences не поднялся; приложение всё равно должно показать сплэш за несколько секунд (локальное состояние стартует пустым). Пересоберите pods командами выше.
+
 ### `Exited with status code 127`
 
 Значит Xcode не нашёл Flutter (`FLUTTER_ROOT` / `xcode_backend.sh`). Обычно после `flutter clean` без нового `flutter pub get`, или открыт `.xcodeproj` вместо workspace.

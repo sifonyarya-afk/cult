@@ -19,7 +19,13 @@ import 'widgets.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final store = ClinicStore();
-  await store.load();
+  try {
+    // Prefer a short timeout: a broken SharedPreferences channel otherwise
+    // leaves a blank white screen before runApp.
+    await store.load().timeout(const Duration(seconds: 8));
+  } catch (_) {
+    // MissingPluginException / channel hang — continue with empty local state.
+  }
   runApp(CultApp(store: store));
 }
 

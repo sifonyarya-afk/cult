@@ -257,61 +257,69 @@ class ClinicStore extends ChangeNotifier {
   }
 
   Future<void> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_key);
-    if (raw == null) {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_key);
+      if (raw == null) {
+        _applyClinicDefaults();
+        _seedThreads();
+        notifyListeners();
+        return;
+      }
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      cart = (json['cart'] as List<dynamic>? ?? [])
+          .map((item) => CartItem.fromJson(item as Map<String, dynamic>))
+          .toList();
+      appointments = (json['appointments'] as List<dynamic>? ?? [])
+          .map((item) => Appointment.fromJson(item as Map<String, dynamic>))
+          .where((item) => item.id != 'seed-visit')
+          .toList();
+      orders = (json['orders'] as List<dynamic>? ?? [])
+          .map((item) => ShopOrder.fromJson(item as Map<String, dynamic>))
+          .toList();
+      gifts = (json['gifts'] as List<dynamic>? ?? [])
+          .map((item) => GiftCard.fromJson(item as Map<String, dynamic>))
+          .toList();
+      favorites = (json['favorites'] as List<dynamic>? ?? []).cast<String>();
+      spent = json['spent'] as int? ?? 0;
+      welcomeBonus = json['welcomeBonus'] as int? ?? 0;
+      welcomeGranted = json['welcomeGranted'] as bool? ?? welcomeBonus > 0;
+      profileName = json['profileName'] as String? ?? '';
+      profilePhone = json['profilePhone'] as String? ?? '';
+      profileEmail = json['profileEmail'] as String? ?? '';
+      gender = ClientGender.tryParse(json['gender'] as String?);
+      ycClientId = json['ycClientId'] as int? ?? 0;
+      companyId = json['companyId'] as String? ?? '';
+      chainId = json['chainId'] as String? ?? '0';
+      partnerToken = json['partnerToken'] as String? ?? '';
+      userToken = json['userToken'] as String? ?? '';
+      _applyClinicDefaults();
+      final savedNotices = json['notices'] as Map<String, dynamic>?;
+      if (savedNotices != null) {
+        notices = savedNotices.map(
+          (key, value) => MapEntry(key, value as bool),
+        );
+      }
+      final savedThreads = json['threads'] as Map<String, dynamic>?;
+      threads = {};
+      if (savedThreads != null) {
+        for (final entry in savedThreads.entries) {
+          threads[entry.key] = (entry.value as List<dynamic>)
+              .map((item) => ChatMessage.fromJson(item as Map<String, dynamic>))
+              .toList();
+        }
+      }
+      final savedRead = json['chatRead'] as Map<String, dynamic>?;
+      chatRead = savedRead == null
+          ? {}
+          : savedRead.map((key, value) => MapEntry(key, value.toString()));
+      _seedThreads();
+      notifyListeners();
+    } catch (_) {
       _applyClinicDefaults();
       _seedThreads();
       notifyListeners();
-      return;
     }
-    final json = jsonDecode(raw) as Map<String, dynamic>;
-    cart = (json['cart'] as List<dynamic>? ?? [])
-        .map((item) => CartItem.fromJson(item as Map<String, dynamic>))
-        .toList();
-    appointments = (json['appointments'] as List<dynamic>? ?? [])
-        .map((item) => Appointment.fromJson(item as Map<String, dynamic>))
-        .where((item) => item.id != 'seed-visit')
-        .toList();
-    orders = (json['orders'] as List<dynamic>? ?? [])
-        .map((item) => ShopOrder.fromJson(item as Map<String, dynamic>))
-        .toList();
-    gifts = (json['gifts'] as List<dynamic>? ?? [])
-        .map((item) => GiftCard.fromJson(item as Map<String, dynamic>))
-        .toList();
-    favorites = (json['favorites'] as List<dynamic>? ?? []).cast<String>();
-    spent = json['spent'] as int? ?? 0;
-    welcomeBonus = json['welcomeBonus'] as int? ?? 0;
-    welcomeGranted = json['welcomeGranted'] as bool? ?? welcomeBonus > 0;
-    profileName = json['profileName'] as String? ?? '';
-    profilePhone = json['profilePhone'] as String? ?? '';
-    profileEmail = json['profileEmail'] as String? ?? '';
-    gender = ClientGender.tryParse(json['gender'] as String?);
-    ycClientId = json['ycClientId'] as int? ?? 0;
-    companyId = json['companyId'] as String? ?? '';
-    chainId = json['chainId'] as String? ?? '0';
-    partnerToken = json['partnerToken'] as String? ?? '';
-    userToken = json['userToken'] as String? ?? '';
-    _applyClinicDefaults();
-    final savedNotices = json['notices'] as Map<String, dynamic>?;
-    if (savedNotices != null) {
-      notices = savedNotices.map((key, value) => MapEntry(key, value as bool));
-    }
-    final savedThreads = json['threads'] as Map<String, dynamic>?;
-    threads = {};
-    if (savedThreads != null) {
-      for (final entry in savedThreads.entries) {
-        threads[entry.key] = (entry.value as List<dynamic>)
-            .map((item) => ChatMessage.fromJson(item as Map<String, dynamic>))
-            .toList();
-      }
-    }
-    final savedRead = json['chatRead'] as Map<String, dynamic>?;
-    chatRead = savedRead == null
-        ? {}
-        : savedRead.map((key, value) => MapEntry(key, value.toString()));
-    _seedThreads();
-    notifyListeners();
   }
 
   static const _chatSeeds = {
