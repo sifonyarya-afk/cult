@@ -18,17 +18,33 @@ class CultAgent {
     ClientGender? gender,
     String? lastBot,
     String? lastUser,
+    List<String> recentUsers = const [],
   }) {
-    final q = _normalize(text);
+    final q = _repairAsr(_normalize(text));
     if (q.isEmpty) {
       return 'Я рядом и внимательно слушаю. '
           'Можно без названий процедур: что смущает в коже или самочувствии, '
           'или какой результат хотите к дате. Подскажу мягкий следующий шаг.';
     }
 
+    final topic = _topicBlob(lastUser: lastUser, recentUsers: recentUsers);
+
     // «Повтори / не поняла» — briefly restate last bot line.
     final meta = _metaReply(q, lastBot);
     if (meta != null) return meta;
+
+    // «А сколько?» after a named service/product in last bot reply.
+    final priceFollow = _priceFollowUp(
+      q,
+      lastBot,
+      localServices: localServices,
+      localProducts: localProducts,
+      liveServices: liveServices,
+      localDevices: localDevices,
+      localInfusions: localInfusions,
+      gender: gender,
+    );
+    if (priceFollow != null) return priceFollow;
 
     // Follow-ups first when we have context (so «да» after CTA is not generic).
     final follow = _followUpReply(
@@ -51,9 +67,16 @@ class CultAgent {
     final compare = _compareReply(q, gender: gender);
     if (compare != null) return compare;
 
-    // Deadline / event / budget / «посоветуй что-нибудь».
+    // Deadline / event / budget / gift / safety / course / season.
     final situation = _situationReply(q, gender: gender);
     if (situation != null) return situation;
+
+    final intent = _intentReply(q, gender: gender);
+    if (intent != null) return intent;
+
+    // Topic from earlier turns + short symptom now («сухость» after «лицо»).
+    final grounded = _groundedConcern(q, topic, gender: gender);
+    if (grounded != null) return grounded;
 
     // Two concerns in one phrase (dry + tired…).
     final blend = _blendConcernReply(q, gender: gender);
@@ -91,6 +114,196 @@ class CultAgent {
         'Одного ориентира достаточно: лицо, тело, энергия или домашний уход. '
         'Или как в зеркале: тусклость, отёк, морщинки, пигмент — '
         'дам два спокойных варианта и мягкий путь к записи, если захотите.';
+  }
+
+  /// Fix common RU voice / ASR slips before matching.
+  String _repairAsr(String q) {
+    var t = q;
+    const pairs = <List<String>>[
+      ['микро иголь', 'микроиголь'],
+      ['микро-иголь', 'микроиголь'],
+      ['эр эф', 'rf'],
+      ['рф лифтинг', 'rf лифтинг'],
+      ['нат плюс', 'nad+'],
+      ['нэд плюс', 'nad+'],
+      ['н ад+', 'nad+'],
+      ['вейла пептид', 'veil peptide'],
+      ['вейл пептид', 'veil peptide'],
+      ['veil peptide serum', 'veil peptide serum'],
+      ['митохондриал', 'mitochondrial'],
+      ['фьюэл', 'fuel'],
+      ['фюел', 'fuel'],
+      ['льюмен', 'lumen'],
+      ['люмен барьер', 'lumen barrier'],
+      ['капельницу', 'капельница'],
+      ['биоревитализацю', 'биоревитализацию'],
+      ['скульптурны массаж', 'скульптурный массаж'],
+      ['лимфо дренаж', 'лимфодренаж'],
+      ['айпиэль', 'ipl'],
+      ['ай пи эль', 'ipl'],
+    ];
+    for (final pair in pairs) {
+      t = t.replaceAll(pair[0], pair[1]);
+    }
+    return t;
+  }
+
+  String _topicBlob({String? lastUser, List<String> recentUsers = const []}) {
+    final parts = <String>[
+      for (final item in recentUsers) _normalize(item),
+      if (lastUser != null && lastUser.trim().isNotEmpty) _normalize(lastUser),
+    ];
+    return parts.where((p) => p.isNotEmpty).join(' ');
+  }
+
+  String? _priceFollowUp(
+    String q,
+    String? lastBot, {
+    required List<Service> localServices,
+    required List<Product> localProducts,
+    required List<YcService> liveServices,
+    required List<Device> localDevices,
+    required List<Infusion> localInfusions,
+    ClientGender? gender,
+  }) {
+    if (lastBot == null || lastBot.isEmpty) return null;
+    final asksPrice = q == 'цена' ||
+        q == 'а цена' ||
+        q == 'стоимость' ||
+        q == 'а сколько' ||
+        q == 'сколько' ||
+        q == 'почем' ||
+        q == 'почём' ||
+        q.contains('сколько стоит') ||
+        q.contains('а сколько стоит') ||
+        q.contains('какая цена') ||
+        (q.contains('скольк') && q.split(' ').length <= 4);
+    if (!asksPrice) return null;
+    // Already names a catalog item — let normal catalog path work.
+    if (q.contains('rf') ||
+        q.contains('массаж') ||
+        q.contains('serum') ||
+        q.contains('cream') ||
+        q.contains('veil') ||
+        q.contains('nad')) {
+      return null;
+    }
+    final named = RegExp(r'«([^»]+)»').firstMatch(lastBot);
+    final titled = named?.group(1) ??
+        RegExp(
+          r'Посмотрела ([^.]+)\.',
+        ).firstMatch(lastBot)?.group(1);
+    if (titled == null || titled.trim().isEmpty) return null;
+    final hit = _catalogHit(
+      _normalize('$titled цена'),
+      localServices: localServices,
+      localProducts: localProducts,
+      liveServices: liveServices,
+      localDevices: localDevices,
+      localInfusions: localInfusions,
+      gender: gender,
+    );
+    if (hit == null) {
+      return 'По «$titled» точную цифру лучше смотреть в «Прайс» или карточке услуги. '
+          'Могу помочь записаться на консультацию через «+» — там же подтвердят стоимость.';
+    }
+    return 'Да, по цене. ${hit.reply}';
+  }
+
+  String? _intentReply(String q, {ClientGender? gender}) {
+    if (q.contains('безопасно') ||
+        q.contains('вредно ли') ||
+        q.contains('опасно ли') ||
+        q.contains('есть ли риск') ||
+        q.contains('не опасно')) {
+      return 'Безопасность всегда важнее скорости: сначала осмотр, сбор противопоказаний и честный разговор о рисках. '
+          'Я подскажу направление, но допуск даёт врач на консультации. Запишем осмотр через «+»?';
+    }
+    if (q.contains('сколько сеанс') ||
+        q.contains('сколько процедур') ||
+        q.contains('сколько раз') ||
+        q.contains('какой курс') ||
+        q.contains('на сколько сеанс')) {
+      return 'Длина курса зависит от задачи и кожи: массаж и уходы часто от одного визита, RF и пилинги — курсом после осмотра. '
+          'Без оценки не обещаю «ровно N раз». Скажите цель — предложу реалистичный порядок и запись на консультацию.';
+    }
+    if (q.contains('в подарок') ||
+        q.contains('подарить') ||
+        q.contains('сюрприз') ||
+        (q.contains('подарок') && !q.contains('сертификат'))) {
+      return 'Для подарка чаще берут сертификат CULT — номинал выбираете сами, код копируется в профиле. '
+          'Можно и формулу из шопа, если знаете уход человека. Открыть «Купить сертификат» в профиле или подсказать номинал?';
+    }
+    if (q.contains('зим') || q.contains('мороз') || q.contains('отоплен')) {
+      return 'Зимой и в отоплении чаще страдает барьер: сухость, стянутость, чувствительность. '
+          'Мягкий путь — увлажняющий уход и барьерный крем, без агрессивных кислот «для блеска». Скажите «крем» или «уход» — продолжим.';
+    }
+    if ((q.contains('лет') || q.contains('жар')) &&
+        (q.contains('кожа') ||
+            q.contains('лиц') ||
+            q.contains('пигмент') ||
+            q.contains('солнц') ||
+            q.contains('что делать'))) {
+      return 'Летом бережём тон и пигмент: SPF, аккуратный уход, агрессивные протоколы — только после оценки фототипа. '
+          'Если уже есть пятна — лучше осмотр, а не самостоятельное отбеливание.';
+    }
+    if (q.contains('мужчин') || q.contains('для муж')) {
+      return gender == ClientGender.man || gender == null
+          ? 'Для мужчин обычно спокойный вход: барбер-массаж, уход без «лишнего блеска», при необходимости RF по овалу. '
+              'Что важнее — свежий вид или плотность?'
+          : 'Могу сориентировать и по мужским протоколам: массаж, уход, RF без перегруза. Кому подбираем — вам или в подарок?';
+    }
+    return null;
+  }
+
+  String? _groundedConcern(
+    String q,
+    String topic, {
+    ClientGender? gender,
+  }) {
+    if (topic.isEmpty) return null;
+    final compact = q
+        .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final shortSymptom = compact.split(' ').where((w) => w.isNotEmpty).length <= 4;
+    if (!shortSymptom) return null;
+    final aboutFace = topic.contains('лиц') || topic.contains('зеркал');
+    final aboutEnergy = topic.contains('энерг') || topic.contains('сил');
+    final aboutBody = topic.contains('тел') && !topic.contains('тела лица');
+    // «сухость» after talking about face → full dry concern (already ok), but add zone cue.
+    if (aboutFace &&
+        (q.contains('сух') ||
+            q.contains('тускл') ||
+            q.contains('отёк') ||
+            q.contains('морщин') ||
+            q.contains('пигмент') ||
+            q.contains('жирн') ||
+            q.contains('пор'))) {
+      final base = _blendConcernReply(q, gender: gender) ??
+          _concernReply(q, gender: gender);
+      if (base == null) return null;
+      return 'Раз мы про лицо. $base';
+    }
+    if (aboutEnergy &&
+        (q.contains('устал') || q.contains('капель') || q.contains('инфуз'))) {
+      final base = _concernReply(q, gender: gender);
+      if (base == null) return null;
+      return 'Да, продолжаем про энергию. $base';
+    }
+    if (aboutBody &&
+        (q.contains('целлюлит') ||
+            q.contains('живот') ||
+            q.contains('рельеф') ||
+            q.contains('аппарат'))) {
+      final base = _concernReply(q, gender: gender);
+      if (base == null) {
+        return 'Про тело без жёстких обещаний: эстетика дополняет режим. '
+            'Запишем консультацию по аппаратным или скажете зону точнее?';
+      }
+      return 'Про тело: $base';
+    }
+    return null;
   }
 
   String _withCatalogWarmth(String q, String reply) {

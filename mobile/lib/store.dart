@@ -906,6 +906,14 @@ class ClinicStore extends ChangeNotifier {
           .where((m) => m.from == 'me')
           .map((m) => m.text)
           .firstOrNull;
+      final recentUsers = thread.reversed
+          .skip(1)
+          .where((m) => m.from == 'me')
+          .map((m) => m.text)
+          .take(3)
+          .toList()
+          .reversed
+          .toList();
       return cultAgent.answer(
         text,
         localServices: catalogServices,
@@ -914,6 +922,7 @@ class ClinicStore extends ChangeNotifier {
         gender: gender,
         lastBot: lastBot,
         lastUser: lastUser,
+        recentUsers: recentUsers,
       );
     }
     if (contactId == 'specialist') {

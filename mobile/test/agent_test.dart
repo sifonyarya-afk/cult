@@ -187,6 +187,42 @@ void main() {
     expect(reply, contains('10'));
   });
 
+  test('ASR чинит микро игольчатый RF', () {
+    final reply = cultAgent.answer('Сколько стоит микро игольчатый эр эф?');
+    expect(reply.toLowerCase(), contains('rf'));
+    expect(reply, contains('45 000'));
+  });
+
+  test('А сколько подтягивает цену из lastBot', () {
+    final reply = cultAgent.answer(
+      'а сколько',
+      lastBot:
+          'По услуге «Микроигольчатый RF»: 45 000 ₽, занимает 1 ч. Короткий текст.',
+    );
+    expect(reply.toLowerCase(), contains('rf'));
+    expect(reply, contains('45'));
+  });
+
+  test('Подарок без слова сертификат', () {
+    final reply = cultAgent.answer('Что подарить подруге?');
+    expect(reply.toLowerCase(), contains('сертификат'));
+  });
+
+  test('Вопрос про безопасность', () {
+    final reply = cultAgent.answer('Это безопасно?');
+    expect(reply.toLowerCase(), contains('осмотр'));
+  });
+
+  test('Короткий симптом с topic про лицо', () {
+    final reply = cultAgent.answer(
+      'сухость',
+      lastUser: 'Давайте про лицо',
+      recentUsers: ['Давайте про лицо'],
+    );
+    expect(reply.toLowerCase(), contains('лиц'));
+    expect(reply.toLowerCase(), anyOf(contains('барьер'), contains('влаг')));
+  });
+
   test('Мужской профиль не предлагает женский массаж первым', () {
     final reply = cultAgent.answer(
       'скульптурный массаж лица',
