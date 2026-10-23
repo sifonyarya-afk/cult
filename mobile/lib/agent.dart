@@ -33,6 +33,22 @@ class CultAgent {
     final meta = _metaReply(q, lastBot);
     if (meta != null) return meta;
 
+    // «Не то / мимо» — reset without arguing.
+    final correction = _correctionReply(q);
+    if (correction != null) return correction;
+
+    // «Без уколов / только дом» preferences before catalog suggestions.
+    final preference = _preferenceReply(q, gender: gender);
+    if (preference != null) return preference;
+
+    // Утро / вечер / выходные для записи.
+    final slot = _slotReply(q);
+    if (slot != null) return slot;
+
+    // Врач из команды CULT.
+    final doctor = _doctorReply(q);
+    if (doctor != null) return doctor;
+
     // «А сколько?» after a named service/product in last bot reply.
     final priceFollow = _priceFollowUp(
       q,
@@ -302,6 +318,152 @@ class CultAgent {
             'Запишем консультацию по аппаратным или скажете зону точнее?';
       }
       return 'Про тело: $base';
+    }
+    return null;
+  }
+
+  String? _correctionReply(String q) {
+    final compact = q
+        .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final hit = compact == 'не то' ||
+        compact == 'мимо' ||
+        compact == 'нет не то' ||
+        compact == 'не то совсем' ||
+        q.contains('не то что') ||
+        q.contains('не об этом') ||
+        q.contains('другое имела') ||
+        q.contains('другое имел') ||
+        q.contains('ты не понял') ||
+        q.contains('вы не понял') ||
+        q.contains('неправильно понял') ||
+        q.contains('давай по-другому') ||
+        q.contains('давай по другому') ||
+        q.contains('не про то');
+    if (!hit) return null;
+    return 'Хорошо, сбрасываю прошлый вариант — без споров. '
+        'Скажите заново одним ориентиром: лицо, тело, энергия, домашний уход или запись. '
+        'Или коротко, что не так в прошлом ответе.';
+  }
+
+  String? _preferenceReply(String q, {ClientGender? gender}) {
+    final noInject = q.contains('без укол') ||
+        q.contains('не хочу укол') ||
+        q.contains('не хочу инъек') ||
+        q.contains('без инъек') ||
+        q.contains('без ботокс') ||
+        q.contains('без филлер');
+    final noDevice = q.contains('без аппарат') ||
+        q.contains('не хочу аппарат') ||
+        q.contains('без лазера') ||
+        q.contains('без rf') ||
+        q.contains('без рф');
+    final onlyHome = q.contains('только дом') ||
+        q.contains('только дома') ||
+        q.contains('без клиник') ||
+        q.contains('сама дома') ||
+        q.contains('сам дома') ||
+        q.contains('только крем') ||
+        q.contains('только уход дома');
+    final noInfus = q.contains('без капель') ||
+        q.contains('без инфуз') ||
+        q.contains('не хочу капель') ||
+        q.contains('не хочу инфуз');
+    if (!noInject && !noDevice && !onlyHome && !noInfus) return null;
+
+    final wantsFresh = q.contains('свеж') ||
+        q.contains('тускл') ||
+        q.contains('морщин') ||
+        q.contains('овал') ||
+        q.contains('сух') ||
+        q.contains('отёк');
+
+    if (onlyHome) {
+      return 'Тогда остаёмся в домашнем контуре: барьерный крем и пептидная сыворотка из шопа — без записи в кресло. '
+          'Скажите «крем» или «сыворотка» — назову цену и наличие.';
+    }
+    if (noInject && noDevice) {
+      return 'Поняла: без инъекций и без аппаратной. Спокойный путь — массаж, уходы и домашний барьер; при силах — можно позже обсудить инфузии отдельно. '
+          'Что ближе: массаж, уход или крем?';
+    }
+    if (noInject) {
+      return wantsFresh
+          ? 'Без уколов тоже можно двигаться: скульптурный массаж, уходы, при необходимости аппаратная после осмотра, дома — барьер и пептиды. '
+              'Инъекции не предлагаю, пока сами не попросите. С чего начнём — массаж или уход?'
+          : 'Ок, инъекции снимаем со стола. Остаются массаж, уходы, домашний шоп и при желании аппаратная или инфузии. '
+              'Скажите задачу кожи или «посоветуй что-нибудь» без уколов.';
+    }
+    if (noDevice) {
+      return 'Без аппаратной — тоже рабочий путь: массаж, уходы, домашний уход; инъекции только если сами захотите и после осмотра. '
+          'Что в приоритете — свежий вид или комфорт кожи?';
+    }
+    if (noInfus) {
+      return 'Капельницы пропускаем. Тогда смотрим лицо или тело через уход, массаж или шоп — либо просто консультацию. '
+          'Что смущает сильнее: кожа или общий тонус без капельниц?';
+    }
+    return null;
+  }
+
+  String? _slotReply(String q) {
+    final morning = q.contains('утром') ||
+        q.contains('с утра') ||
+        q.contains('на утро') ||
+        q.contains('к открытию') ||
+        q.contains('пораньше');
+    final evening = q.contains('вечером') ||
+        q.contains('на вечер') ||
+        q.contains('после работ') ||
+        q.contains('попозже');
+    final weekend = q.contains('в выходн') ||
+        q.contains('на выходн') ||
+        q.contains('в субботу') ||
+        q.contains('в воскресенье');
+    final bookingCue = q.contains('запис') ||
+        q.contains('приех') ||
+        q.contains('прийт') ||
+        q.contains('слот') ||
+        q.contains('удобн') ||
+        q.contains('хочу на') ||
+        q.contains('можно на') ||
+        q.contains('давайте на');
+    if (!(morning || evening || weekend)) return null;
+    if (!bookingCue && !(morning || evening)) return null;
+    if (!bookingCue && weekend) return null;
+    final when = [
+      if (morning) 'утро',
+      if (evening) 'вечер',
+      if (weekend) 'выходные',
+    ].join(' / ');
+    return 'Ориентир по времени приняла: $when. Клиника ежедневно 9:00–21:00. '
+        'Откройте «+» или «Запись» и выберите окно; если нужен конкретный врач — напишите имя. '
+        'Могу сначала сузить услугу под вашу задачу.';
+  }
+
+  String? _doctorReply(String q) {
+    for (final doc in doctors) {
+      final name = _normalize(doc.name);
+      final slug = _normalize(doc.slug);
+      final nameHit = name.length >= 4 && q.contains(name);
+      final slugHit = slug.length >= 4 && q.contains(slug);
+      final parts = name
+          .split(RegExp(r'[^a-zа-я0-9]+'))
+          .where((w) => w.length >= 4)
+          .toList();
+      final partHit = parts.any(q.contains);
+      final strongPart =
+          parts.any((w) => w.length >= 5 && q.contains(w));
+      if (!(nameHit || slugHit || partHit)) continue;
+      final cue = q.contains('врач') ||
+          q.contains('доктор') ||
+          q.contains('специалист') ||
+          q.contains('к ') ||
+          q.contains('про ');
+      // Distinctive name piece (Элара, Джулиан…) needs no extra cue.
+      if (!nameHit && !slugHit && !cue && !strongPart) continue;
+      return 'Это ${doc.name} — ${doc.role}, опыт ${doc.exp}. ${doc.about} '
+          'Запись к специалисту — через «+» или карточку в меню «Врачи». '
+          'Если скажете задачу (лицо, инфузии, аппаратная), подскажу, насколько профиль совпадает.';
     }
     return null;
   }
@@ -628,11 +790,17 @@ class CultAgent {
       if (about.isNotEmpty && items.length == 1) buf.write('$about ');
       parts.add(buf.toString().trim());
     }
-    final lead = items.length == 1 ? '' : 'Нашла близкие варианты. ';
-    final tail = items.length == 1
-        ? 'Можно открыть карточку в «Магазин» или сразу в корзину — на консультации при необходимости скорректируем.'
-        : 'Если скажете задачу кожи (барьер, плотность, энергия), сузим до одной формулы.';
-    return '$lead${parts.join(' ')}\n$tail';
+    if (items.length == 1) {
+      return '${parts.first}\n'
+          'Можно открыть карточку в «Магазин» или сразу в корзину — на консультации при необходимости скорректируем.';
+    }
+    final a = items[0];
+    final b = items[1];
+    final contrast =
+        'Чем отличаются: ${a.name} — ${a.blurb}; ${b.name} — ${b.blurb}. ';
+    return 'Нашла два близких варианта. ${parts.join(' ')}\n'
+        '$contrast'
+        'Скажите задачу кожи (барьер, плотность, энергия) — оставим одну формулу.';
   }
 
   String _formatServices(List<Service> items, {required bool wantsPrice}) {

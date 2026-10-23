@@ -223,6 +223,31 @@ void main() {
     expect(reply.toLowerCase(), anyOf(contains('барьер'), contains('влаг')));
   });
 
+  test('Не то сбрасывает и просит ориентир', () {
+    final reply = cultAgent.answer('не то');
+    expect(reply.toLowerCase(), contains('сбрас'));
+    expect(reply.toLowerCase(), contains('лицо'));
+  });
+
+  test('Без уколов не предлагает инъекции', () {
+    final reply = cultAgent.answer('Хочу освежить лицо без уколов');
+    expect(reply.toLowerCase(), contains('без укол'));
+    expect(reply.toLowerCase(), anyOf(contains('массаж'), contains('уход')));
+    expect(reply.toLowerCase(), isNot(contains('ботулин')));
+  });
+
+  test('Запись вечером принимает слот', () {
+    final reply = cultAgent.answer('Хочу записаться вечером');
+    expect(reply.toLowerCase(), contains('вечер'));
+    expect(reply, contains('9:00'));
+  });
+
+  test('Агент знает врача Элара', () {
+    final reply = cultAgent.answer('Кто такая Элара Торн?');
+    expect(reply.toLowerCase(), contains('элара'));
+    expect(reply.toLowerCase(), anyOf(contains('врач'), contains('инфуз'), contains('холист')));
+  });
+
   test('Мужской профиль не предлагает женский массаж первым', () {
     final reply = cultAgent.answer(
       'скульптурный массаж лица',
