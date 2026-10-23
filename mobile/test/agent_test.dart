@@ -1,7 +1,9 @@
 import 'package:cult_clinic/agent.dart';
 import 'package:cult_clinic/data.dart';
+import 'package:cult_clinic/store.dart';
 import 'package:cult_clinic/yclients.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   test('Агент отвечает ценой услуги из каталога', () {
@@ -62,5 +64,18 @@ void main() {
       ],
     );
     expect(reply.toLowerCase(), isNot(contains('18 000')));
+  });
+
+  test('Старое приветствие бота обновляется на CULT Агент', () async {
+    SharedPreferences.setMockInitialValues({
+      'cult-flutter':
+          '{"threads":{"bot":[{"id":"old","from":"them","text":"Я ассистент CULT. Спросите про услуги."}]},"chatRead":{"bot":"old"},"cart":[],"appointments":[],"orders":[],"gifts":[],"favorites":[],"spent":0,"welcomeBonus":0,"welcomeGranted":false,"notices":{},"profileName":"","profilePhone":"","profileEmail":""}',
+    });
+    final store = ClinicStore();
+    await store.load();
+    final bot = store.threads['bot']!;
+    expect(bot.length, 1);
+    expect(bot.first.text, contains('CULT Агент'));
+    expect(bot.first.text, contains('Голос'));
   });
 }

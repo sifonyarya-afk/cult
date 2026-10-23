@@ -222,8 +222,10 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
   var _markedRead = false;
   var _listening = false;
   var _speechReady = false;
+  var _speechDenied = false;
   var _speakReplies = true;
   var _ttsReady = false;
+  var _bootedVoice = false;
 
   bool get _isAgent => widget.contactId == 'bot';
 
@@ -290,8 +292,9 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     _markedRead = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ClinicScope.of(context).markChatRead(widget.contactId);
-      if (_isAgent) _prepareVoice();
+      final store = ClinicScope.of(context);
+      store.markChatRead(widget.contactId);
+      if (_isAgent) _bootAgentVoice(store);
     });
   }
 
@@ -306,6 +309,60 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
       _ttsReady = false;
     }
   }
+
+  Future<bool> _ensureSpeech() async {
+    if (_speechReady) return true;
+    try {
+      final available = await _speech.initialize(
+        onError: (error) {
+          if (!mounted) return;
+          setState(() {
+            _listening = false;
+            _speechDenied = true;
+          });
+          showCultSnack(context, 'Микрофон: ${error.errorMsg}');
+        },
+        onStatus: (status) {
+          if (!mounted) return;
+          if (status == 'done' || status == 'notListening') {
+            setState(() => _listening = false);
+          }
+        },
+      );
+      if (!mounted) return available;
+      setState(() {
+        _speechReady = available;
+        _speechDenied = !available;
+      });
+      return available;
+    } catch (_) {
+      if (mounted) setState(() => _speechDenied = true);
+      return false;
+    }
+  }
+
+  Future<void> _bootAgentVoice(ClinicStore store) async {
+    if (!_isAgent || _bootedVoice) return;
+    _bootedVoice = true;
+    await _prepareVoice();
+    // Asks iOS for Microphone + Speech Recognition as soon as the chat opens.
+    final ok = await _ensureSpeech();
+    if (!mounted) return;
+    if (!ok) {
+      showCultSnack(
+        context,
+        'Разрешите Микрофон и «Распознавание речи» в Настройках → CULT.',
+      );
+    }
+    if (_speakReplies) {
+      final greeting = store.threads['bot']?.firstOrNull?.text ??
+          _chatSeedFallback;
+      await _speak(greeting);
+    }
+  }
+
+  static const _chatSeedFallback =
+      'Я CULT Агент. Нажмите «Голос» и спросите про услугу или формулу.';
 
   Future<void> _speak(String text) async {
     if (!_isAgent || !_speakReplies || text.trim().isEmpty) return;
@@ -327,31 +384,16 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     try {
       await _tts.stop();
     } catch (_) {}
-    final available = _speechReady
-        ? true
-        : await _speech.initialize(
-            onError: (error) {
-              if (!mounted) return;
-              setState(() => _listening = false);
-              showCultSnack(context, 'Микрофон: ${error.errorMsg}');
-            },
-            onStatus: (status) {
-              if (!mounted) return;
-              if (status == 'done' || status == 'notListening') {
-                setState(() => _listening = false);
-              }
-            },
-          );
+    final available = await _ensureSpeech();
     if (!available) {
       if (mounted) {
         showCultSnack(
           context,
-          'Нет доступа к микрофону. Разрешите речь в настройках iPhone.',
+          'Нет доступа к микрофону. Настройки → CULT → Микрофон и речь.',
         );
       }
       return;
     }
-    _speechReady = true;
     if (mounted) setState(() => _listening = true);
     HapticFeedback.mediumImpact();
     await _speech.listen(
@@ -514,20 +556,53 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
       ),
       body: Column(
         children: [
-          if (_isAgent && _listening)
+          if (_isAgent)
             Material(
-              color: Cult.gold.withValues(alpha: 0.35),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: _listening
+                  ? Cult.gold.withValues(alpha: 0.45)
+                  : (_speechDenied
+                        ? const Color(0xFFF8E8E6)
+                        : const Color(0xFFF3EFEA)),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                 child: Row(
                   children: [
-                    Icon(Icons.mic, size: 18, color: Cult.ink),
-                    SizedBox(width: 8),
+                    Icon(
+                      _listening
+                          ? Icons.mic
+                          : (_speechDenied
+                                ? Icons.mic_off_outlined
+                                : Icons.mic_none),
+                      size: 20,
+                      color: _speechDenied ? Cult.error : Cult.ink,
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Слушаю… спросите про услугу или товар',
-                        style: TextStyle(fontSize: 13),
+                        _listening
+                            ? 'Слушаю… скажите услугу или товар'
+                            : (_speechDenied
+                                  ? 'Нет доступа к микрофону — включите в Настройках → CULT'
+                                  : 'Нажмите «Голос» ниже — спрошу про цены и шоп'),
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.3,
+                          color: _speechDenied ? Cult.error : Cult.ink,
+                        ),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton.tonal(
+                      onPressed: () => _toggleListen(store),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _listening ? Cult.secondary : Cult.ink,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                      ),
+                      child: Text(_listening ? 'Стоп' : 'Голос'),
                     ),
                   ],
                 ),
@@ -634,13 +709,11 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                         style: IconButton.styleFrom(
                           backgroundColor: _listening
                               ? Cult.secondary
-                              : const Color(0xFFF3EFEA),
-                          foregroundColor: _listening
-                              ? Colors.white
                               : Cult.ink,
+                          foregroundColor: Colors.white,
                           minimumSize: const Size(48, 48),
                         ),
-                        icon: Icon(_listening ? Icons.stop : Icons.mic_none),
+                        icon: Icon(_listening ? Icons.stop : Icons.mic),
                       ),
                       const SizedBox(width: 6),
                     ],
@@ -656,7 +729,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                           hintText: widget.contactId == 'bot'
                               ? (_listening
                                     ? 'Говорите…'
-                                    : 'Услуга, цена или формула…')
+                                    : 'Или напишите: цена RF, состав…')
                               : widget.contactId == 'specialist'
                               ? 'Опишите симптом или вопрос врачу…'
                               : 'Напишите администратору…',

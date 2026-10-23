@@ -315,10 +315,12 @@ class ClinicStore extends ChangeNotifier {
           ? {}
           : savedRead.map((key, value) => MapEntry(key, value.toString()));
       _seedThreads();
+      _migrateAgentSeed();
       notifyListeners();
     } catch (_) {
       _applyClinicDefaults();
       _seedThreads();
+      _migrateAgentSeed();
       notifyListeners();
     }
   }
@@ -326,7 +328,7 @@ class ClinicStore extends ChangeNotifier {
   static const _chatSeeds = {
     'admin': 'Здравствуйте. Помогу с записью, трансфером и сертификатом.',
     'bot':
-        'Я CULT Агент. Спросите голосом или текстом про услуги, цены и формулы шопа — нажмите микрофон.',
+        'Я CULT Агент. Спросите голосом или текстом про услуги, цены и формулы шопа — нажмите «Голос» или микрофон внизу.',
     'specialist': 'Здравствуйте. Я на связи по уходу после процедур.',
   };
 
@@ -342,6 +344,26 @@ class ClinicStore extends ChangeNotifier {
       // Welcome seeds are not "new" replies — badge only for later messages.
       chatRead.putIfAbsent(entry.key, () => seed.id);
     }
+  }
+
+  /// Replace stale bot welcome (old «Я ассистент…») when the thread is still only a seed.
+  void _migrateAgentSeed() {
+    final thread = threads['bot'];
+    if (thread == null || thread.isEmpty) return;
+    final onlySeed = thread.length == 1 && thread.first.from == 'them';
+    if (!onlySeed) return;
+    final text = thread.first.text;
+    final fresh = _chatSeeds['bot']!;
+    if (text == fresh) return;
+    if (text.contains('микрофон') || text.contains('«Голос»')) return;
+    final seed = ChatMessage(
+      id: 'bot-seed-${DateTime.now().microsecondsSinceEpoch}',
+      from: 'them',
+      text: fresh,
+    );
+    threads['bot'] = [seed];
+    chatRead['bot'] = seed.id;
+    _save();
   }
 
   void clearChat(String contactId) {
