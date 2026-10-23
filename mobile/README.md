@@ -76,30 +76,43 @@ open ios/Runner.xcworkspace
 
 В Xcode: Product → Clean Build Folder, затем Run. В Build Settings у Runner должны быть User-Defined значения `FLUTTER_ROOT` (путь к Flutter SDK на Mac).
 
-### `Xcode has killed the LLDB RPC server`
+### `Cannot create a FlutterEngine…` / `ptrace… Operation not permitted` / `killed the LLDB RPC server`
 
-Отладчик Xcode отвалился (часто после нехватки места на диске или «зависшего» Run). Приложение CULT тут ни при чём.
+Это сбой **отладчика Xcode/LLDB**, не кода CULT. Debug-сборка на iOS 14+ обязана стартовать с подключённым Flutter tooling или Xcode. Если LLDB умер или вы открыли иконку с домашнего экрана — увидите:
 
-1. В Xcode: Stop (■).
-2. В Terminal завершите зависший процесс и очистите кэш отладки:
+- `Could not call ptrace(PT_TRACE_ME): Operation not permitted`
+- `Cannot create a FlutterEngine instance in debug mode without Flutter tooling or Xcode`
+- `Xcode has killed the LLDB RPC server`
 
-```bash
-kill 7490 2>/dev/null
-killall lldb-rpc-server 2>/dev/null
-killall Runner 2>/dev/null
-rm -rf ~/Library/Developer/Xcode/DerivedData/*
-```
-
-3. Проверьте свободное место: `df -h /` (нужно ≥ 5–10 GB).
-4. Надёжнее запускать без Xcode-отладчика:
+**Надёжный способ — запускать из Terminal:**
 
 ```bash
 cd ~/Desktop/cult/cult/mobile
 flutter pub get
+flutter devices
 flutter run
 ```
 
-Или в Xcode: Product → Run без breakpoint’ов; если снова убьёт LLDB — используйте только `flutter run`.
+Выберите свой iPhone в списке. Не запускайте Debug-иконку CULT с домашнего экрана.
+
+Если всё же через Xcode:
+
+1. На iPhone: Настройки → Конфиденциальность и безопасность → **Режим разработчика** → Вкл. (перезагрузка).
+2. В Xcode: Stop (■), затем Product → Clean Build Folder.
+3. Снова Run из **`Runner.xcworkspace`** (не `.xcodeproj`), подождите пока LLDB останется подключённым.
+4. Если LLDB снова убит — закройте Xcode и используйте только `flutter run`.
+
+Сброс зависшего отладчика:
+
+```bash
+killall lldb-rpc-server 2>/dev/null
+killall Runner 2>/dev/null
+rm -rf ~/Library/Developer/Xcode/DerivedData/Runner-*
+```
+
+Проверьте место: `df -h /` (желательно ≥ 5–10 GB).
+
+Чтобы открывать приложение с иконки без кабеля — соберите **Profile** или **Release** (`flutter run --release` или схему Release в Xcode). Debug с домашнего экрана на iOS так не стартует.
 
 ### `No space left on device` / `database or disk is full`
 
