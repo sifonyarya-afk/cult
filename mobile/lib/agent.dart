@@ -45,6 +45,10 @@ class CultAgent {
     final why = _whyReply(q, lastBot);
     if (why != null) return why;
 
+    // План / визит / фрустрация / вдвоём / тип кожи.
+    final care = _careFlowReply(q, gender: gender);
+    if (care != null) return care;
+
     // «Запиши меня на…»
     final book = _bookIntentReply(
       q,
@@ -83,6 +87,10 @@ class CultAgent {
       gender: gender,
     );
     if (priceFollow != null) return priceFollow;
+
+    // «Дорого» right after a priced recommendation.
+    final priceObj = _priceObjectionReply(q, lastBot);
+    if (priceObj != null) return priceObj;
 
     // Follow-ups first when we have context (so «да» after CTA is not generic).
     final follow = _followUpReply(
@@ -154,6 +162,11 @@ class CultAgent {
     final resume = _resumeLastUser(q, lastUser, gender: gender);
     if (resume != null) return resume;
 
+    if (q.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length >= 8) {
+      return 'Слышу много деталей — давайте не растерять суть. '
+          'Выделите одно: зона (лицо/тело), ощущение в зеркале или срок к дате. '
+          'От этого дам два спокойных шага, без лишнего.';
+    }
     return 'Слышу вас — давайте сузим без жёстких названий. '
         'Одного ориентира достаточно: лицо, тело, энергия или домашний уход. '
         'Или как в зеркале: тусклость, отёк, морщинки, пигмент — '
@@ -542,6 +555,24 @@ class CultAgent {
                 q.contains('лазер')));
     if (!wants) return null;
 
+    final morning = q.contains('утром') ||
+        q.contains('с утра') ||
+        q.contains('на утро') ||
+        q.contains('пораньше');
+    final evening = q.contains('вечером') ||
+        q.contains('на вечер') ||
+        q.contains('после работ') ||
+        q.contains('попозже');
+    final weekend = q.contains('в выходн') ||
+        q.contains('на выходн') ||
+        q.contains('в субботу') ||
+        q.contains('в воскресенье');
+    final timeNote = [
+      if (morning) 'утро',
+      if (evening) 'вечер',
+      if (weekend) 'выходные',
+    ];
+
     var rest = q
         .replaceAll('запиши меня на', ' ')
         .replaceAll('запиши на', ' ')
@@ -554,11 +585,26 @@ class CultAgent {
         .replaceAll(RegExp(r'^хочу на\s+'), ' ')
         .replaceAll('запиши меня', ' ')
         .replaceAll('запиши', ' ')
+        .replaceAll('вечером', ' ')
+        .replaceAll('утром', ' ')
+        .replaceAll('на вечер', ' ')
+        .replaceAll('на утро', ' ')
+        .replaceAll('с утра', ' ')
+        .replaceAll('после работы', ' ')
+        .replaceAll('после работ', ' ')
+        .replaceAll('в субботу', ' ')
+        .replaceAll('в воскресенье', ' ')
+        .replaceAll('на выходных', ' ')
+        .replaceAll('в выходные', ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
 
+    final when = timeNote.isEmpty
+        ? ''
+        : ' Ориентир по времени: ${timeNote.join(' / ')} (клиника 9:00–21:00).';
+
     if (rest.isEmpty || rest.length < 3) {
-      return 'Запишем с удовольствием. Нажмите «+» на главной или «Запись» в меню — услуга, врач, время. '
+      return 'Запишем с удовольствием. Нажмите «+» на главной или «Запись» в меню — услуга, врач, время.$when '
           'Можете голосом назвать процедуру, я подтвержу направление.';
     }
 
@@ -575,12 +621,100 @@ class CultAgent {
       final named = RegExp(r'«([^»]+)»').firstMatch(hit.reply)?.group(1);
       final title = named ?? rest;
       return 'Отлично, берём курс на «$title». '
-          'Запись: откройте «+» на главной или меню «Запись» — услуга, врач и время. '
+          'Запись: откройте «+» на главной или меню «Запись» — услуга, врач и время.$when '
           'Если слотов не видно — напишите администратору в чат, помогут вручную.\n'
           '${_briefRestate(hit.reply)}';
     }
-    return 'Запишем на «$rest»: откройте «+» или «Запись» и выберите ближайшее окно. '
+    return 'Запишем на «$rest»: откройте «+» или «Запись» и выберите ближайшее окно.$when '
         'Если название в прайсе чуть другое — на осмотре или с администратором уточним.';
+  }
+
+  String? _priceObjectionReply(String q, String? lastBot) {
+    final objects = q.contains('дорого') ||
+        q.contains('многовато') ||
+        q.contains('длинновато по цене') ||
+        q.contains('есть дешевле') ||
+        q.contains('подешевле') ||
+        q.contains('не потяну') ||
+        q.contains('слишком дорог');
+    if (!objects) return null;
+    final priced = lastBot != null &&
+        (lastBot.contains('₽') ||
+            lastBot.contains('руб') ||
+            lastBot.toLowerCase().contains('стоит') ||
+            lastBot.toLowerCase().contains('цен'));
+    if (!priced) return null;
+    final named = RegExp(r'«([^»]+)»').firstMatch(lastBot)?.group(1);
+    final about = named == null ? 'этого варианта' : '«$named»';
+    return 'Слышу про бюджет — без давления по $about. '
+        'Мягче по входу: уход или массаж, домашний шоп, консультация без процедуры в тот же день; курс иногда выгоднее разового визита. '
+        'Назовите потолок цифрой или зону — подберу реалистичную ступень.';
+  }
+
+  String? _careFlowReply(String q, {ClientGender? gender}) {
+    final man = gender == ClientGender.man;
+    if (q.contains('составь план') ||
+        q.contains('план ухода') ||
+        q.contains('план на месяц') ||
+        q.contains('пошагово') ||
+        q.contains('что делать по шагам') ||
+        q.contains('схему ухода') ||
+        q.contains('дорогую схему')) {
+      return man
+          ? 'Спокойный план на старт: 1) короткая консультация или барбер-массаж; 2) простой домашний барьер; 3) при необходимости RF по овалу после осмотра. '
+              'Без «сделанного» лица. С чего начнём — осмотр или массаж?'
+          : 'Спокойный план на старт: 1) осмотр или мягкий уход/массаж; 2) дом — барьерный крем и при необходимости сыворотка; 3) курс (RF/пилинг/инъекции) только если цель глубже и после согласия. '
+              'Куда шагнуть первым — клиника или домашний уход?';
+    }
+    if (q.contains('как проходит приём') ||
+        q.contains('как проходит прием') ||
+        q.contains('что будет на приём') ||
+        q.contains('что будет на прием') ||
+        q.contains('как проходит визит') ||
+        q.contains('что меня ждёт') ||
+        q.contains('что меня ждет') ||
+        q.contains('как выглядит визит')) {
+      return 'Обычный визит: ресепшен и короткое ожидание → разговор и осмотр → согласование протокола → сама процедура или только консультация, если так решите. '
+          'На лицо лучше без плотного макияжа; документ — на ресепшен. Вопросы можно заранее врачу в чате.';
+    }
+    if (q.contains('ничего не помогает') ||
+        q.contains('уже всё пробовал') ||
+        q.contains('уже все пробовал') ||
+        q.contains('уже всё пробовала') ||
+        q.contains('уже все пробовала') ||
+        q.contains('бесит') ||
+        q.contains('достало') ||
+        q.contains('надоело') ||
+        q.contains('замучал') ||
+        q.contains('замучила')) {
+      return 'Слышу усталость от бесконечных попыток — это важно. Не будем наслаивать ещё десять средств. '
+          'Один спокойный шаг: очный осмотр без обязательства процедуры в тот же день, либо максимально простой домашний барьер. '
+          'Расскажите, что уже пробовали — уколы, аппараты, кремы — чтобы не повторять лишнее.';
+    }
+    if (q.contains('вдвоём') ||
+        q.contains('вдвоем') ||
+        q.contains('с подругой') ||
+        q.contains('с мужем') ||
+        q.contains('с женой') ||
+        q.contains('вместе прид') ||
+        q.contains('на двоих')) {
+      return 'Вдвоём удобно: можно соседние окна или один за другим — администратор поможет через чат или «+». '
+          'Сертификат тоже хорошо заходит как жест. Скажите, вам уход/массаж или разным задачи?';
+    }
+    if (q.contains('комбинир') ||
+        q.contains('т-зона') ||
+        q.contains('т зона') ||
+        (q.contains('жирн') && q.contains('сух'))) {
+      return 'Комбинированная кожа — частый случай: Т-зона блестит, щёки суше. Не сушим всё лицо агрессивно. '
+          'Чаще: мягкий уход в клинике + барьерный крем, а плотные активы — точечно. Могу назвать крем или записать на уход.';
+    }
+    if (q.contains('чувствительная кожа') ||
+        q.contains('реактивная кожа') ||
+        q.contains('кожа реагирует на всё')) {
+      return 'Реактивной коже сначала возвращаем барьер, а не «мощный эффект». '
+          'Старт: мягкий уход без кислот и барьерный крем; аппаратные и пилинги — только после осмотра. Запишем спокойную консультацию?';
+    }
+    return null;
   }
 
   String? _correctionReply(String q) {

@@ -282,6 +282,33 @@ void main() {
     expect(reply.toLowerCase(), isNot(contains('ботулин')));
   });
 
+  test('Запиши на массаж вечером учитывает время', () {
+    final reply = cultAgent.answer('Запиши меня на массаж вечером');
+    expect(reply.toLowerCase(), contains('массаж'));
+    expect(reply.toLowerCase(), contains('вечер'));
+  });
+
+  test('Дорого после цены предлагает мягче', () {
+    final reply = cultAgent.answer(
+      'дорого',
+      lastBot: 'По услуге «Микроигольчатый RF»: стоит 45 000 ₽.',
+    );
+    expect(reply.toLowerCase(), contains('бюджет'));
+    expect(reply.toLowerCase(), anyOf(contains('уход'), contains('массаж'), contains('шоп')));
+  });
+
+  test('Составь план даёт шаги', () {
+    final reply = cultAgent.answer('Составь план ухода');
+    expect(reply.toLowerCase(), contains('1)'));
+    expect(reply.toLowerCase(), anyOf(contains('2)'), contains('дом')));
+  });
+
+  test('Как проходит визит', () {
+    final reply = cultAgent.answer('Как проходит визит?');
+    expect(reply.toLowerCase(), contains('осмотр'));
+    expect(reply.toLowerCase(), contains('ресепшен'));
+  });
+
   test('Мужской профиль не предлагает женский массаж первым', () {
     final reply = cultAgent.answer(
       'скульптурный массаж лица',
