@@ -126,6 +126,31 @@ void main() {
     expect(reply.toLowerCase(), isNot(contains('точного совпадения')));
   });
 
+  test('«Да» после предложения записи ведёт к записи', () {
+    final reply = cultAgent.answer(
+      'да',
+      lastBot: 'Запишем через «+» на главной? Могу помочь с консультацией.',
+    );
+    expect(reply.toLowerCase(), anyOf(contains('запись'), contains('«+»'), contains('+')));
+    expect(reply.toLowerCase(), isNot(contains('лицо, тело, энергия или запись')));
+  });
+
+  test('Событие завтра — без тяжёлой реабилитации', () {
+    final reply = cultAgent.answer('Завтра свадьба, что можно сделать с лицом?');
+    expect(reply.toLowerCase(), anyOf(contains('массаж'), contains('уход')));
+    expect(reply.toLowerCase(), contains('реабилитац'));
+  });
+
+  test('Посоветуй что-нибудь учитывает пол', () {
+    final woman = cultAgent.answer('посоветуй что-нибудь');
+    expect(woman.toLowerCase(), anyOf(contains('массаж'), contains('уход')));
+    final man = cultAgent.answer(
+      'посоветуй что-нибудь',
+      gender: ClientGender.man,
+    );
+    expect(man.toLowerCase(), anyOf(contains('муж'), contains('барбер'), contains('овал')));
+  });
+
   test('Мужской профиль не предлагает женский массаж первым', () {
     final reply = cultAgent.answer(
       'скульптурный массаж лица',

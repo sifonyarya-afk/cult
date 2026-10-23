@@ -25,17 +25,21 @@ class CultAgent {
           'или какой результат хотите к дате. Подскажу мягкий следующий шаг.';
     }
 
-    // Small talk and short acknowledgements first.
-    final chat = _chatReply(q);
-    if (chat != null) return chat;
-
-    // Follow-ups after clarifying questions («лицо или тело?»…).
-    final follow = _followUpReply(q, lastBot);
+    // Follow-ups first when we have context (so «да» after CTA is not generic).
+    final follow = _followUpReply(q, lastBot, gender: gender);
     if (follow != null) return follow;
+
+    // Small talk — short «да/нет» defer if lastBot exists (handled above).
+    final chat = _chatReply(q, lastBot: lastBot, gender: gender);
+    if (chat != null) return chat;
 
     // «Что лучше…» comparisons before raw catalog dump.
     final compare = _compareReply(q, gender: gender);
     if (compare != null) return compare;
+
+    // Deadline / event / «посоветуй что-нибудь».
+    final situation = _situationReply(q, gender: gender);
+    if (situation != null) return situation;
 
     // Free-form concerns / goals without exact catalog names.
     final concern = _concernReply(q, gender: gender);
@@ -58,9 +62,9 @@ class CultAgent {
     if (hit != null && hit.score >= 5) return hit.reply;
 
     return 'Слышу вас — давайте сузим без жёстких названий. '
-        'Скажите одно: лицо, тело, энергия или домашний уход. '
-        'Или опишите, что видите в зеркале (тусклость, отёк, морщинки, пигмент) — '
-        'дам два спокойных варианта и, если нужно, путь к записи.';
+        'Одного ориентира достаточно: лицо, тело, энергия или домашний уход. '
+        'Или как в зеркале: тусклость, отёк, морщинки, пигмент — '
+        'дам два спокойных варианта и мягкий путь к записи, если захотите.';
   }
 
   ({String reply, int score})? _catalogHit(
@@ -280,13 +284,18 @@ class CultAgent {
 
   /// Greetings and bedside manner — answers before catalog/FAQ ops.
   /// Note: Dart `\b` is ASCII-only, so we avoid it for Cyrillic.
-  String? _chatReply(String q) {
+  String? _chatReply(
+    String q, {
+    String? lastBot,
+    ClientGender? gender,
+  }) {
     final compact = q
         .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
     final words = compact.split(' ').where((w) => w.isNotEmpty).toList();
     final first = words.isEmpty ? '' : words.first;
+    final hasContext = lastBot != null && lastBot.trim().isNotEmpty;
     final isGreeting = const {
           'привет',
           'здравствуй',
@@ -303,9 +312,13 @@ class CultAgent {
         compact.startsWith('добрый вечер') ||
         compact.startsWith('доброй ночи');
     if (isGreeting && words.length <= 5) {
-      return 'Здравствуйте, очень приятно. '
-          'Я рядом, как на спокойной консультации: можно просто поговорить о коже, энергии или записи. '
-          'С чего начнём?';
+      final man = gender == ClientGender.man;
+      return man
+          ? 'Здравствуйте, рад вас слышать. '
+              'Можно без названий: кожа, энергия, овал или запись — подстроюсь. С чего начнём?'
+          : 'Здравствуйте, очень приятно. '
+              'Я рядом, как на спокойной консультации: можно просто поговорить о коже, энергии или записи. '
+              'С чего начнём?';
     }
     if (q.contains('как дела') ||
         q.contains('как ты') ||
@@ -353,6 +366,13 @@ class CultAgent {
           'поможешь',
           'подскажете',
         }.contains(first)) {
+      // Open «посоветуй что-нибудь» → _situationReply (richer, gender-aware).
+      if (compact.contains('что-нибудь') ||
+          compact.contains('что нибудь') ||
+          compact.contains('что мне') ||
+          compact.startsWith('порекомендуй')) {
+        return null;
+      }
       return 'Конечно, давайте вместе. '
           'Коротко: лицо или тело, что хотите улучшить, и был ли уже курс у нас? '
           'От этого мягко выберу услугу или домашний уход.';
@@ -366,6 +386,28 @@ class CultAgent {
         compact.contains('можно поговорить')) {
       return 'Да, давайте поговорим спокойно. '
           'Можете начать с ощущения: сухость, усталость, «хочу свежий вид» — или спросить про клинику. Я подстроюсь.';
+    }
+    // With prior bot line, let _followUpReply own short yes/no.
+    if (hasContext &&
+        words.length <= 3 &&
+        const {
+          'да',
+          'ага',
+          'угу',
+          'ок',
+          'окей',
+          'хорошо',
+          'ладно',
+          'понятно',
+          'ясно',
+          'давай',
+          'конечно',
+          'нет',
+          'не надо',
+          'не нужно',
+          'потом',
+        }.contains(compact)) {
+      return null;
     }
     if (words.length <= 3 &&
         const {
@@ -433,16 +475,115 @@ class CultAgent {
     return null;
   }
 
-  String? _followUpReply(String q, String? lastBot) {
+  String? _followUpReply(
+    String q,
+    String? lastBot, {
+    ClientGender? gender,
+  }) {
     if (lastBot == null || lastBot.isEmpty) return null;
     final prev = _normalize(lastBot);
     final compact = q
         .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
+    final words = compact.split(' ').where((w) => w.isNotEmpty).toList();
+    final shortYes = words.length <= 3 &&
+        const {
+          'да',
+          'ага',
+          'угу',
+          'ок',
+          'окей',
+          'хорошо',
+          'ладно',
+          'понятно',
+          'ясно',
+          'давай',
+          'конечно',
+          'согласна',
+          'согласен',
+        }.contains(compact);
+    final shortNo = words.length <= 3 &&
+        const {
+          'нет',
+          'не надо',
+          'не нужно',
+          'потом',
+          'не сейчас',
+          'позже',
+        }.contains(compact);
+
+    final offeredBooking = prev.contains('запис') ||
+        prev.contains('через «+»') ||
+        prev.contains('через "+"') ||
+        prev.contains('через плюс') ||
+        prev.contains('консультац') ||
+        prev.contains('осмотр');
+    final offeredCompare = prev.contains('сравнить') ||
+        prev.contains('что ближе') ||
+        prev.contains('с чего начн');
+    final askedMirror = prev.contains('что видите в зеркале') ||
+        prev.contains('что заметнее') ||
+        prev.contains('что не нравится') ||
+        prev.contains('что беспокоит') ||
+        prev.contains('что смущает');
+
+    if (shortYes) {
+      if (offeredBooking) {
+        return 'Отлично. Нажмите «+» на главной или откройте «Запись»: выберите услугу, врача и время. '
+            'Если ещё не решили протокол — возьмите консультацию, на осмотре сузим без спешки.';
+      }
+      if (offeredCompare) {
+        return 'Хорошо. Тогда скажите полюса или задачу: например массаж или RF, крем или сыворотка, '
+            'либо что видите в зеркале — сравню спокойно.';
+      }
+      if (askedMirror) {
+        return 'Давайте тогда по зеркалу: сухость, тусклость, морщинки, отёк или пигмент? '
+            'Одного слова достаточно — предложу мягкий старт.';
+      }
+      return 'Хорошо, продолжаем. Лицо, тело, энергия или запись — что сейчас ближе?';
+    }
+    if (shortNo) {
+      return 'Хорошо, без давления. Можем просто поговорить о коже или уходе — или вернётесь позже голосом или текстом.';
+    }
+
+    // Choice after «быстрый эффект / курс» or massage vs RF.
+    if (prev.contains('быстрый эффект') ||
+        prev.contains('долгий результат') ||
+        prev.contains('к вечеру')) {
+      if (compact.contains('быстр') ||
+          compact.contains('вечер') ||
+          compact.contains('сейчас') ||
+          compact.contains('срочно')) {
+        return 'Тогда ближе уход или скульптурный массаж — свежий вид без долгой реабилитации. '
+            'Скажите дату события или «массаж» — уточню и помогу с записью.';
+      }
+      if (compact.contains('курс') ||
+          compact.contains('долг') ||
+          compact.contains('надолго') ||
+          compact.contains('стойк')) {
+        return 'Для стойкого эффекта смотрим курс: RF, пилинги или инъекции — только после осмотра. '
+            'Запишем короткую консультацию через «+», чтобы не гадать по фото?';
+      }
+    }
+    if (prev.contains('массаж') && prev.contains('rf')) {
+      if (compact.contains('массаж') || compact.contains('мягк')) {
+        return 'Отличный мягкий вход — массаж. Спросите «массаж» для цены и длительности '
+            'или сразу «+» на запись. Если позже захотите плотность — вернёмся к RF.';
+      }
+      if (compact.contains('rf') ||
+          compact.contains('рф') ||
+          compact.contains('аппарат') ||
+          compact.contains('плотност')) {
+        return 'Тогда логичен микроигольчатый RF после осмотра — курс и интенсивность под вашу кожу. '
+            'Могу назвать ориентир по цене («микроигольчатый RF») или записать на консультацию через «+».';
+      }
+    }
+
     if (prev.contains('лицо или тело') ||
         prev.contains('лицо, тело') ||
-        prev.contains('лицо, тело, энергия')) {
+        prev.contains('лицо, тело, энергия') ||
+        prev.contains('с чего начн')) {
       if (compact.contains('лиц')) {
         return 'Отлично, про лицо. Что заметнее: сухость, тусклость, морщинки, отёк или пигмент? '
             'От этого мягко выберу массаж, уход, аппаратную или домашний крем.';
@@ -460,7 +601,12 @@ class CultAgent {
       if (compact.contains('уход') ||
           compact.contains('дом') ||
           compact.contains('крем') ||
-          compact.contains('сывор')) {
+          compact.contains('сывор') ||
+          compact.contains('запис')) {
+        if (compact.contains('запис')) {
+          return 'Тогда запись: «+» на главной или меню «Запись» — услуга, врач, время. '
+              'Если протокол ещё не ясен, возьмите консультацию.';
+        }
         return 'Для дома хорошо заходят барьерный крем и пептидная сыворотка из шопа. '
             'Скажите «крем» или «сыворотка» — назову цену и наличие, без лишней суеты.';
       }
@@ -468,7 +614,7 @@ class CultAgent {
     if (prev.contains('сравнить') ||
         prev.contains('два спокойных') ||
         prev.contains('что ближе')) {
-      final concern = _concernReply(q);
+      final concern = _concernReply(q, gender: gender);
       if (concern != null) return concern;
       if (compact.contains('запис') ||
           compact.contains('консульт') ||
@@ -477,11 +623,8 @@ class CultAgent {
             'Запись через «+» на главной или меню «Запись».';
       }
     }
-    if (prev.contains('что не нравится') ||
-        prev.contains('что видите в зеркале') ||
-        prev.contains('что беспокоит') ||
-        prev.contains('что смущает')) {
-      return _concernReply(q) ??
+    if (askedMirror) {
+      return _concernReply(q, gender: gender) ??
           'Слышу вас. Давайте уточним зону — лицо или тело — и подберём самый спокойный старт.';
     }
     return null;
@@ -551,6 +694,70 @@ class CultAgent {
 
     return 'Чтобы честно сравнить, нужны два полюса: например массаж или RF, крем или сыворотка, энергия или лицо. '
         'Или опишите результат к дате — предложу два спокойных варианта без давления.';
+  }
+
+  /// Deadline, event, age band, open-ended «посоветуй».
+  String? _situationReply(String q, {ClientGender? gender}) {
+    final man = gender == ClientGender.man;
+    final compact = q
+        .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final wordCount =
+        compact.split(' ').where((w) => w.isNotEmpty).length;
+    final soon = q.contains('завтра') ||
+        q.contains('послезавтра') ||
+        q.contains('сегодня') ||
+        q.contains('через день') ||
+        q.contains('через два') ||
+        q.contains('на выходн') ||
+        q.contains('к вечеру') ||
+        q.contains('срочно');
+    final event = q.contains('свадьб') ||
+        q.contains('день рожден') ||
+        q.contains('мероприят') ||
+        q.contains('съёмк') ||
+        q.contains('съемк') ||
+        q.contains('фотосес') ||
+        q.contains('отпуск') ||
+        q.contains('выпускн') ||
+        q.contains('праздник');
+    final weekish = q.contains('через недел') ||
+        q.contains('через две') ||
+        q.contains('через месяц') ||
+        q.contains('к лету') ||
+        q.contains('к отпуск');
+
+    if (soon ||
+        (event && (soon || q.contains('скоро') || q.contains('через')))) {
+      return 'К близкой дате не берём тяжёлую реабилитацию. Чаще — уход с сыворотками или скульптурный массаж, иногда лёгкая инфузия Beauty & Glow. '
+          'Скажите точную дату и зону (лицо / отёк / тон) — предложу один спокойный протокол и запись.';
+    }
+    if (event || weekish) {
+      return 'Под дату есть запас — можно сочетать мягкий старт сейчас и при необходимости курс после осмотра. '
+          'Назовите, что важнее в кадре: тон, овал, свежесть или энергия — сузим до двух вариантов.';
+    }
+    if (RegExp(r'(мне |мне)\s*\d{2}').hasMatch(q) ||
+        RegExp(r'\d{2}\s*лет').hasMatch(q)) {
+      return 'Возраст — ориентир, не диагноз: смотрим кожу и цели, а не цифру в паспорте. '
+          'Коротко опишите, что смущает (сухость, плотность, мимика, энергия) — предложу мягкий вход без лишнего.';
+    }
+    if (q.contains('посоветуй что') ||
+        q.contains('порекомендуй') ||
+        q.contains('не знаю с чего') ||
+        q.contains('с чего начать') ||
+        q.contains('что мне сделать') ||
+        q.contains('что мне подходит') ||
+        compact.contains('посоветуй что-нибудь') ||
+        (compact.startsWith('посоветуй') && wordCount <= 6) ||
+        (compact.startsWith('порекомендуй') && wordCount <= 6)) {
+      return man
+          ? 'Частый спокойный старт для мужчин: барбер-массаж или осмотр с разговором про овал и кожу, дома — простой барьерный уход. '
+              'Скажите, что важнее — свежий вид к дате или плотность курсом — и сузим.'
+          : 'Частый спокойный старт: скульптурный массаж или увлажняющий уход, дома — барьерный крем; если сил мало — коротко про инфузии. '
+              'Скажите, что важнее сейчас — зеркало, энергия или запись — и выберем один шаг.';
+    }
+    return null;
   }
 
   /// Free-form goals and skin concerns without exact product names.
