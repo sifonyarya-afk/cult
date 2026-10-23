@@ -417,8 +417,14 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     }
   }
 
-  Future<void> _speak(String text, {bool tight = false}) async {
-    if (!_isAgent || !_speakReplies || text.trim().isEmpty) return;
+  Future<void> _speak(
+    String text, {
+    bool tight = false,
+    bool force = false,
+  }) async {
+    // Mic turns always get a spoken reply; the speaker toggle only gates text sends.
+    if (!_isAgent || text.trim().isEmpty) return;
+    if (!_speakReplies && !force) return;
     if (!mounted) return;
     await _tts.speak(text, tight: tight);
   }
@@ -498,7 +504,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
             await _tts.stop();
           } catch (_) {}
           if (!mounted) return;
-          await _speak(line, tight: tight);
+          await _speak(line, tight: tight, force: fromVoice);
         }();
       }
     }

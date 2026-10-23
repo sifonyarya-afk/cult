@@ -816,7 +816,7 @@ class Contact {
 }
 
 /// Bump when shipping a user-visible feature so Settings proves the Mac build is fresh.
-const cultBuildTag = 'agent-replies-v11';
+const cultBuildTag = 'agent-replies-v12';
 
 const contacts = <Contact>[
   Contact(
@@ -824,7 +824,7 @@ const contacts = <Contact>[
     name: 'CULT Агент',
     role: 'Голос · как на консультации',
     seed:
-        'Здравствуйте. Я консультант CULT — можно просто поговорить: про самочувствие, кожу, процедуры или запись. Нажмите «Голос» или напишите своими словами — подстроюсь.',
+        'Здравствуйте. Я консультант CULT — можно просто поговорить: про самочувствие, кожу, процедуры или запись. Нажмите «Голос» или напишите своими словами. Если ответила длинно — скажите «короче».',
   ),
   Contact(
     id: 'admin',
