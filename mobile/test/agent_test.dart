@@ -909,4 +909,35 @@ void main() {
     expect(reply.toLowerCase(), contains('единиц'));
     expect(reply, isNot(contains('₽')));
   });
+
+  test('Veil Peptide в корзину не путает с Neuro-Regen', () {
+    final turn = cultAgent.respond('Положи Veil Peptide Serum в корзину');
+    expect(turn.cartAdd, isNotNull);
+    expect(turn.cartAdd!.name.toLowerCase(), contains('veil'));
+    expect(turn.cartAdd!.name.toLowerCase(), isNot(contains('neuro')));
+  });
+
+  test('ГВ аббревиатура и блеск через час не часы работы', () {
+    final gv = cultAgent.answer('Можно ли делать массаж при ГВ?');
+    expect(gv.toLowerCase(), anyOf(contains('грудн'), contains('вскармл'), contains('врач')));
+    expect(gv.toLowerCase(), isNot(contains('мануальный лифтинг контура')));
+    final shine = cultAgent.answer('Кожа блестит через час после умывания');
+    expect(shine.toLowerCase(), anyOf(contains('блеск'), contains('т-зон'), contains('барьер')));
+    expect(shine.toLowerCase(), isNot(contains('9:00')));
+  });
+
+  test('SMAS простыми словами и RF при зубных имплантах', () {
+    final smas = cultAgent.answer('Что такое SMAS простыми словами?');
+    expect(smas.toLowerCase(), contains('smas'));
+    expect(smas.toLowerCase(), isNot(contains('скажите проще')));
+    final rf = cultAgent.answer('Можно ли делать RF если стоят металлические импланты в зубах?');
+    expect(rf.toLowerCase(), anyOf(contains('зуб'), contains('металл'), contains('имплант')));
+    expect(rf.toLowerCase(), isNot(contains('меню «аппаратная»')));
+  });
+
+  test('Похмелье на капельницу не меню инфузий', () {
+    final reply = cultAgent.answer('Можно ли прийти на капельницу с похмелья?');
+    expect(reply.toLowerCase(), contains('похмел'));
+    expect(reply.toLowerCase(), isNot(contains('меню «инфузии»')));
+  });
 }
