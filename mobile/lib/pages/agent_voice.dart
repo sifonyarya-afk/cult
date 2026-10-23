@@ -372,9 +372,11 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     final hero = _heroReply ?? contacts.firstWhere((c) => c.id == 'bot').seed;
     final lastUser = _lastUserLine;
 
+    // Embedded above shell bottom nav — no extra SafeArea (that caused Column overflow).
     return Scaffold(
       backgroundColor: const Color(0xFF100E0C),
       appBar: AppBar(
+        toolbarHeight: 56,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -420,247 +422,251 @@ class _AgentVoicePageState extends State<AgentVoicePage>
               ? 0.55 + _pulse.value * 0.35
               : (_speaking ? 0.4 + _pulse.value * 0.25 : 0.22);
           return Container(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0, -0.55),
-            radius: 1.15,
-            colors: [
-              Color.lerp(
-                const Color(0xFF3A2E1C),
-                const Color(0xFF5A4630),
-                ambient,
-              )!,
-              const Color(0xFF1A1510),
-              const Color(0xFF100E0C),
-            ],
-            stops: const [0, 0.45, 1],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              if (_offers.isNotEmpty)
-                SizedBox(
-                  height: 112,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _offers.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 10),
-                    itemBuilder: (context, index) {
-                      final offer = _offers[index];
-                      return _SuggestCard(
-                        offer: offer,
-                        onTap: () => _askOffer(store, offer),
-                        onBook: offer.kind == 'service' ||
-                                offer.kind == 'infusion'
-                            ? () {
-                                cultTapFeedback();
-                                _askOffer(
-                                  store,
-                                  AgentOffer(
-                                    title: offer.title,
-                                    subtitle: offer.subtitle,
-                                    priceLabel: offer.priceLabel,
-                                    kind: offer.kind,
-                                    ask: 'Запиши меня на ${offer.title}',
-                                  ),
-                                );
-                              }
-                            : null,
-                      );
-                    },
-                  ),
-                ),
-              Expanded(
-                child: ListView(
-                  controller: _scroll,
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
-                  children: [
-                    if (lastUser != null && lastUser.isNotEmpty) ...[
-                      Text(
-                        'Вы · $lastUser',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0x99C9BBA5),
-                          fontSize: 13,
-                          height: 1.35,
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                    ],
-                    AnimatedOpacity(
-                      duration: const Duration(milliseconds: 280),
-                      opacity: _speaking ? 1 : 0.96,
-                      child: Text(
-                        hero,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: const Color(0xFFF3EBDD),
-                          fontSize: hero.length > 160 ? 17 : 20,
-                          height: 1.45,
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 0.15,
-                        ),
-                      ),
-                    ),
-                    if (_partial.isNotEmpty) ...[
-                      const SizedBox(height: 28),
-                      Text(
-                        _partial,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Color.lerp(
-                            const Color(0xFFE8D8BE),
-                            Cult.sand,
-                            _pulse.value,
-                          ),
-                          fontSize: 16,
-                          height: 1.4,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ],
-                    if (messages.length > 2) ...[
-                      const SizedBox(height: 28),
-                      ...messages
-                          .where((m) => m.from == 'them')
-                          .toList()
-                          .reversed
-                          .skip(1)
-                          .take(2)
-                          .toList()
-                          .reversed
-                          .map(
-                            (m) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Text(
-                                m.text,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Color(0x66D9CBB5),
-                                  fontSize: 13,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ),
-                          ),
-                    ],
-                  ],
-                ),
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(0, -0.55),
+                radius: 1.15,
+                colors: [
+                  Color.lerp(
+                    const Color(0xFF3A2E1C),
+                    const Color(0xFF5A4630),
+                    ambient,
+                  )!,
+                  const Color(0xFF1A1510),
+                  const Color(0xFF100E0C),
+                ],
+                stops: const [0, 0.45, 1],
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(28, 0, 28, 10),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  child: Text(
-                    _status,
-                    key: ValueKey(_status),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: _speechDenied
-                          ? const Color(0xFFFFB4A8)
-                          : const Color(0xFFD9CBB5),
-                      fontSize: 13,
-                      height: 1.3,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 30),
-                child: Builder(
-                  builder: (context) {
-                    final active = _listening || _speaking;
-                    final scale = active ? 1 + (_pulse.value * 0.07) : 1.0;
-                    final ring = active ? 10 + (_pulse.value * 14) : 0.0;
-                    return Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        if (active)
-                          Container(
-                            width: 96 + ring,
-                            height: 96 + ring,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Cult.sand
-                                    .withValues(alpha: 0.28 + _pulse.value * 0.22),
-                                width: 1.2,
-                              ),
-                            ),
-                          ),
-                        Transform.scale(
-                          scale: scale,
-                          child: Semantics(
-                            button: true,
-                            label: _listening
-                                ? 'Остановить прослушивание'
-                                : (_speaking
-                                    ? 'Остановить речь'
-                                    : 'Говорить с CULT Агентом'),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                customBorder: const CircleBorder(),
-                                onTap: () => _onMainButton(store),
-                                child: Ink(
-                                  width: 96,
-                                  height: 96,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: _listening
-                                          ? const [
-                                              Color(0xFFE8D9C0),
-                                              Color(0xFFB9A07A),
-                                            ]
-                                          : (_speaking
-                                              ? const [
-                                                  Color(0xFFC9B496),
-                                                  Color(0xFF6E5B43),
-                                                ]
-                                              : const [
-                                                  Color(0xFFD7BEA0),
-                                                  Color(0xFF8A7355),
-                                                ]),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_offers.isNotEmpty)
+                  SizedBox(
+                    height: 104,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _offers.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
+                      itemBuilder: (context, index) {
+                        final offer = _offers[index];
+                        return _SuggestCard(
+                          offer: offer,
+                          onTap: () => _askOffer(store, offer),
+                          onBook: offer.kind == 'service' ||
+                                  offer.kind == 'infusion'
+                              ? () {
+                                  cultTapFeedback();
+                                  _askOffer(
+                                    store,
+                                    AgentOffer(
+                                      title: offer.title,
+                                      subtitle: offer.subtitle,
+                                      priceLabel: offer.priceLabel,
+                                      kind: offer.kind,
+                                      ask: 'Запиши меня на ${offer.title}',
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Cult.sand.withValues(
-                                          alpha: _listening ? 0.35 : 0.16,
-                                        ),
-                                        blurRadius: _listening ? 32 : 18,
-                                        spreadRadius: _listening ? 1 : 0,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    _listening
-                                        ? Icons.stop_rounded
-                                        : (_speaking
-                                            ? Icons.volume_up_rounded
-                                            : Icons.mic_rounded),
-                                    size: 40,
-                                    color: const Color(0xFF1B1408),
-                                  ),
-                                ),
-                              ),
+                                  );
+                                }
+                              : null,
+                        );
+                      },
+                    ),
+                  ),
+                Expanded(
+                  child: ListView(
+                    controller: _scroll,
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+                    children: [
+                      if (lastUser != null && lastUser.isNotEmpty) ...[
+                        Text(
+                          'Вы · $lastUser',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0x99C9BBA5),
+                            fontSize: 13,
+                            height: 1.35,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+                      AnimatedOpacity(
+                        duration: const Duration(milliseconds: 280),
+                        opacity: _speaking ? 1 : 0.96,
+                        child: Text(
+                          hero,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: const Color(0xFFF3EBDD),
+                            fontSize: hero.length > 160 ? 16 : 19,
+                            height: 1.4,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 0.15,
+                          ),
+                        ),
+                      ),
+                      if (_partial.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        Text(
+                          _partial,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color.lerp(
+                              const Color(0xFFE8D8BE),
+                              Cult.sand,
+                              _pulse.value,
                             ),
+                            fontSize: 16,
+                            height: 1.35,
+                            fontStyle: FontStyle.italic,
                           ),
                         ),
                       ],
-                    );
-                  },
+                      if (messages.length > 2) ...[
+                        const SizedBox(height: 20),
+                        ...messages
+                            .where((m) => m.from == 'them')
+                            .toList()
+                            .reversed
+                            .skip(1)
+                            .take(2)
+                            .toList()
+                            .reversed
+                            .map(
+                              (m) => Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Text(
+                                  m.text,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Color(0x66D9CBB5),
+                                    fontSize: 13,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ),
+                            ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      );
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 6),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    child: Text(
+                      _status,
+                      key: ValueKey(_status),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _speechDenied
+                            ? const Color(0xFFFFB4A8)
+                            : const Color(0xFFD9CBB5),
+                        fontSize: 13,
+                        height: 1.3,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 120,
+                  child: Center(
+                    child: Builder(
+                      builder: (context) {
+                        final active = _listening || _speaking;
+                        final scale = active ? 1 + (_pulse.value * 0.06) : 1.0;
+                        final ring = active ? 8 + (_pulse.value * 10) : 0.0;
+                        return Stack(
+                          alignment: Alignment.center,
+                          clipBehavior: Clip.none,
+                          children: [
+                            if (active)
+                              Container(
+                                width: 88 + ring,
+                                height: 88 + ring,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Cult.sand.withValues(
+                                      alpha: 0.28 + _pulse.value * 0.22,
+                                    ),
+                                    width: 1.2,
+                                  ),
+                                ),
+                              ),
+                            Transform.scale(
+                              scale: scale,
+                              child: Semantics(
+                                button: true,
+                                label: _listening
+                                    ? 'Остановить прослушивание'
+                                    : (_speaking
+                                        ? 'Остановить речь'
+                                        : 'Говорить с CULT Агентом'),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    customBorder: const CircleBorder(),
+                                    onTap: () => _onMainButton(store),
+                                    child: Ink(
+                                      width: 88,
+                                      height: 88,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: _listening
+                                              ? const [
+                                                  Color(0xFFE8D9C0),
+                                                  Color(0xFFB9A07A),
+                                                ]
+                                              : (_speaking
+                                                  ? const [
+                                                      Color(0xFFC9B496),
+                                                      Color(0xFF6E5B43),
+                                                    ]
+                                                  : const [
+                                                      Color(0xFFD7BEA0),
+                                                      Color(0xFF8A7355),
+                                                    ]),
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Cult.sand.withValues(
+                                              alpha: _listening ? 0.35 : 0.16,
+                                            ),
+                                            blurRadius: _listening ? 28 : 16,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        _listening
+                                            ? Icons.stop_rounded
+                                            : (_speaking
+                                                ? Icons.volume_up_rounded
+                                                : Icons.mic_rounded),
+                                        size: 36,
+                                        color: const Color(0xFF1B1408),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
         },
       ),
     );
@@ -691,86 +697,87 @@ class _SuggestCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
-        child: Container(
-          width: 236,
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Cult.sand.withValues(alpha: 0.35)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    kindLabel,
-                    style: const TextStyle(
-                      color: Color(0xFFB9A990),
-                      fontSize: 11,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    offer.priceLabel,
-                    style: const TextStyle(
-                      color: Color(0xFFF6EFE3),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                offer.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                offer.subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFFC9BBA5),
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  const Text(
-                    'Рассказать',
-                    style: TextStyle(
-                      color: Cult.sand,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (onBook != null) ...[
-                    const SizedBox(width: 14),
-                    GestureDetector(
-                      onTap: onBook,
-                      child: const Text(
-                        'Запись',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+        child: SizedBox(
+          width: 228,
+          height: 96,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        kindLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFB9A990),
+                          fontSize: 11,
+                          letterSpacing: 0.3,
                         ),
                       ),
                     ),
+                    Text(
+                      offer.priceLabel,
+                      style: const TextStyle(
+                        color: Color(0xFFF6EFE3),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
-                ],
-              ),
-            ],
+                ),
+                Text(
+                  offer.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  offer.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFC9BBA5),
+                    fontSize: 11,
+                  ),
+                ),
+                Row(
+                  children: [
+                    const Text(
+                      'Рассказать',
+                      style: TextStyle(
+                        color: Cult.sand,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (onBook != null) ...[
+                      const SizedBox(width: 14),
+                      GestureDetector(
+                        onTap: onBook,
+                        child: const Text(
+                          'Запись',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
