@@ -33,7 +33,7 @@ class CultAgent {
 
     final topic = _topicBlob(lastUser: lastUser, recentUsers: recentUsers);
 
-    // «Повтори / короче / не поняла».
+    // «Повтори / короче / подробнее / не поняла».
     final meta = _metaReply(q, lastBot);
     if (meta != null) return meta;
 
@@ -134,7 +134,7 @@ class CultAgent {
     if (compare != null) return compare;
 
     // Deadline / event / budget / gift / safety / course / season.
-    final situation = _situationReply(q, gender: gender);
+    final situation = _situationReply(q, gender: gender, topic: topic);
     if (situation != null) return situation;
 
     final intent = _intentReply(q, gender: gender);
@@ -231,6 +231,14 @@ class CultAgent {
       ['бьюти глоу', 'beauty & glow'],
       ['иммунити', 'immunity'],
       ['имьюнити', 'immunity'],
+      // Light EN → RU so mixed voice queries hit catalog/FAQ.
+      ['massage', 'массаж'],
+      ['facial', 'уход для лица'],
+      [' price', ' цена'],
+      ['price ', 'цена '],
+      ['how much', 'сколько стоит'],
+      ['booking', 'запись'],
+      ['appointment', 'запись'],
     ];
     for (final pair in pairs) {
       t = t.replaceAll(pair[0], pair[1]);
@@ -1086,17 +1094,71 @@ class CultAgent {
         q.contains('не расслыша') ||
         q.contains('что ты сказа') ||
         q.contains('что вы сказа');
-    if (!wantsRepeat && !wantsShort) return null;
+    final wantsOtherWords = q.contains('по-другому') ||
+        q.contains('по другому') ||
+        q.contains('другими словами') ||
+        q.contains('объясни проще') ||
+        q.contains('попроще') ||
+        compact == 'проще';
+    final wantsMore = compact == 'подробнее' ||
+        compact == 'поподробнее' ||
+        compact == 'разверни' ||
+        compact == 'еще' ||
+        compact == 'ещё' ||
+        compact == 'а еще' ||
+        compact == 'а ещё' ||
+        compact == 'что еще' ||
+        compact == 'что ещё' ||
+        compact == 'еще варианты' ||
+        compact == 'ещё варианты' ||
+        compact == 'другие варианты' ||
+        q.contains('расскажи подробнее') ||
+        q.contains('можно подробнее') ||
+        q.contains('ещё вариант') ||
+        q.contains('еще вариант');
+    final wantsSlower = q.contains('медленнее') ||
+        q.contains('помедленнее') ||
+        q.contains('говори тише') ||
+        q.contains('говори громче') ||
+        q.contains('говори медлен') ||
+        compact == 'тише' ||
+        compact == 'громче' ||
+        compact == 'потише' ||
+        compact == 'погромче';
+    if (wantsSlower &&
+        !q.contains('массаж') &&
+        !q.contains('уход') &&
+        !q.contains('крем')) {
+      return 'Хорошо — дальше короче и спокойнее по смыслу. '
+          'Повторите тему одним словом (массаж, сухость, запись) — отвечу в двух фразах. '
+          'Темп синтеза голоса можно смягчить в настройках телефона, если звук всё ещё быстрый.';
+    }
+    if (!wantsRepeat && !wantsShort && !wantsOtherWords && !wantsMore) {
+      return null;
+    }
     if (lastBot == null || lastBot.trim().isEmpty) {
-      return wantsShort
-          ? 'Хорошо, буду короче. Сформулируйте вопрос одним предложением — отвечу в двух фразах.'
-          : 'Конечно. Скажите ещё раз вопрос своими словами — отвечу короче и по шагам.';
+      if (wantsShort) {
+        return 'Хорошо, буду короче. Сформулируйте вопрос одним предложением — отвечу в двух фразах.';
+      }
+      if (wantsMore || wantsOtherWords) {
+        return 'Конечно. Назовите тему — лицо, энергия, запись или услугу из прайса — разберу спокойно и по шагам.';
+      }
+      return 'Конечно. Скажите ещё раз вопрос своими словами — отвечу короче и по шагам.';
     }
     final brief = _briefRestate(lastBot);
     if (wantsShort) {
       final one = brief.split(RegExp(r'(?<=[.!?])\s+')).first.trim();
       return 'Короче: $one '
           'Если нужно действие — скажите «запись», «крем» или «не то».';
+    }
+    if (wantsMore) {
+      return 'Дополню. $brief '
+          'Рядом обычно смотрят ещё мягкий уход/массаж, домашний барьер или короткую консультацию без процедуры в тот же день. '
+          'Скажите «запись», «крем» или «не то» — сузим.';
+    }
+    if (wantsOtherWords) {
+      return 'Иначе: $brief '
+          'Если всё ещё мимо — одно слово: зона, симптом или «запись».';
     }
     return 'Коротко повторю: $brief '
         'Если удобнее иначе — уточните зону или цель одним словом.';
@@ -1180,6 +1242,13 @@ class CultAgent {
         compact == 'дальше' ||
         compact == 'продолжим' ||
         compact == 'и всё' ||
+        compact == 'что можно' ||
+        compact == 'а что можно' ||
+        compact == 'что делать' ||
+        compact == 'и что делать' ||
+        compact == 'какие варианты' ||
+        compact == 'а ещё' ||
+        compact == 'а еще' ||
         compact.contains('а что с этим');
     if (!vague) return null;
     final prev = _normalize(lastUser);
@@ -1546,9 +1615,24 @@ class CultAgent {
         q.contains('чем можешь помочь') ||
         q.contains('ты врач') ||
         q.contains('ты бот') ||
+        q.contains('ты робот') ||
+        q.contains('ты ии') ||
+        q.contains('ты нейросет') ||
+        q.contains('ты искусствен') ||
+        q.contains('are you a bot') ||
+        q.contains('are you ai') ||
         q.contains('ты человек')) {
-      return 'Я CULT Агент — голос клиники. Говорю просто, как врач на осмотре: слушаю жалобу, предлагаю мягкий протокол или уход. '
-          'Окончательное решение всегда за очным специалистом. О чём подумаем?';
+      return 'Я CULT Агент — голос клиники в приложении, не живой врач. '
+          'Слушаю задачу простыми словами и предлагаю мягкий следующий шаг; осмотр и решение — за специалистом очно или в чате «Врач». '
+          'О чём подумаем: кожа, энергия или запись?';
+    }
+    if (q.contains('на английском') ||
+        q.contains('speak english') ||
+        q.contains('do you speak') ||
+        compact == 'english' ||
+        compact == 'английский') {
+      return 'I can help in simple English: booking, massage, facials, RF, IV drips, and shop formulas at CULT Sochi (Chernomorskaya 6, 9:00–21:00). '
+          'For clinical decisions please see a doctor in chat. Or continue in Russian — as you prefer.';
     }
     if (words.length <= 4 &&
         const {
@@ -1825,8 +1909,33 @@ class CultAgent {
       }
     }
     if (askedMirror) {
-      return _concernReply(q, gender: gender) ??
-          'Слышу вас. Давайте уточним зону — лицо или тело — и подберём самый спокойный старт.';
+      final zone = _zoneOnlyReply(q);
+      if (zone != null) return zone;
+      if (compact.contains('лиц')) {
+        return 'Отлично, про лицо. Что заметнее: сухость, тусклость, морщинки, отёк или пигмент? '
+            'От этого мягко выберу массаж, уход, аппаратную или домашний крем.';
+      }
+      if (compact.contains('тел') && !compact.contains('телефон')) {
+        return 'Хорошо, про тело. Чаще смотрим плотность, рельеф или тонус — без обещаний «за один раз». '
+            'Ближе консультация с аппаратной или сначала просто осмотр?';
+      }
+      final concern = _concernReply(q, gender: gender);
+      if (concern != null) return concern;
+      return 'Слышу вас. Одного слова из зеркала достаточно: сухость, тусклость, морщинки, отёк или пигмент — '
+          'предложу мягкий старт.';
+    }
+    // Continue after event / near-date advice («что можно» after wedding).
+    if (prev.contains('близкой дате') ||
+        prev.contains('под дату') ||
+        prev.contains('реабилитац')) {
+      if (compact.contains('что можно') ||
+          compact.contains('какие вариант') ||
+          compact.contains('что делать') ||
+          compact == 'можно' ||
+          compact.contains('без реабилита')) {
+        return 'К близкой дате спокойно: скульптурный массаж, увлажняющий уход, иногда Beauty & Glow — без тяжёлой реабилитации. '
+            'Скажите зону (лицо / отёк / тон) или «запись» — зафиксируем один шаг.';
+      }
     }
     return null;
   }
@@ -1898,7 +2007,11 @@ class CultAgent {
   }
 
   /// Deadline, event, age band, open-ended «посоветуй».
-  String? _situationReply(String q, {ClientGender? gender}) {
+  String? _situationReply(
+    String q, {
+    ClientGender? gender,
+    String topic = '',
+  }) {
     final man = gender == ClientGender.man;
     final compact = q
         .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
@@ -1940,6 +2053,22 @@ class CultAgent {
     }
     if (RegExp(r'(мне |мне)\s*\d{2}').hasMatch(q) ||
         RegExp(r'\d{2}\s*лет').hasMatch(q)) {
+      final blob = '$topic $q';
+      if (blob.contains('прыщ') ||
+          blob.contains('акне') ||
+          blob.contains('acne') ||
+          blob.contains('воспал') ||
+          blob.contains('высып')) {
+        return 'В вашем возрасте воспаления часто ведём мягко: осмотр, уход или пилинг без агрессии дома. '
+            'Запись на консультацию — через «+»; если зона ясна — опишите её одним словом.';
+      }
+      if (blob.contains('морщин') ||
+          blob.contains('овал') ||
+          blob.contains('помолод') ||
+          blob.contains('антивозраст')) {
+        return 'Возраст — только фон: смотрим кожу и цель. Мягкий вход — массаж или уход; курс (RF/инъекции) — после осмотра, без спешки. '
+            'Что важнее сейчас — свежесть, плотность или запись?';
+      }
       return 'Возраст — ориентир, не диагноз: смотрим кожу и цели, а не цифру в паспорте. '
           'Коротко опишите, что смущает (сухость, плотность, мимика, энергия) — предложу мягкий вход без лишнего.';
     }
@@ -2014,6 +2143,19 @@ class CultAgent {
       return 'Воспаления лучше не трогать агрессивно дома — кожа потом дольше восстанавливается. '
           'На очном осмотре подберём уход или пилинг без лишней травмы. '
           'Запись на консультацию — через «+» на главной; или опишите зону подробнее.';
+    }
+    if (q.contains('помолодеть') ||
+        q.contains('омоложен') ||
+        q.contains('антивозраст') ||
+        q.contains('anti age') ||
+        q.contains('anti-age') ||
+        q.contains('antiage') ||
+        (q.contains('моложе') && (q.contains('выгляд') || q.contains('хочу')))) {
+      return man
+          ? 'Запрос «выглядеть свежее» слышу часто: без «перекачанного» эффекта обычно массаж/барбер-уход, плотность RF по овалу после осмотра, дома — простой барьер. '
+              'Скажите, что важнее — быстрый свежий вид или курс — и сузим.'
+          : 'Поняла запрос помолодеть без жёстких обещаний: часто начинают с массажа или ухода, дома — барьер и пептиды; курс RF или инъекции — только после осмотра и если цель глубже. '
+              'Что ближе — свежесть к дате или плотность на дистанции?';
     }
     if (q.contains('морщин') ||
         q.contains('мими') ||
@@ -2438,10 +2580,14 @@ class CultAgent {
     if (q.contains('консультац')) {
       return 'Консультацию удобно открыть через «+» на главной или в карточке врача. Первый визит часто начинается с осмотра — без давления «сделать всё сразу».';
     }
-    if (q.contains('дет') ||
+    // Avoid false hits like «помолодеть» / «долголетие» on bare «дет».
+    if (q.contains('детск') ||
         q.contains('ребён') ||
         q.contains('ребен') ||
-        q.contains('несовершеннолет')) {
+        q.contains('несовершеннолет') ||
+        q.contains('подрост') ||
+        RegExp(r'(^|[^а-яa-z])дети([^а-яa-z]|$)').hasMatch(q) ||
+        RegExp(r'(^|[^а-яa-z])дитя([^а-яa-z]|$)').hasMatch(q)) {
       return 'Большинство эстетических протоколов — с 18 лет. Для подростков нужна очная консультация врача и согласие опекуна.';
     }
     return null;

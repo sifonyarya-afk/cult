@@ -388,6 +388,64 @@ void main() {
     expect(reply.toLowerCase(), isNot(contains('18 000')));
   });
 
+  test('Помолодеть не путает с детскими процедурами', () {
+    final reply = cultAgent.answer('хочу помолодеть');
+    expect(reply.toLowerCase(), isNot(contains('18 лет')));
+    expect(reply.toLowerCase(), isNot(contains('подрост')));
+    expect(
+      reply.toLowerCase(),
+      anyOf(contains('помолодеть'), contains('свеж'), contains('массаж'), contains('уход')),
+    );
+  });
+
+  test('Лицо после «не знаю с чего начать» не спрашивает снова зону', () {
+    final first = cultAgent.answer('не знаю с чего начать');
+    final reply = cultAgent.answer('лицо', lastBot: first, lastUser: 'не знаю с чего начать');
+    expect(reply.toLowerCase(), contains('лиц'));
+    expect(reply.toLowerCase(), isNot(contains('лицо или тело')));
+  });
+
+  test('Ты робот — отвечает про CULT Агент', () {
+    final reply = cultAgent.answer('ты робот?');
+    expect(reply.toLowerCase(), contains('cult'));
+    expect(reply.toLowerCase(), anyOf(contains('агент'), contains('помощ')));
+  });
+
+  test('Подробнее дополняет lastBot', () {
+    final reply = cultAgent.answer(
+      'подробнее',
+      lastBot: 'К близкой дате не берём тяжёлую реабилитацию. Чаще — уход или массаж.',
+    );
+    expect(reply.toLowerCase(), contains('дополн'));
+    expect(reply.toLowerCase(), anyOf(contains('уход'), contains('массаж')));
+  });
+
+  test('Возраст после прыщей опирается на тему', () {
+    final reply = cultAgent.answer(
+      'мне 20',
+      lastUser: 'прыщи',
+      recentUsers: ['прыщи'],
+    );
+    expect(reply.toLowerCase(), anyOf(contains('воспален'), contains('уход'), contains('пилинг')));
+  });
+
+  test('После свадьбы «что можно» продолжает событие', () {
+    final first = cultAgent.answer('для свадьбы через неделю');
+    final reply = cultAgent.answer(
+      'что можно',
+      lastBot: first,
+      lastUser: 'для свадьбы через неделю',
+    );
+    expect(reply.toLowerCase(), anyOf(contains('массаж'), contains('уход'), contains('glow')));
+    expect(reply.toLowerCase(), isNot(contains('лицо, тело, энергия')));
+  });
+
+  test('English massage price hits catalog', () {
+    final reply = cultAgent.answer('massage price');
+    expect(reply.toLowerCase(), contains('массаж'));
+    expect(reply, contains('₽'));
+  });
+
   test('Старое приветствие бота обновляется на CULT Агент', () async {
     SharedPreferences.setMockInitialValues({
       'cult-flutter':
