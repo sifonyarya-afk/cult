@@ -102,9 +102,9 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
                 Text('Как у человека', style: cultHeadline(28)),
                 const SizedBox(height: 8),
                 const Text(
-                  'Системный голос iPhone часто звучит плоско. '
-                  'Для живой русской речи добавьте ключ Yandex SpeechKit — голос Alena. '
-                  'Без ключа скачайте Premium Милена в настройках iPhone.',
+                  'Вставьте API-ключ Yandex SpeechKit — голос Alena заговорит как человек. '
+                  'Или запускайте с Mac: ./run_voice.sh (файл с ключом не в git). '
+                  'Нажмите «Прослушать тест» после сохранения.',
                   style: TextStyle(color: Cult.muted, height: 1.4),
                 ),
                 const SizedBox(height: 18),

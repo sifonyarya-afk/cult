@@ -18,6 +18,10 @@ class CultTts {
 
   static const prefsKey = 'cult-yandex-tts-key';
 
+  /// Optional compile-time seed: `flutter run --dart-define=CULT_YANDEX_TTS_KEY=…`
+  /// Never commit real keys; paste in Settings or pass via dart-define / local file.
+  static const envYandexTtsKey = String.fromEnvironment('CULT_YANDEX_TTS_KEY');
+
   final FlutterTts _tts;
   final AudioPlayer _player;
   var _ready = false;
@@ -32,22 +36,57 @@ class CultTts {
 
   Future<void> loadKey() async {
     final prefs = await SharedPreferences.getInstance();
-    yandexApiKey = prefs.getString(prefsKey);
+    if (prefs.containsKey(prefsKey)) {
+      yandexApiKey = prefs.getString(prefsKey) ?? '';
+      return;
+    }
+    final fromEnv = envYandexTtsKey.trim();
+    final fromFile = await _readLocalKeyFile();
+    final seed = fromEnv.isNotEmpty ? fromEnv : fromFile;
+    if (seed != null && seed.isNotEmpty) {
+      yandexApiKey = seed;
+      await prefs.setString(prefsKey, seed);
+      return;
+    }
+    yandexApiKey = '';
+  }
+
+  /// Gitignored `mobile/.cult_yandex_tts_key` — one line, API key only.
+  static Future<String?> _readLocalKeyFile() async {
+    try {
+      for (final path in [
+        '.cult_yandex_tts_key',
+        'mobile/.cult_yandex_tts_key',
+      ]) {
+        final file = File(path);
+        if (await file.exists()) {
+          final text = (await file.readAsString()).trim();
+          if (text.isNotEmpty) return text;
+        }
+      }
+      // App documents / bundle relative — also try alongside temp for simulators.
+      final dir = await getTemporaryDirectory();
+      final sibling = File('${dir.parent.path}/.cult_yandex_tts_key');
+      if (await sibling.exists()) {
+        final text = (await sibling.readAsString()).trim();
+        if (text.isNotEmpty) return text;
+      }
+    } catch (_) {}
+    return null;
   }
 
   static Future<void> saveKey(String key) async {
     final prefs = await SharedPreferences.getInstance();
-    final trimmed = key.trim();
-    if (trimmed.isEmpty) {
-      await prefs.remove(prefsKey);
-    } else {
-      await prefs.setString(prefsKey, trimmed);
-    }
+    // Empty string disables neural.
+    await prefs.setString(prefsKey, key.trim());
   }
 
   static Future<String?> readKey() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(prefsKey);
+    if (prefs.containsKey(prefsKey)) return prefs.getString(prefsKey);
+    final fromEnv = envYandexTtsKey.trim();
+    if (fromEnv.isNotEmpty) return fromEnv;
+    return _readLocalKeyFile();
   }
 
   Future<void> prepare() async {

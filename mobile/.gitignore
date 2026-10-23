@@ -46,3 +46,7 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Local SpeechKit key — never commit
+.cult_yandex_tts_key
+run_voice.sh
