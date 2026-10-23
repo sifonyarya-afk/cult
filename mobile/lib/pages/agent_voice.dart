@@ -12,7 +12,10 @@ import 'voice_settings.dart';
 
 /// Voice-first CULT Агент: one mic button, living consultation layout.
 class AgentVoicePage extends StatefulWidget {
-  const AgentVoicePage({super.key});
+  const AgentVoicePage({super.key, this.active = true});
+
+  /// When embedded in the shell tab, false pauses mic/TTS off-tab.
+  final bool active;
 
   @override
   State<AgentVoicePage> createState() => _AgentVoicePageState();
@@ -42,18 +45,66 @@ class _AgentVoicePageState extends State<AgentVoicePage>
     _pulse = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1600),
-    )..repeat(reverse: true);
+    );
+    _syncPulse();
+  }
+
+  void _syncPulse() {
+    if (widget.active) {
+      if (!_pulse.isAnimating) _pulse.repeat(reverse: true);
+    } else if (_pulse.isAnimating) {
+      _pulse
+        ..stop()
+        ..value = 0;
+    }
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_booted) return;
+    if (_booted || !widget.active) return;
     _booted = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+      if (!mounted || !widget.active) return;
       ClinicScope.of(context).markChatRead('bot');
       _boot();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant AgentVoicePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.active != widget.active) _syncPulse();
+    if (oldWidget.active && !widget.active) {
+      _pauseSession();
+    } else if (!oldWidget.active && widget.active) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !widget.active) return;
+        if (!_booted) {
+          _booted = true;
+          ClinicScope.of(context).markChatRead('bot');
+          _boot();
+        } else {
+          setState(() => _status = 'Нажмите — и говорите своими словами');
+        }
+      });
+    }
+  }
+
+  Future<void> _pauseSession() async {
+    try {
+      await _speech.stop();
+    } catch (_) {}
+    try {
+      await _tts.stop();
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _listening = false;
+      _speaking = false;
+      _busy = false;
+      _partial = '';
+      _status = 'Нажмите — и говорите своими словами';
     });
   }
 

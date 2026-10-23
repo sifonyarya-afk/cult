@@ -816,7 +816,7 @@ class Contact {
 }
 
 /// Bump when shipping a user-visible feature so Settings proves the Mac build is fresh.
-const cultBuildTag = 'champagne-accent-v19';
+const cultBuildTag = 'agent-nav-center-v20';
 
 const contacts = <Contact>[
   Contact(

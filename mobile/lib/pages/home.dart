@@ -50,58 +50,6 @@ class HomePage extends StatelessWidget {
               onRetry: () => store.syncClinic(),
               retryLabel: 'Обновить',
             ),
-          Semantics(
-            button: true,
-            label: 'CULT Агент голосом',
-            child: Material(
-              color: Cult.ink,
-              borderRadius: BorderRadius.circular(16),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  cultTapFeedback();
-                  pushPage(
-                    context,
-                    const ChatThreadPage(contactId: 'bot'),
-                  );
-                },
-                child: const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 14, 16, 14),
-                  child: Row(
-                    children: [
-                      Icon(Icons.mic_none, color: Colors.white),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'CULT Агент',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.4,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Одна кнопка — говорите, без клавиатуры',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(Icons.chevron_right, color: Colors.white70),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
           CultCard(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
             child: Column(
@@ -306,13 +254,6 @@ class HomePage extends StatelessWidget {
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
-                _LinkChip(
-                  'Агент',
-                  () => pushPage(
-                    context,
-                    const ChatThreadPage(contactId: 'bot'),
-                  ),
-                ),
                 _LinkChip(
                   'Специалисты',
                   () => pushPage(context, const DoctorsPage()),

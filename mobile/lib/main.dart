@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'pages/agent_voice.dart';
 import 'pages/auth_page.dart';
 import 'pages/browse.dart';
 import 'pages/cabinet.dart';
@@ -288,8 +289,12 @@ class _ShellState extends State<Shell> {
 
   void _openShop() => setState(() {
     _shopTab = 2;
-    _index = 2;
+    _index = 3; // Магазин (Агент — центр, index 2)
   });
+
+  static const _tabHome = 0;
+  static const _tabAgent = 2;
+  static const _tabShop = 3;
 
   @override
   void didChangeDependencies() {
@@ -313,88 +318,95 @@ class _ShellState extends State<Shell> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              tooltip: 'Меню',
-              onPressed: () {
-                cultTapFeedback();
-                _menu(context);
-              },
-              icon: const Icon(Icons.menu),
-            ),
-            title: GestureDetector(
-              onTap: () {
-                cultTapFeedback();
-                FocusManager.instance.primaryFocus?.unfocus();
-                Navigator.of(context).popUntil((route) => route.isFirst);
-                setState(() => _index = 0);
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (!_homeScroll.hasClients) return;
-                  _homeScroll.animateTo(
-                    0,
-                    duration: const Duration(milliseconds: 320),
-                    curve: Curves.easeOutCubic,
-                  );
-                });
-              },
-              child: const Text('CULT'),
-            ),
-            actions: [
-              if (store.syncing)
-                const Padding(
-                  padding: EdgeInsets.only(right: 4),
-                  child: SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Cult.primary,
+          appBar: _index == _tabAgent
+              ? null
+              : AppBar(
+                  leading: IconButton(
+                    tooltip: 'Меню',
+                    onPressed: () {
+                      cultTapFeedback();
+                      _menu(context);
+                    },
+                    icon: Badge(
+                      isLabelVisible: store.hasUnreadChat,
+                      smallSize: 8,
+                      backgroundColor: Cult.gold,
+                      child: const Icon(Icons.menu),
                     ),
                   ),
-                ),
-              IconButton(
-                tooltip: 'Настройки',
-                onPressed: () {
-                  cultTapFeedback();
-                  pushPage(context, const SettingsPage());
-                },
-                icon: const Icon(Icons.settings_outlined),
-              ),
-              if (_index == 2 || store.cartCount > 0)
-                IconButton(
-                  tooltip: store.cartCount > 0
-                      ? 'Корзина, ${store.cartCount}'
-                      : 'Корзина',
-                  onPressed: () {
-                    cultTapFeedback();
-                    pushPage(context, const CartPage());
-                  },
-                  icon: Badge(
-                    isLabelVisible: store.cartCount > 0,
-                    label: Text('${store.cartCount}'),
-                    child: Semantics(
-                      label: store.cartCount > 0
-                          ? 'Корзина, ${store.cartCount} позиц.'
-                          : 'Корзина',
-                      child: const Icon(Icons.shopping_bag_outlined),
-                    ),
+                  title: GestureDetector(
+                    onTap: () {
+                      cultTapFeedback();
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                      setState(() => _index = _tabHome);
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!_homeScroll.hasClients) return;
+                        _homeScroll.animateTo(
+                          0,
+                          duration: const Duration(milliseconds: 320),
+                          curve: Curves.easeOutCubic,
+                        );
+                      });
+                    },
+                    child: const Text('CULT'),
                   ),
+                  actions: [
+                    if (store.syncing)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 4),
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Cult.primary,
+                          ),
+                        ),
+                      ),
+                    IconButton(
+                      tooltip: 'Настройки',
+                      onPressed: () {
+                        cultTapFeedback();
+                        pushPage(context, const SettingsPage());
+                      },
+                      icon: const Icon(Icons.settings_outlined),
+                    ),
+                    if (_index == _tabShop || store.cartCount > 0)
+                      IconButton(
+                        tooltip: store.cartCount > 0
+                            ? 'Корзина, ${store.cartCount}'
+                            : 'Корзина',
+                        onPressed: () {
+                          cultTapFeedback();
+                          pushPage(context, const CartPage());
+                        },
+                        icon: Badge(
+                          isLabelVisible: store.cartCount > 0,
+                          label: Text('${store.cartCount}'),
+                          child: Semantics(
+                            label: store.cartCount > 0
+                                ? 'Корзина, ${store.cartCount} позиц.'
+                                : 'Корзина',
+                            child: const Icon(Icons.shopping_bag_outlined),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-            ],
-          ),
           body: IndexedStack(
             index: _index,
             children: [
               HomePage(onShop: _openShop, scrollController: _homeScroll),
               const ServicesPage(),
+              AgentVoicePage(active: _index == _tabAgent),
               ShopPage(key: ValueKey(_shopTab), initialTab: _shopTab),
-              const ChatPage(),
               const CabinetPage(),
             ],
           ),
           floatingActionButton: AnimatedSwitcher(
             duration: const Duration(milliseconds: 220),
-            child: _index == 0
+            child: _index == _tabHome
                 ? FloatingActionButton(
                     key: const ValueKey('fab-book'),
                     heroTag: 'shell-book',
@@ -416,7 +428,7 @@ class _ShellState extends State<Shell> {
               HapticFeedback.selectionClick();
               if (value == _index) {
                 Navigator.of(context).popUntil((route) => route.isFirst);
-                if (value == 0 && _homeScroll.hasClients) {
+                if (value == _tabHome && _homeScroll.hasClients) {
                   _homeScroll.animateTo(
                     0,
                     duration: const Duration(milliseconds: 320),
@@ -427,38 +439,28 @@ class _ShellState extends State<Shell> {
               }
               setState(() => _index = value);
             },
-            destinations: [
-              const NavigationDestination(
+            destinations: const [
+              NavigationDestination(
                 icon: Icon(Icons.home_outlined),
                 selectedIcon: Icon(Icons.home),
                 label: 'Главная',
               ),
-              const NavigationDestination(
+              NavigationDestination(
                 icon: Icon(Icons.spa_outlined),
                 selectedIcon: Icon(Icons.spa),
                 label: 'Услуги',
               ),
-              const NavigationDestination(
+              NavigationDestination(
+                icon: Icon(Icons.mic_none),
+                selectedIcon: Icon(Icons.mic),
+                label: 'Агент',
+              ),
+              NavigationDestination(
                 icon: Icon(Icons.shopping_bag_outlined),
                 selectedIcon: Icon(Icons.shopping_bag),
                 label: 'Магазин',
               ),
               NavigationDestination(
-                icon: Badge(
-                  isLabelVisible: store.hasUnreadChat,
-                  smallSize: 8,
-                  backgroundColor: Cult.gold,
-                  child: const Icon(Icons.chat_bubble_outline),
-                ),
-                selectedIcon: Badge(
-                  isLabelVisible: store.hasUnreadChat,
-                  smallSize: 8,
-                  backgroundColor: Cult.gold,
-                  child: const Icon(Icons.chat_bubble),
-                ),
-                label: 'Чат',
-              ),
-              const NavigationDestination(
                 icon: Icon(Icons.person_outline),
                 selectedIcon: Icon(Icons.person),
                 label: 'Профиль',
@@ -560,8 +562,19 @@ class _ShellState extends State<Shell> {
               onTap: () {
                 cultTapFeedback();
                 Navigator.pop(sheetContext);
-                setState(() => _index = 2);
+                setState(() => _index = _tabShop);
               },
+            ),
+            ListTile(
+              leading: Badge(
+                isLabelVisible: store.hasUnreadChat,
+                smallSize: 8,
+                backgroundColor: Cult.gold,
+                child: const Icon(Icons.chat_bubble_outline),
+              ),
+              title: const Text('Чат'),
+              subtitle: const Text('Администратор и врач'),
+              onTap: () => _go(sheetContext, const ChatPage()),
             ),
             ListTile(
               leading: const Icon(Icons.calendar_today_outlined),

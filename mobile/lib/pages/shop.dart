@@ -48,21 +48,7 @@ class _ShopPageState extends State<ShopPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text('Биохакинг-шоп', style: cultHeadline(28)),
-                  ),
-                  ActionChip(
-                    avatar: const Icon(Icons.smart_toy_outlined, size: 18),
-                    label: const Text('ИИ Помощник'),
-                    onPressed: () {
-                      cultTapFeedback();
-                      _openAiPicker(context, store);
-                    },
-                  ),
-                ],
-              ),
+              Text('Биохакинг-шоп', style: cultHeadline(28)),
               const SizedBox(height: 4),
               const Text(
                 'Уход, БАДы и наборы для дома.',
@@ -112,116 +98,6 @@ class _ShopPageState extends State<ShopPage>
       ],
     );
   }
-}
-
-void _openAiPicker(BuildContext context, ClinicStore store) {
-  final pool = products.where((item) {
-    if (store.gender == ClientGender.man) {
-      return item.tab == 'biohack' || item.tab == 'supplements';
-    }
-    if (store.gender == ClientGender.woman) {
-      return item.tab == 'cosmetics' || item.tab == 'supplements';
-    }
-    return true;
-  }).toList();
-  final source = pool.isEmpty ? products : pool;
-  final pick = source.isEmpty
-      ? null
-      : source[DateTime.now().millisecond % source.length];
-  showModalBottomSheet<void>(
-    context: context,
-    builder: (sheet) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('ИИ-подбор', style: cultHeadline(26)),
-            const SizedBox(height: 8),
-            Text(
-              store.gender == null
-                  ? 'По вашему профилю CULT рекомендуем формулу для домашнего протокола.'
-                  : 'Подбор для профиля «${store.gender!.label}»: формула под домашний протокол.',
-              style: const TextStyle(color: Cult.muted, height: 1.4),
-            ),
-            if (pick != null) ...[
-              const SizedBox(height: 16),
-              CultCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(pick.name, style: cultHeadline(20)),
-                    const SizedBox(height: 4),
-                    Text(
-                      pick.blurb,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Cult.muted),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      rub(pick.price),
-                      style: cultHeadline(22).copyWith(color: Cult.primary),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              CultButton(
-                label: 'В корзину · ${rub(pick.price)}',
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                  store.addToCart(pick.id, pick.name, pick.price);
-                  Navigator.pop(sheet);
-                  showCultSnack(
-                    context,
-                    '${pick.name} в корзине',
-                    actionLabel: 'Оформить',
-                    onAction: () => pushPage(context, const CartPage()),
-                  );
-                },
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(sheet);
-                  pushPage(context, ProductPage(product: pick));
-                },
-                child: const Text('Открыть карточку'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Clipboard.setData(
-                    ClipboardData(
-                      text:
-                          'ИИ-подбор CULT: ${pick.name} · ${rub(pick.price)} — ${pick.blurb}',
-                    ),
-                  );
-                  cultTapFeedback();
-                  showCultSnack(context, 'Рекомендация скопирована');
-                },
-                child: const Text('Скопировать подбор'),
-              ),
-              TextButton(
-                onPressed: () {
-                  store.sendMessage(
-                    'bot',
-                    'Расскажите про формулу «${pick.name}»',
-                  );
-                  Navigator.pop(sheet);
-                  showCultSnack(
-                    context,
-                    'Спросили бота — откройте вкладку Чат',
-                  );
-                },
-                child: const Text('Спросить бота'),
-              ),
-            ],
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 class _ProductList extends StatefulWidget {

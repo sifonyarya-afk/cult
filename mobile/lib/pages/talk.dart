@@ -24,206 +24,155 @@ class ChatPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = ClinicScope.of(context);
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      children: [
-        Text('Центр поддержки', style: cultHeadline(30)),
-        const SizedBox(height: 6),
-        const Text(
-          'Сначала CULT Агент (голос), затем администратор и врач.',
-          style: TextStyle(color: Cult.muted),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Сборка $cultBuildTag',
-          style: const TextStyle(color: Cult.muted, fontSize: 11),
-        ),
-        if (store.hasUnreadChat) ...[
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              onPressed: () {
-                cultTapFeedback();
-                store.markAllChatsRead();
-                showCultSnack(context, 'Все чаты прочитаны');
-              },
-              child: const Text('Отметить все прочитанными'),
-            ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Чат')),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        children: [
+          Text('Центр поддержки', style: cultHeadline(30)),
+          const SizedBox(height: 6),
+          const Text(
+            'Администратор и врач клиники. CULT Агент — в нижней панели по центру.',
+            style: TextStyle(color: Cult.muted),
           ),
-        ],
-        const SizedBox(height: 14),
-        Semantics(
-          button: true,
-          label: 'CULT Агент голосом',
-          child: Material(
-            color: Cult.ink,
-            borderRadius: BorderRadius.circular(18),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(18),
-              onTap: () {
-                cultTapFeedback();
-                pushPage(context, const AgentVoicePage());
-              },
-              child: const Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
-                child: Row(
-                  children: [
-                    Icon(Icons.mic, color: Colors.white, size: 28),
-                    SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'CULT Агент',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Живой разговор — одна кнопка, без клавиатуры',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(Icons.chevron_right, color: Colors.white70),
-                  ],
-                ),
+          const SizedBox(height: 4),
+          Text(
+            'Сборка $cultBuildTag',
+            style: const TextStyle(color: Cult.muted, fontSize: 11),
+          ),
+          if (store.hasUnreadChat) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () {
+                  cultTapFeedback();
+                  store.markAllChatsRead();
+                  showCultSnack(context, 'Все чаты прочитаны');
+                },
+                child: const Text('Отметить все прочитанными'),
               ),
             ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        for (final contact in contacts.where((c) => c.id != 'bot'))
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Semantics(
-              button: true,
-              label: '${contact.name}, ${contact.role}',
-              hint: 'Удерживайте, чтобы скопировать',
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  cultTapFeedback();
-                  pushPage(context, ChatThreadPage(contactId: contact.id));
-                },
-                onLongPress: () {
-                  Clipboard.setData(
-                    ClipboardData(text: '${contact.name} · ${contact.role}'),
-                  );
-                  cultTapFeedback();
-                  showCultSnack(context, 'Контакт скопирован');
-                },
-                child: CultCard(
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3EFEA),
-                          borderRadius: BorderRadius.circular(14),
+          ],
+          const SizedBox(height: 14),
+          for (final contact in contacts.where((c) => c.id != 'bot'))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Semantics(
+                button: true,
+                label: '${contact.name}, ${contact.role}',
+                hint: 'Удерживайте, чтобы скопировать',
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    cultTapFeedback();
+                    pushPage(context, ChatThreadPage(contactId: contact.id));
+                  },
+                  onLongPress: () {
+                    Clipboard.setData(
+                      ClipboardData(text: '${contact.name} · ${contact.role}'),
+                    );
+                    cultTapFeedback();
+                    showCultSnack(context, 'Контакт скопирован');
+                  },
+                  child: CultCard(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3EFEA),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(_iconFor(contact.id), color: Cult.ink),
                         ),
-                        child: Icon(_iconFor(contact.id), color: Cult.ink),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(contact.name, style: cultHeadline(20)),
-                            Text(
-                              contact.role,
-                              style: const TextStyle(
-                                color: Cult.muted,
-                                fontSize: 13,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(contact.name, style: cultHeadline(20)),
+                              Text(
+                                contact.role,
+                                style: const TextStyle(
+                                  color: Cult.muted,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                            Builder(
-                              builder: (_) {
-                                final thread = store.threads[contact.id] ?? [];
-                                final last = thread.isEmpty
-                                    ? null
-                                    : thread.last;
-                                final preview = last?.text ?? contact.seed;
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    preview,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Cult.muted.withValues(alpha: 0.95),
-                                      fontSize: 13,
+                              Builder(
+                                builder: (_) {
+                                  final thread = store.threads[contact.id] ?? [];
+                                  final last =
+                                      thread.isEmpty ? null : thread.last;
+                                  final preview = last?.text ?? contact.seed;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      preview,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color:
+                                            Cult.muted.withValues(alpha: 0.95),
+                                        fontSize: 13,
+                                      ),
                                     ),
-                                  ),
-                                );
-                              },
-                            ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (store.isChatUnread(contact.id))
+                              Container(
+                                width: 8,
+                                height: 8,
+                                margin: const EdgeInsets.only(right: 6),
+                                decoration: const BoxDecoration(
+                                  color: Cult.gold,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            const Icon(Icons.chevron_right, color: Cult.muted),
                           ],
                         ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (store.isChatUnread(contact.id))
-                            Container(
-                              width: 8,
-                              height: 8,
-                              margin: const EdgeInsets.only(right: 6),
-                              decoration: const BoxDecoration(
-                                color: Cult.gold,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          const Icon(Icons.chevron_right, color: Cult.muted),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        const SizedBox(height: 12),
-        const CultSectionLabel('Альтернативная поддержка'),
-        const SizedBox(height: 8),
-        CultCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              _SupportLink(
-                title: 'CULT Агент · одна кнопка',
-                onTap: () => pushPage(context, const AgentVoicePage()),
-              ),
-              const Divider(height: 1, indent: 16, endIndent: 16),
-              _SupportLink(
-                title: 'Экстренные протоколы',
-                onTap: () =>
-                    pushPage(context, const ChatThreadPage(contactId: 'admin')),
-              ),
-              const Divider(height: 1, indent: 16, endIndent: 16),
-              _SupportLink(
-                title: 'Позвонить в клинику',
-                onTap: () => openExternal(
-                  'tel:+74950000007',
-                  context: context,
+          const SizedBox(height: 12),
+          const CultSectionLabel('Альтернативная поддержка'),
+          const SizedBox(height: 8),
+          CultCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _SupportLink(
+                  title: 'Экстренные протоколы',
+                  onTap: () => pushPage(
+                    context,
+                    const ChatThreadPage(contactId: 'admin'),
+                  ),
                 ),
-              ),
-            ],
+                const Divider(height: 1, indent: 16, endIndent: 16),
+                _SupportLink(
+                  title: 'Позвонить в клинику',
+                  onTap: () => openExternal(
+                    'tel:+74950000007',
+                    context: context,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

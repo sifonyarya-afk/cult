@@ -26,8 +26,8 @@ void main() {
     expect(find.text('Онлайн запись'), findsOneWidget);
     expect(find.text('Магазин биохакинга'), findsOneWidget);
     expect(find.text('Чат с врачом'), findsOneWidget);
-    expect(find.text('CULT Агент'), findsOneWidget);
-    expect(find.textContaining('Одна кнопка'), findsOneWidget);
+    expect(find.text('Агент'), findsOneWidget);
+    expect(find.text('CULT Агент'), findsNothing);
 
     await tester.ensureVisible(find.text('Мои анализы'));
     await tester.pumpAndSettle();
@@ -64,18 +64,43 @@ void main() {
     expect(find.text('Трансфер'), findsWidgets);
   });
 
-  testWidgets('Во вкладке Чат сверху CULT Агент и метка сборки', (tester) async {
+  testWidgets('Агент в центре нижней панели открывает голосовой экран', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
     await store.load();
     await store.setGender(ClientGender.woman);
     await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Агент'));
+    // Agent pulse animation runs forever — don't pumpAndSettle.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 80));
+    expect(find.text('CULT Агент'), findsWidgets);
+    expect(find.text('Живой разговор'), findsOneWidget);
+  });
+
+  testWidgets('Чат из меню без карточки агента, с меткой сборки', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final store = ClinicStore();
+    await store.load();
+    await store.setGender(ClientGender.woman);
+    await tester.pumpWidget(CultApp(store: store, splash: Duration.zero));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Чат'),
+      120,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Чат'));
     await tester.pumpAndSettle();
-    expect(find.text('CULT Агент'), findsWidgets);
     expect(find.textContaining(cultBuildTag), findsOneWidget);
-    expect(find.textContaining('Живой разговор'), findsOneWidget);
+    expect(find.text('Центр поддержки'), findsOneWidget);
+    expect(find.textContaining('Живой разговор'), findsNothing);
   });
 
   testWidgets('Профиль тянется вниз для синхронизации', (tester) async {
@@ -647,7 +672,10 @@ void main() {
     store.sendMessage('bot', 'Где биохакинг-шоп?');
     expect(store.threads['bot']!.last.text.toLowerCase(), contains('магазин'));
     store.sendMessage('bot', 'Как работает ИИ-подбор?');
-    expect(store.threads['bot']!.last.text.toLowerCase(), contains('помощник'));
+    expect(
+      store.threads['bot']!.last.text.toLowerCase(),
+      anyOf(contains('магазин'), contains('голос'), contains('формул')),
+    );
     store.sendMessage('bot', 'Где смотреть состав средств?');
     expect(store.threads['bot']!.last.text.toLowerCase(), contains('состав'));
     store.sendMessage('bot', 'Есть ли в наличии формулы?');
