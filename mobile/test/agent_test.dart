@@ -817,4 +817,37 @@ void main() {
     expect(reply.toLowerCase(), contains('биоревитал'));
     expect(reply.toLowerCase(), isNot(contains('скажите проще')));
   });
+
+  test('Носогубки без филлера не уходят в губы', () {
+    final reply = cultAgent.answer('Хочу убрать носогубки без филлера');
+    expect(reply.toLowerCase(), contains('носогуб'));
+    expect(reply.toLowerCase(), isNot(contains('уточк')));
+  });
+
+  test('RF при кардиостимуляторе — ограничение', () {
+    final reply = cultAgent.answer('Можно ли делать RF при кардиостимуляторе?');
+    expect(reply.toLowerCase(), anyOf(contains('кардио'), contains('запрет'), contains('огранич')));
+    expect(reply.toLowerCase(), isNot(contains('меню «аппаратная»')));
+  });
+
+  test('Длительность скульптурного массажа из прайса', () {
+    final reply = cultAgent.answer('Сколько длится сеанс скульптурного массажа?');
+    expect(reply.toLowerCase(), contains('массаж'));
+    expect(reply.toLowerCase(), anyOf(contains('мин'), contains('час')));
+    expect(reply.toLowerCase(), isNot(contains('меню «')));
+  });
+
+  test('Плазмолифтинг и витилиго не generic', () {
+    final plasma = cultAgent.answer('Делаете ли плазмолифтинг?');
+    expect(plasma.toLowerCase(), anyOf(contains('плазмо'), contains('prp')));
+    final vit = cultAgent.answer('У меня витилиго на лице');
+    expect(vit.toLowerCase(), contains('витилиго'));
+    expect(vit.toLowerCase(), isNot(contains('если сложно сформулировать')));
+  });
+
+  test('Биоревитализация отличается от филлера', () {
+    final reply = cultAgent.answer('Чем отличается биоревитализация от филлера?');
+    expect(reply.toLowerCase(), contains('филлер'));
+    expect(reply.toLowerCase(), anyOf(contains('увлажн'), contains('объём'), contains('объем')));
+  });
 }
