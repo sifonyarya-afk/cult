@@ -522,6 +522,32 @@ void main() {
     expect(reply.toLowerCase(), anyOf(contains('запис'), contains('+')));
   });
 
+  test('Хочу к Эларе находит врача', () {
+    final reply = cultAgent.answer('хочу к эларе');
+    expect(reply.toLowerCase(), contains('элара'));
+  });
+
+  test('Носогубки не generic', () {
+    final reply = cultAgent.answer('носогубки');
+    expect(reply.toLowerCase(), contains('носогуб'));
+    expect(reply.toLowerCase(), isNot(contains('слышу вас — давайте сузим')));
+  });
+
+  test('Что успеем после события вечером', () {
+    final mid = cultAgent.answer('сегодня вечером событие');
+    final reply = cultAgent.answer(
+      'что успеем',
+      lastBot: mid,
+      lastUser: 'сегодня вечером событие',
+    );
+    expect(reply.toLowerCase(), anyOf(contains('массаж'), contains('уход'), contains('успеем')));
+  });
+
+  test('А сколько без контекста просит название', () {
+    final reply = cultAgent.answer('а сколько');
+    expect(reply.toLowerCase(), anyOf(contains('назовите'), contains('прайс')));
+  });
+
   test('Старое приветствие бота обновляется на CULT Агент', () async {
     SharedPreferences.setMockInitialValues({
       'cult-flutter':

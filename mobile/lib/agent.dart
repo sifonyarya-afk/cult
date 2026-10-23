@@ -107,6 +107,18 @@ class CultAgent {
       gender: gender,
     );
     if (priceFollow != null) return priceFollow;
+    // Bare price ask without catalog anchor.
+    final compactPrice = q
+        .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (compactPrice == 'а сколько' ||
+        compactPrice == 'сколько' ||
+        compactPrice == 'сколько стоит' ||
+        compactPrice == 'какая цена') {
+      return 'Назовите услугу или формулу — скажу цену из каталога. '
+          'Или откройте «Прайс» в меню; для записи без цифры сначала — «+» на главной.';
+    }
 
     // «Дорого» right after a priced recommendation.
     final priceObj = _priceObjectionReply(q, lastBot);
@@ -224,7 +236,8 @@ class CultAgent {
       ['био ревитал', 'биоревитал'],
       ['смас', 'smas'],
       ['с мас', 'smas'],
-      ['ультразвуков', 'smas'],
+      ['ультразвуковой лифтинг', 'smas'],
+      ['ультразвуковый лифтинг', 'smas'],
       ['контурн пластик', 'контурная пластика'],
       ['липофилинг', 'липофилинг'],
       ['beauty and glow', 'beauty & glow'],
@@ -1127,9 +1140,16 @@ class CultAgent {
         q.contains('хочу на') ||
         q.contains('можно на') ||
         q.contains('давайте на');
+    final bareSlot = compact == 'утро' ||
+        compact == 'вечер' ||
+        compact == 'с утра' ||
+        compact == 'на вечер' ||
+        compact == 'на утро';
+    // Don't steal «сегодня вечером событие» from situation/event flow.
     if (!(morning || evening || weekend || weekday.isNotEmpty)) return null;
-    if (!bookingCue && !(morning || evening) && weekday.isEmpty) return null;
+    if (!bookingCue && !bareSlot && weekday.isEmpty) return null;
     if (!bookingCue && weekend && weekday.isEmpty) return null;
+    if ((morning || evening) && !bookingCue && !bareSlot) return null;
     final when = [
       if (morning) 'утро',
       if (evening) 'вечер',
@@ -1142,6 +1162,16 @@ class CultAgent {
   }
 
   String? _doctorReply(String q) {
+    bool partHit(String part) {
+      if (part.length < 4) return false;
+      if (q.contains(part)) return true;
+      // «Элара» → «эларе» / «элару»; «Джулиан» → «джулиану».
+      if (part.length >= 5 && q.contains(part.substring(0, part.length - 1))) {
+        return true;
+      }
+      return false;
+    }
+
     for (final doc in doctors) {
       final name = _normalize(doc.name);
       final slug = _normalize(doc.slug);
@@ -1151,15 +1181,15 @@ class CultAgent {
           .split(RegExp(r'[^a-zа-я0-9]+'))
           .where((w) => w.length >= 4)
           .toList();
-      final partHit = parts.any(q.contains);
-      final strongPart =
-          parts.any((w) => w.length >= 5 && q.contains(w));
-      if (!(nameHit || slugHit || partHit)) continue;
+      final anyPart = parts.any(partHit);
+      final strongPart = parts.any((w) => w.length >= 5 && partHit(w));
+      if (!(nameHit || slugHit || anyPart)) continue;
       final cue = q.contains('врач') ||
           q.contains('доктор') ||
           q.contains('специалист') ||
           q.contains('к ') ||
-          q.contains('про ');
+          q.contains('про ') ||
+          q.contains('хочу к');
       // Distinctive name piece (Элара, Джулиан…) needs no extra cue.
       if (!nameHit && !slugHit && !cue && !strongPart) continue;
       return 'Это ${doc.name} — ${doc.role}, опыт ${doc.exp}. ${doc.about} '
@@ -1388,6 +1418,8 @@ class CultAgent {
         q.contains('выгоран');
     final dull = q.contains('тускл') ||
         q.contains('серый') ||
+        q.contains('серая') ||
+        q.contains('серое') ||
         q.contains('сияни') ||
         q.contains('свежий');
     final wrinkle = q.contains('морщин') || q.contains('мими') || q.contains('гусиные');
@@ -2140,6 +2172,14 @@ class CultAgent {
       return 'Дома сейчас мягко: барьерный крем, без новых кислот и ретинола, пока врач не скажет иначе. '
           'Скажите «крем» — назову формулу из шопа.';
     }
+    if ((prev.contains('аллерг') || prev.contains('анестез')) &&
+        (compact.contains('что можно') ||
+            compact.contains('какие вариант') ||
+            compact.contains('тогда что') ||
+            compact.contains('что тогда'))) {
+      return 'При аллергии двигаемся только после осмотра: часто мягкий уход и массаж без лишней анестезии; инъекции и аппаратную — по допуску врача. '
+          'Напишите аллерген в чат специалиста или запишитесь через «+».';
+    }
     return null;
   }
 
@@ -2237,7 +2277,7 @@ class CultAgent {
     final event = q.contains('свадьб') ||
         q.contains('день рожден') ||
         q.contains('мероприят') ||
-        q.contains('съемк') ||
+        q.contains('событ') ||
         q.contains('съемк') ||
         q.contains('фотосес') ||
         q.contains('отпуск') ||
@@ -2411,6 +2451,9 @@ class CultAgent {
     }
     if (q.contains('тускл') ||
         q.contains('серый') ||
+        q.contains('серая') ||
+        q.contains('серое') ||
+        q.contains('серой') ||
         q.contains('сияни') ||
         q.contains('свежий вид') ||
         q.contains('освежить') ||
@@ -2419,6 +2462,25 @@ class CultAgent {
         q.contains('выглядеть')) {
       return 'Для быстрого «свежего вида» люблю уход с сыворотками или скульптурный массаж — без тяжёлой реабилитации. '
           'Если есть день-два до события, скажите дату: подберём протокол под календарь.';
+    }
+    if (q.contains('носогуб') ||
+        q.contains('носо губ') ||
+        (q.contains('складк') && q.contains('губ'))) {
+      return 'Носогубные складки разбираем спокойно: иногда достаточно ухода и массажа, объём — только после осмотра. '
+          'Могу рассказать про мягкий вход или записать на консультацию через «+».';
+    }
+    if (q.contains('черные точки') ||
+        q.contains('комедон') ||
+        q.contains('черн точки') ||
+        (q.contains('точки') && q.contains('пор'))) {
+      return 'Чёрные точки и комедоны лучше не выдавливать агрессивно дома. На осмотре подберём мягкую чистку или уход без пересушивания. '
+          'Запись через «+»; или скажите «чистка» / «пилинг», если хотите ориентир из прайса.';
+    }
+    if (q.contains('ультразвук') ||
+        q.contains('узи чист') ||
+        q.contains('ультразвуков')) {
+      return 'Ультразвуковая чистка — мягкий аппаратный уход; SMAS/Ultherapy — уже лифтинг другой силы. '
+          'Скажите задачу (очищение или лифтинг) — сузим; запись на консультацию через «+».';
     }
     if (q.contains('устал') ||
         q.contains('нет сил') ||
@@ -2634,8 +2696,55 @@ class CultAgent {
       return 'CULT Сочи открыта ежедневно, включая выходные, с 9:00 до 21:00 — Черноморская, 6. '
           'Могу помочь записаться в удобное окно.';
     }
-    if (q.contains('добр') || q.contains('адрес') || q.contains('ехать')) {
+    if (q.contains('добр') ||
+        q.contains('адрес') ||
+        q.contains('ехать') ||
+        q.contains('доехать') ||
+        q.contains('находитесь') ||
+        q.contains('находится') ||
+        q.contains('где вы') ||
+        q.contains('где клиник') ||
+        q.contains('как найти')) {
       return 'Ждём вас в Сочи, Черноморская, 6. Если нужен трансфер — закажите в профиле, водитель напишет в чат.';
+    }
+    if (q.contains('меню на русском') ||
+        q.contains('интерфейс на русском') ||
+        q.contains('приложение на русском')) {
+      return 'Приложение CULT на русском: запись, чат, прайс и шоп. Если что-то отображается иначе — перезапустите приложение или напишите администратору в чат.';
+    }
+    if ((q.contains('чек') && !q.contains('чекап') && !q.contains('чек-ап')) &&
+        (q.contains('нужен') ||
+            q.contains('выпиш') ||
+            q.contains('кассов') ||
+            q == 'чек')) {
+      return 'Кассовый чек и закрывающие документы выдают на ресепшен после оплаты. Для юрлица напишите администратору в чат заранее.';
+    }
+    if (q.contains('крипт') ||
+        q.contains('bitcoin') ||
+        q.contains('btc') ||
+        q.contains('usdt') ||
+        q.contains('криптовалют')) {
+      return 'Криптовалюту обычно не принимаем — оплата в рублях картой, наличными или бонусами CULT. Уточните на ресепшен, если появятся новые способы.';
+    }
+    if (q.contains('кэшбек') ||
+        q.contains('кешбек') ||
+        q.contains('cashback') ||
+        q.contains('мили') ||
+        q.contains('программа лояльн') ||
+        q.contains('как потратить бонус') ||
+        q.contains('сколько бонус')) {
+      return 'Лояльность CULT: welcome-бонус 3 000 ₽ новым клиентам, начисление и списание — в профиле (до 30% чека бонусами на платине). '
+          'Отдельного кэшбека милями банков обычно нет — детали у администратора.';
+    }
+    if (q.contains('корпоратив') ||
+        q.contains('для сотрудник') ||
+        q.contains('для офиса') ||
+        q.contains('мастер-класс') ||
+        q.contains('мастер класс') ||
+        q.contains('день открытых') ||
+        q.contains('экскурсия по клиник')) {
+      return 'Корпоративы, мастер-классы и дни открытых дверей согласует администратор — напишите в чат задачу и число гостей. '
+          'Сертификаты для команды тоже удобно оформить в профиле.';
     }
     if (q.contains('телефон') ||
         q.contains('позвон') ||
@@ -2770,7 +2879,9 @@ class CultAgent {
     if (q.contains('prp') ||
         q.contains('плазмолифт') ||
         q.contains('плазмотерап') ||
-        q.contains('плазмой')) {
+        q.contains('плазмой') ||
+        q.contains('плазма') ||
+        q == 'plasma') {
       return 'PRP и плазмотерапия — в контуре инъекционных протоколов после осмотра и анализов по назначению врача. '
           'Запись на консультацию через «+» или меню «Инъекции».';
     }
