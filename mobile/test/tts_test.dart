@@ -23,7 +23,7 @@ void main() {
   test('spokenGreeting короткий для озвучки', () {
     expect(CultTts.spokenGreeting.length, lessThan(160));
     expect(CultTts.spokenGreeting.toLowerCase(), contains('здравствуйте'));
-    expect(CultTts.spokenGreeting.toLowerCase(), contains('кнопк'));
+    expect(CultTts.spokenGreeting.toLowerCase(), contains('cult'));
   });
 
   test('toSpokenBrief complete договаривает длинный ответ', () {

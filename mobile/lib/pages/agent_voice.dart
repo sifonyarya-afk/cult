@@ -8,8 +8,6 @@ import '../store.dart';
 import '../theme.dart';
 import '../tts.dart';
 import '../widgets.dart';
-import 'voice_settings.dart';
-
 /// Voice-first CULT Агент: one mic button, living consultation layout.
 class AgentVoicePage extends StatefulWidget {
   const AgentVoicePage({super.key, this.active = true});
@@ -399,14 +397,6 @@ class _AgentVoicePageState extends State<AgentVoicePage>
           ],
         ),
         actions: [
-          IconButton(
-            tooltip: 'Живой голос',
-            onPressed: () {
-              cultTapFeedback();
-              pushPage(context, const VoiceSettingsPage());
-            },
-            icon: const Icon(Icons.graphic_eq),
-          ),
           if (canClear)
             IconButton(
               tooltip: 'Очистить',
@@ -635,14 +625,6 @@ class _AgentVoicePageState extends State<AgentVoicePage>
                                                       Color(0xFF8A7355),
                                                     ]),
                                         ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Cult.sand.withValues(
-                                              alpha: _listening ? 0.35 : 0.16,
-                                            ),
-                                            blurRadius: _listening ? 28 : 16,
-                                          ),
-                                        ],
                                       ),
                                       child: Icon(
                                         _listening

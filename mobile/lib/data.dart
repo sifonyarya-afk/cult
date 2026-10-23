@@ -322,6 +322,9 @@ class Product {
   final String name;
   final String blurb;
   final int price;
+
+  /// Asset key or `https://…` photo URL.
+  /// Later: take URL from YClients service/good comment field.
   final String image;
   final String tab;
   final String stock;
@@ -330,13 +333,15 @@ class Product {
   final String about;
 }
 
+/// Temporary CDN photos for the shop; swap to YClients comment URLs when wired.
 const products = <Product>[
   Product(
     id: 'neuro',
     name: 'Neuro-Regen IV Serum',
     blurb: 'Сыворотка для когнитивного усиления',
     price: 18400,
-    image: 'neuro',
+    image:
+        'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&q=80',
     tab: 'supplements',
     composition: 'Фосфатидилсерин, цитиколин, витамин B12',
     about:
@@ -347,7 +352,8 @@ const products = <Product>[
     name: 'Cellular Catalyst 01',
     blurb: 'Формула-предшественник NAD+',
     price: 24500,
-    image: 'catalyst',
+    image:
+        'https://images.unsplash.com/photo-1620916569866-af8c5a8a1260?w=800&q=80',
     tab: 'supplements',
     badge: 'Фаворит CULT',
     composition: 'Никотинамидрибозид, птеростильбен',
@@ -358,7 +364,8 @@ const products = <Product>[
     name: 'Liposomal Gluta-Pure',
     blurb: 'Мастер-антиоксидантный комплекс',
     price: 12000,
-    image: 'gluta',
+    image:
+        'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=800&q=80',
     tab: 'supplements',
     composition: 'Липосомальный глутатион, витамин C',
     about: 'Антиоксидантная поддержка после аппаратных процедур.',
@@ -368,7 +375,8 @@ const products = <Product>[
     name: 'Mitochondrial Fuel',
     blurb: 'Ускоритель производства АТФ',
     price: 15500,
-    image: 'mito',
+    image:
+        'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=800&q=80',
     tab: 'supplements',
     stock: 'low',
     composition: 'Коэнзим Q10, PQQ, магний',
@@ -379,7 +387,8 @@ const products = <Product>[
     name: 'Lumen Barrier Cream',
     blurb: 'Барьерный крем с церамидами',
     price: 8900,
-    image: 'lumen',
+    image:
+        'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=800&q=80',
     tab: 'cosmetics',
     composition: 'Церамиды NP, холестерол, сквалан',
     about: 'Восстанавливает липидный слой после пилингов и RF.',
@@ -389,7 +398,8 @@ const products = <Product>[
     name: 'Veil Peptide Serum',
     blurb: 'Ночная сыворотка плотности',
     price: 14200,
-    image: 'veil',
+    image:
+        'https://images.unsplash.com/photo-1620916297397-a4a5402a3ed6?w=800&q=80',
     tab: 'cosmetics',
     badge: 'Фаворит CULT',
     composition: 'Матриксил, медь, пантенол',
@@ -400,7 +410,8 @@ const products = <Product>[
     name: 'Aura Mineral Mist',
     blurb: 'Минеральный спрей сияния',
     price: 6400,
-    image: 'aura',
+    image:
+        'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=800&q=80',
     tab: 'cosmetics',
     stock: 'low',
     composition: 'Цинк, термальная вода, ниацинамид',
@@ -411,7 +422,8 @@ const products = <Product>[
     name: 'Home Bio-Scan Kit',
     blurb: 'Домашний набор биомаркеров',
     price: 32000,
-    image: 'scan',
+    image:
+        'https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=800&q=80',
     tab: 'biohack',
     badge: 'Новинка',
     composition: 'Ланцеты, полоски, инструкция по 12 маркерам',
@@ -422,7 +434,8 @@ const products = <Product>[
     name: 'Circadian Light Panel',
     blurb: 'Панель утреннего света',
     price: 27500,
-    image: 'light',
+    image:
+        'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=800&q=80',
     tab: 'biohack',
     composition: 'Светодиоды 480 нм и 650 нм',
     about: '10 минут в первый час после подъёма.',
@@ -432,7 +445,8 @@ const products = <Product>[
     name: 'NAD+ Micro-Patch',
     blurb: 'Пластырь-предшественник на 12 часов',
     price: 9800,
-    image: 'patch',
+    image:
+        'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=800&q=80',
     tab: 'biohack',
     stock: 'low',
     composition: 'Предшественник NAD+, клеевая основа',
@@ -815,16 +829,16 @@ class Contact {
   final String seed;
 }
 
-/// Bump when shipping a user-visible feature so Settings proves the Mac build is fresh.
-const cultBuildTag = 'floating-dock-v23';
+/// Bump when shipping a user-visible feature so a Mac pull proves the build is fresh.
+const cultBuildTag = 'human-shop-v24';
 
 const contacts = <Contact>[
   Contact(
     id: 'bot',
     name: 'CULT Агент',
-    role: 'Живой разговор · одна кнопка',
+    role: 'Как на приёме · голосом',
     seed:
-        'Здравствуйте. Говорите как на консультации — одной кнопкой, без сценария. Я подстроюсь под ваши слова и при необходимости предложу услугу или средство из шопа.',
+        'Здравствуйте. Я из CULT — можно просто поговорить о коже, самочувствии, дате визита или записи. Я рядом.',
   ),
   Contact(
     id: 'admin',

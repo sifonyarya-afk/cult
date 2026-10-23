@@ -81,7 +81,7 @@ void main() {
     expect(find.text('Живой разговор'), findsOneWidget);
   });
 
-  testWidgets('Чат из меню без карточки агента, с меткой сборки', (tester) async {
+  testWidgets('Чат из меню без карточки агента', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = ClinicStore();
     await store.load();
@@ -98,9 +98,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Чат'));
     await tester.pumpAndSettle();
-    expect(find.textContaining(cultBuildTag), findsOneWidget);
     expect(find.text('Центр поддержки'), findsOneWidget);
     expect(find.textContaining('Живой разговор'), findsNothing);
+    expect(find.text('Настройки'), findsNothing);
   });
 
   testWidgets('Профиль тянется вниз для синхронизации', (tester) async {

@@ -42,19 +42,33 @@ class ClinicScope extends InheritedNotifier<ClinicStore> {
 class CultImage extends StatelessWidget {
   const CultImage(this.name, {super.key, this.aspect = 4 / 5, this.radius = 0});
 
+  /// Asset key from [photo], or a full `https://…` URL (shop / YClients comment).
   final String name;
   final double aspect;
   final double radius;
+
+  bool get _isNetwork =>
+      name.startsWith('http://') || name.startsWith('https://');
 
   @override
   Widget build(BuildContext context) {
     final child = AspectRatio(
       aspectRatio: aspect,
-      child: Image.asset(
-        photo[name] ?? photo['logo']!,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => const ColoredBox(color: Cult.sand),
-      ),
+      child: _isNetwork
+          ? Image.network(
+              name,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return const ColoredBox(color: Color(0xFFF3EFEA));
+              },
+              errorBuilder: (_, _, _) => const ColoredBox(color: Cult.sand),
+            )
+          : Image.asset(
+              photo[name] ?? photo['logo']!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const ColoredBox(color: Cult.sand),
+            ),
     );
     if (radius == 0) return child;
     return ClipRRect(borderRadius: BorderRadius.circular(radius), child: child);

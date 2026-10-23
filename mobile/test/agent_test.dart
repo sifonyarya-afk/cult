@@ -568,8 +568,11 @@ void main() {
     final bot = store.threads['bot']!;
     expect(bot.length, 1);
     expect(bot.first.text, contains('CULT'));
-    expect(bot.first.text.toLowerCase(), anyOf(contains('кнопк'), contains('голос')));
     expect(bot.first.text.toLowerCase(), contains('говор'));
+    expect(
+      bot.first.text.toLowerCase(),
+      anyOf(contains('кож'), contains('запис'), contains('визит')),
+    );
   });
 
   test('Не дублирует уточняющий вопрос подряд', () {

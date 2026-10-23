@@ -10,7 +10,6 @@ import '../widgets.dart';
 import '../yclients.dart';
 import 'agent_voice.dart';
 import 'cabinet.dart';
-import 'voice_settings.dart';
 
 class ChatPage extends StatelessWidget {
   const ChatPage({super.key});
@@ -34,11 +33,6 @@ class ChatPage extends StatelessWidget {
           const Text(
             'Администратор и врач клиники. CULT Агент — в нижней панели по центру.',
             style: TextStyle(color: Cult.muted),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Сборка $cultBuildTag',
-            style: const TextStyle(color: Cult.muted, fontSize: 11),
           ),
           if (store.hasUnreadChat) ...[
             const SizedBox(height: 10),
@@ -349,18 +343,6 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
         'Разрешите Микрофон и «Распознавание речи» в Настройках → CULT.',
       );
     }
-    final hasNeural = _tts.yandexApiKey?.trim().isNotEmpty ?? false;
-    final voice = (_tts.selectedVoiceLabel ?? '').toLowerCase();
-    final softSystem = !hasNeural &&
-        !voice.contains('premium') &&
-        !voice.contains('enhanced') &&
-        !voice.contains('alena');
-    if (softSystem) {
-      showCultSnack(
-        context,
-        'Чтобы голос был как у человека: Профиль → Живой голос агента',
-      );
-    }
     if (_speakReplies) {
       // Short spoken line — full seed stays as text in the bubble.
       await _speak(CultTts.spokenGreeting);
@@ -610,13 +592,6 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    TextButton(
-                      onPressed: () {
-                        cultTapFeedback();
-                        pushPage(context, const VoiceSettingsPage());
-                      },
-                      child: const Text('Живой'),
-                    ),
                     FilledButton.tonal(
                       onPressed: () => _toggleListen(store),
                       style: FilledButton.styleFrom(

@@ -293,8 +293,10 @@ class _ShellState extends State<Shell> {
   });
 
   static const _tabHome = 0;
+  static const _tabServices = 1;
   static const _tabAgent = 2;
   static const _tabShop = 3;
+  static const _tabProfile = 4;
 
   @override
   void didChangeDependencies() {
@@ -364,14 +366,6 @@ class _ShellState extends State<Shell> {
                           ),
                         ),
                       ),
-                    IconButton(
-                      tooltip: 'Настройки',
-                      onPressed: () {
-                        cultTapFeedback();
-                        pushPage(context, const SettingsPage());
-                      },
-                      icon: const Icon(Icons.settings_outlined),
-                    ),
                     if (_index == _tabShop || store.cartCount > 0)
                       IconButton(
                         tooltip: store.cartCount > 0
@@ -589,17 +583,15 @@ class _ShellState extends State<Shell> {
               subtitle: Text(
                 store.signedIn ? store.profilePhone : 'Сохраним вас в филиале',
               ),
-              onTap: () => _go(
-                sheetContext,
-                store.signedIn
-                    ? const SettingsPage()
-                    : const AuthPage(allowSkip: false),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings_outlined),
-              title: const Text('Настройки'),
-              onTap: () => _go(sheetContext, const SettingsPage()),
+              onTap: () {
+                cultTapFeedback();
+                Navigator.pop(sheetContext);
+                if (store.signedIn) {
+                  setState(() => _index = _tabProfile);
+                } else {
+                  pushPage(context, const AuthPage(allowSkip: false));
+                }
+              },
             ),
           ],
         ),
@@ -674,9 +666,9 @@ class _CultDockBar extends StatelessWidget {
                     borderRadius: BorderRadius.circular(40),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 22,
-                        offset: const Offset(0, 8),
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
@@ -759,13 +751,6 @@ class _CultDockBar extends StatelessWidget {
                                       Color(0xFFC4A882),
                                     ],
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Cult.sand.withValues(alpha: 0.55),
-                                blurRadius: 18,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
                             border: Border.all(
                               color: Colors.white,
                               width: 3,
