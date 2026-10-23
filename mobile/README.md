@@ -180,24 +180,38 @@ flutter run --release
 
 Предупреждение CocoaPods «no platform was specified» значит, что на Mac ещё старый `Podfile` (не подтянули фиксы). Сделайте `git stash` + `git pull` из корня `cult` — см. блок выше.
 
-### `module 'Flutter' not found` / `shared_preferences_foundation` / VerifyModule
+### `module 'Flutter' not found` / VerifyModule (`url_launcher_ios`, `shared_preferences_foundation`)
 
-Xcode 15+/16 проверяет pod-модули отдельно от Flutter и падает на `shared_preferences_foundation` (`VerifyModule` → `module 'Flutter' not found`). В `ios/Podfile` уже отключён `ENABLE_MODULE_VERIFIER` и стоит `use_frameworks! :linkage => :static`.
+Xcode 15+/16 гоняет **VerifyModule** по pod-фреймворкам без `Flutter.framework` и падает:
 
-Закройте Xcode и из `mobile` пересоберите pods:
+- `url_launcher_ios-Swift.h` → `module 'Flutter' not found`
+- то же для `shared_preferences_foundation`
+- рядом бывает warning `CwlCatchExceptionSupport` (quoted include) — не причина, в Podfile приглушён
+
+В `ios/Podfile` уже: `use_frameworks! :linkage => :static`, `ENABLE_MODULE_VERIFIER = NO` на project и targets.
+
+**Обязательно** подтянуть Podfile и снести DerivedData (старый VerifyModule кэш иначе остаётся):
 
 ```bash
-cd ~/Desktop/cult/cult/mobile
+cd ~/Desktop/cult/cult
+git pull origin main
+cd mobile
 flutter pub get
 rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
 rm -rf ~/Library/Developer/Xcode/DerivedData/Runner-*
 (cd ios && pod install)
+grep ENABLE_MODULE_VERIFIER ios/Pods/Pods.xcodeproj/project.pbxproj | head
+```
+
+`grep` должен показать `ENABLE_MODULE_VERIFIER = NO`. Потом только **`Runner.xcworkspace`** (не `.xcodeproj`):
+
+```bash
 open ios/Runner.xcworkspace
 ```
 
-В Xcode: Product → Clean Build Folder, затем Run. Открывайте именно **`Runner.xcworkspace`**.
+В Xcode: Product → Clean Build Folder, затем Run. Или из Terminal: `flutter run`.
 
-Если снова белый экран без ошибок — плагин SharedPreferences не поднялся; приложение всё равно должно показать сплэш за несколько секунд (локальное состояние стартует пустым). Пересоберите pods командами выше.
+Если снова VerifyModule — вы открыли старый workspace или DerivedData не удалился; повторите блок выше и закройте все окна Xcode перед `pod install`.
 
 ### `Exited with status code 127`
 
