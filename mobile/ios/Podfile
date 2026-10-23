@@ -53,4 +53,16 @@ post_install do |installer|
       config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
     end
   end
+
+  # speech_to_text pulls CwlCatchException*; Xcode 15+/16 warns on quoted
+  # #import in framework umbrellas. Rewrite to angle-bracket form after install.
+  Dir.glob(File.join(installer.sandbox.root, 'Target Support Files', '**', '*-umbrella.h')).each do |header|
+    text = File.read(header)
+    patched = text.gsub(/#import\s+"([^"]+)"/) do
+      name = Regexp.last_match(1)
+      folder = File.basename(File.dirname(header))
+      %(#import <#{folder}/#{name}>)
+    end
+    File.write(header, patched) if patched != text
+  end
 end

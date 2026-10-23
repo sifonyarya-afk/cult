@@ -4,7 +4,7 @@
 
 **Мира** — косметолог CULT на центральной жемчужине нижней панели. Живой голос без карточек-подсказок: слушает → отвечает → слушает. Запись на услугу — только после уточнений и кнопки **«Запись»**. Чат с администратором/врачом — через меню ☰. iOS спросит Микрофон и «Распознавание речи».
 
-Если агента нет / старый UI — на Mac почти всегда **старый коммит** и `git pull` не прошёл. Актуальная метка: **`mira-live-v27`** (`cultBuildTag` в `mobile/lib/data.dart`).
+Если агента нет / старый UI — на Mac почти всегда **старый коммит** и `git pull` не прошёл. Актуальная метка: **`ios-cwl-fix-v28`** (`cultBuildTag` в `mobile/lib/data.dart`).
 
 В zsh строка после `#` — не комментарий (если нет `INTERACTIVE_COMMENTS`). Не копируйте команды с `# …` в конец: будет `fatal: '#' does not appear to be a git repository` и `pathspec '#'`.
 
@@ -21,7 +21,7 @@ grep cultBuildTag mobile/lib/data.dart
 grep speech_to_text mobile/pubspec.yaml
 ```
 
-После `pull` `cultBuildTag` должен быть `mira-live-v27`. Если `pull` снова ругается на локальные файлы:
+После `pull` `cultBuildTag` должен быть `ios-cwl-fix-v28`. Если `pull` снова ругается на локальные файлы:
 
 ```bash
 cd ~/Desktop/cult/cult
@@ -204,13 +204,33 @@ flutter run --release
 
 Предупреждение CocoaPods «no platform was specified» значит, что на Mac ещё старый `Podfile` (не подтянули фиксы). Сделайте `git stash` + `git pull` из корня `cult` — см. блок выше.
 
+### `CwlCatchExceptionSupport-umbrella.h` · quoted include
+
+Сообщение Xcode вроде:
+
+`Pods/.../CwlCatchExceptionSupport-umbrella.h: double-quoted include "CwlCatchException.h" in framework header, expected angle-bracketed instead`
+
+Это warning от зависимости `speech_to_text` (CwlCatchException), **не ошибка приложения**. В актуальном `ios/Podfile` umbrella переписывается на `#import <…>` при `pod install`, warning выключен.
+
+```bash
+cd ~/Desktop/cult/cult
+git pull origin main
+cd mobile
+flutter pub get
+rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
+(cd ios && pod install)
+open ios/Runner.xcworkspace
+```
+
+В Xcode: Product → Clean Build Folder → Run. Метка сборки: `ios-cwl-fix-v28`.
+
 ### `module 'Flutter' not found` / VerifyModule (`url_launcher_ios`, `shared_preferences_foundation`)
 
 Xcode 15+/16 гоняет **VerifyModule** по pod-фреймворкам без `Flutter.framework` и падает:
 
 - `url_launcher_ios-Swift.h` → `module 'Flutter' not found`
 - то же для `shared_preferences_foundation`
-- рядом бывает warning `CwlCatchExceptionSupport` (quoted include) — не причина, в Podfile приглушён
+- warning `CwlCatchExceptionSupport` (`double-quoted include … expected angle-bracketed`) — шум от `speech_to_text` / CwlCatchException; в `Podfile` umbrella правится на `<…>` и warning выключен. Не блокирует сборку. После `pull`: `pod install` заново.
 
 В `ios/Podfile` уже: `use_frameworks! :linkage => :static`, `ENABLE_MODULE_VERIFIER = NO` на project и targets.
 
