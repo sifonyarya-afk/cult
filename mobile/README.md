@@ -2,9 +2,9 @@
 
 Приложение клиники для iPhone. Запись, услуги, магазин, корзина, кабинет, чат и бонусы хранятся на телефоне.
 
-**CULT Агент** (главная → баннер или Чат → CULT Агент): кнопка **«Голос»**, микрофон внизу, динамик в шапке. При открытии чата iOS спросит Микрофон и «Распознавание речи»; приветствие озвучивается.
+**CULT Агент** (главная → баннер или Чат → CULT Агент): тёмный экран с **одной кнопкой** микрофона, без клавиатуры. Слушает → отвечает голосом до конца → снова слушает; сверху пуш-карточки услуг и шопа. iOS спросит Микрофон и «Распознавание речи».
 
-Если бота нет / микрофон не спрашивает — на Mac почти всегда **старый коммит** (например `b7f4d26`) и `git pull` не прошёл.
+Если агента нет / старый UI — на Mac почти всегда **старый коммит** и `git pull` не прошёл. Актуальная сборка в Настройках: **`agent-voice-v17`** (не `agent-replies-warm`).
 
 В zsh строка после `#` — не комментарий (если нет `INTERACTIVE_COMMENTS`). Не копируйте команды с `# …` в конец: будет `fatal: '#' does not appear to be a git repository` и `pathspec '#'`.
 
@@ -17,11 +17,11 @@ git stash push -u -m "local before pull"
 git pull origin main
 git rev-parse --short HEAD
 git log -1 --oneline
-grep -n "CULT Агент" mobile/lib/data.dart
+grep cultBuildTag mobile/lib/data.dart
 grep speech_to_text mobile/pubspec.yaml
 ```
 
-После `pull` хеш **не** должен быть `b7f4d26`. `grep` обязан показать `CULT Агент` и `speech_to_text`. Если `pull` снова ругается на локальные файлы:
+После `pull` хеш должен быть не старше `22ea0d1`, а `cultBuildTag` = `agent-voice-v17`. Если `pull` снова ругается на локальные файлы:
 
 ```bash
 cd ~/Desktop/cult/cult
@@ -41,7 +41,29 @@ cd ..
 flutter run
 ```
 
-В `flutter pub get` должны появиться `speech_to_text 7.4.0` и `flutter_tts` (не 7.5 — он требует Dart 3.12). В приложении: Чат → чёрная кнопка **CULT Агент**; Настройки → Сборка = `agent-voice-v17`.
+В `flutter pub get` должны появиться `speech_to_text 7.4.0` и `flutter_tts` (не 7.5 — он требует Dart 3.12). В приложении: Чат → **CULT Агент**; Настройки → Сборка = `agent-voice-v17`.
+
+### SIGKILL / Lost connection to device при `flutter run`
+
+Это не «старый код»: `22ea0d1` уже скачан. iOS убивает процесс при установке/отладке. На Mac:
+
+1. На iPhone удалите приложение **CULT** (долгое нажатие → Удалить).
+2. Настройки → Конфиденциальность → **Режим разработчика** → Вкл. (если был выкл — перезагрузка).
+3. Кабель (не только Wi‑Fi). Разблокируйте телефон, нажмите Trust.
+4. В Terminal из `mobile`:
+
+```bash
+cd ~/Desktop/cult/cult/mobile
+flutter clean
+flutter pub get
+rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
+(cd ios && pod install)
+flutter devices
+flutter run -d "$(flutter devices | grep -i iphone | head -1 | sed -E 's/.*• ([^ ]+) •.*/\1/')"
+```
+
+5. Если снова SIGKILL сразу после Installing: откройте `ios/Runner.xcworkspace` в Xcode → выберите iPhone → Product → Run. При первом запуске на телефоне: Настройки → Основные → VPN и устройство → доверьте разработчику.
+6. Не жмите `q` в старом сеансе и сразу новый `flutter run` без паузы — дождитесь полного стопа или `flutter run` после удаления приложения с телефона.
 
 **Живой голос (не робот):** системный TTS iPhone всегда слегка синтетический. Чтобы звучало как человек:
 1. **Лучший вариант** — Профиль → **Живой голос агента** → API-ключ [Yandex SpeechKit](https://cloud.yandex.ru/services/speechkit) (голос Alena). Кнопка «Прослушать тест».
