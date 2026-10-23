@@ -81,6 +81,7 @@ void main() {
   test('Агент отвечает на привет и как дела как живой консультант', () {
     final hi = cultAgent.answer('Привет');
     expect(hi.toLowerCase(), contains('здравств'));
+    expect(hi.toLowerCase(), contains('мира'));
     expect(hi.toLowerCase(), isNot(contains('не нашла')));
     final mood = cultAgent.answer('Как дела?');
     expect(mood.toLowerCase(), anyOf(contains('ровн'), contains('чувству')));
@@ -88,6 +89,26 @@ void main() {
     expect(thanks.toLowerCase(), contains('спасибо'));
     final tip = cultAgent.answer('Подскажи');
     expect(tip.toLowerCase(), anyOf(contains('вместе'), contains('лицо')));
+  });
+
+  test('Мира отвечает на базовые живые вопросы', () {
+    final name = cultAgent.answer('Как тебя зовут?');
+    expect(name.toLowerCase(), contains('мира'));
+    final name2 = cultAgent.answer('Как вас зовут');
+    expect(name2.toLowerCase(), contains('мира'));
+    final about = cultAgent.answer('Расскажи о себе');
+    expect(about.toLowerCase(), contains('мира'));
+    final wrinkles = cultAgent.answer('Как избавиться от морщин?');
+    expect(
+      wrinkles.toLowerCase(),
+      anyOf(contains('массаж'), contains('бот'), contains('морщи')),
+    );
+    expect(wrinkles.toLowerCase(), isNot(contains('не нашла')));
+    final help = cultAgent.answer('Помоги с морщинами');
+    expect(
+      help.toLowerCase(),
+      anyOf(contains('массаж'), contains('морщи'), contains('линии')),
+    );
   });
 
   test('Свободный разговор по жалобе без названия услуги', () {

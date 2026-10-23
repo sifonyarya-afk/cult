@@ -119,6 +119,10 @@ class CultAgent {
       ], text);
     }
 
+    // Small talk first — greetings, name, mood — before booking/catalog stealers.
+    final chatEarly = _chatReply(q, lastBot: lastBot, gender: gender);
+    if (chatEarly != null) return chatEarly;
+
     final topic = _topicBlob(lastUser: lastUser, recentUsers: recentUsers);
 
     // «Повтори / короче / подробнее / не поняла».
@@ -202,7 +206,8 @@ class CultAgent {
     final priceObj = _priceObjectionReply(q, lastBot);
     if (priceObj != null) return priceObj;
 
-    // Follow-ups first when we have context (so «да» after CTA is not generic).
+    // Follow-ups when we have context (so «да» after CTA is not generic).
+    // Small talk already handled above.
     final follow = _followUpReply(
       q,
       lastBot,
@@ -210,10 +215,6 @@ class CultAgent {
       lastUser: lastUser,
     );
     if (follow != null) return follow;
-
-    // Small talk — short «да/нет» defer if lastBot exists (handled above).
-    final chat = _chatReply(q, lastBot: lastBot, gender: gender);
-    if (chat != null) return chat;
 
     // Bare «лицо» / «тело» without prior turn.
     final zone = _zoneOnlyReply(q);
@@ -1763,10 +1764,25 @@ class CultAgent {
         .replaceAll(RegExp(r'[!?.,…:;]+'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
-    final vague = compact.length <= 18 ||
-        compact.contains('а дальше') ||
+    // Never resume over clear new questions / small talk.
+    if (compact.contains('как ') ||
+        compact.contains('что ты') ||
+        compact.contains('кто ты') ||
+        compact.contains('расскажи') ||
+        compact.contains('зовут') ||
+        compact.contains('имя') ||
+        compact.contains('умеешь') ||
+        compact.contains('привет') ||
+        compact.contains('здравств') ||
+        compact.contains('избавиться') ||
+        compact.contains('помоги с') ||
+        compact.contains('что с ') ||
+        compact.startsWith('а как') ||
+        compact.startsWith('а что')) {
+      return null;
+    }
+    final vague = compact.contains('а дальше') ||
         compact.contains('что дальше') ||
-        compact.contains('и что') ||
         compact.contains('ну и') ||
         compact == 'дальше' ||
         compact == 'продолжим' ||
@@ -1777,8 +1793,9 @@ class CultAgent {
         compact == 'и что делать' ||
         compact == 'какие варианты' ||
         compact == 'а еще' ||
-        compact == 'а еще' ||
-        compact.contains('а что с этим');
+        compact == 'а ещё' ||
+        compact.contains('а что с этим') ||
+        compact == 'и что';
     if (!vague) return null;
     final prev = _normalize(lastUser);
     final blend = _blendConcernReply(prev, gender: gender);
@@ -2091,31 +2108,36 @@ class CultAgent {
     final hasContext = lastBot != null && lastBot.trim().isNotEmpty;
     final isGreeting = const {
           'привет',
+          'приветик',
           'здравствуй',
           'здравствуйте',
           'хай',
           'hello',
           'hi',
+          'hey',
           'здорово',
           'хелло',
           'салют',
+          'йо',
         }.contains(first) ||
         compact.startsWith('добрый день') ||
         compact.startsWith('доброе утро') ||
         compact.startsWith('добрый вечер') ||
-        compact.startsWith('доброй ночи');
-    if (isGreeting && words.length <= 5) {
+        compact.startsWith('доброй ночи') ||
+        compact == 'добрый' ||
+        compact == 'доброе';
+    if (isGreeting && words.length <= 6) {
       final man = gender == ClientGender.man;
       return man
           ? _pick('greet-m', const [
-              'Здравствуйте, я Мира, косметолог CULT. Расскажите, что с кожей или самочувствием — подберу из наших протоколов.',
-              'Здравствуйте. Мира на связи: можем как на приёме — про овал, барьер, усталость или запись.',
-              'Здравствуйте. Я Мира из CULT. С чего начнём — зеркало, силы или визит?',
+              'Здравствуйте, я Мира. Рада вас слышать — давайте как на приёме: что сейчас с кожей или самочувствием?',
+              'Здравствуйте! Я Мира, косметолог CULT. Чем могу помочь — освежить вид, разобрать морщинки или просто поговорить?',
+              'Здравствуйте, это Мира. Я рядом: расскажите своими словами про кожу или самочувствие.',
             ], q)
           : _pick('greet-w', const [
-              'Здравствуйте, я Мира, косметолог CULT. Можно своими словами — про кожу, энергию или запись, я рядом.',
-              'Здравствуйте, рада вас слышать. Я Мира: давайте спокойно разберём, что сейчас важнее для кожи.',
-              'Здравствуйте. Меня зовут Мира — как на консультации в CULT. Зеркало, самочувствие или сразу визит?',
+              'Здравствуйте, я Мира. Рада вас слышать — давайте спокойно: что сейчас с кожей или самочувствием?',
+              'Здравствуйте! Я Мира, косметолог CULT. Чем помочь — освежить вид, морщинки, усталость или запись?',
+              'Здравствуйте, это Мира. Говорите как удобно — я подстроюсь и предложу из наших протоколов.',
             ], q);
     }
     if (q.contains('как дела') ||
@@ -2123,11 +2145,14 @@ class CultAgent {
         q.contains('как вы') ||
         q.contains('как настроен') ||
         q.contains('как жизнь') ||
-        q.contains('how are you')) {
+        q.contains('как пожива') ||
+        q.contains('how are you') ||
+        compact == 'как самочувствие' ||
+        compact == 'как настроение') {
       return _pick('how-are', const [
         'Спасибо, у меня всё ровно — и я целиком для вас. А вы как себя чувствуете сегодня?',
-        'Хорошо, спасибо. Как вы себя чувствуете: что-то тянет или хотите освежить вид?',
-        'Всё ровно. Если есть, о чём подумать вместе — кожа, силы, запись — слушаю.',
+        'Хорошо, спасибо. Как вы себя чувствуете: кожа спокойная или что-то тянет?',
+        'Всё ровно, спасибо. Расскажите про себя — вместе найдём, что подтянуть.',
       ], q);
     }
     if (words.any(
@@ -2142,7 +2167,7 @@ class CultAgent {
       return _pick('thanks', const [
         'И вам спасибо. Я рядом — можно продолжить без спешки.',
         'Спасибо вам. Если ещё что-то всплывёт — просто скажите.',
-        'Вам спасибо. Остаюсь на связи, когда будете готовы.',
+        'Вам спасибо. Остаюсь на связи.',
       ], q);
     }
     if (compact == 'пока' ||
@@ -2151,15 +2176,29 @@ class CultAgent {
         compact.startsWith('до свидания') ||
         compact == 'спокойной ночи') {
       return _pick('bye', const [
-        'Всего доброго. Берегите себя — буду рада снова услышать вас в CULT.',
+        'Всего доброго. Берегите себя — буду рада снова услышать вас.',
         'До связи. Если что-то всплывёт — я здесь.',
         'Хорошего дня. Загляните, когда захотите продолжить.',
       ], q);
     }
-    if (q.contains('кто ты') ||
-        q.contains('как тебя зовут') ||
+    final asksName = q.contains('как тебя зовут') ||
+        q.contains('как вас зовут') ||
+        q.contains('как зовут') ||
+        q.contains('твое имя') ||
+        q.contains('твоё имя') ||
+        q.contains('ваше имя') ||
+        q.contains('как имя') ||
+        compact == 'имя' ||
+        compact == 'представься' ||
+        compact == 'представитесь';
+    final asksAbout = q.contains('кто ты') ||
+        q.contains('кто вы') ||
         q.contains('что ты умеешь') ||
+        q.contains('что вы умеете') ||
         q.contains('чем можешь помочь') ||
+        q.contains('чем можете помочь') ||
+        q.contains('расскажи о себе') ||
+        q.contains('расскажите о себе') ||
         q.contains('ты врач') ||
         q.contains('ты бот') ||
         q.contains('ты робот') ||
@@ -2168,11 +2207,19 @@ class CultAgent {
         q.contains('ты искусствен') ||
         q.contains('are you a bot') ||
         q.contains('are you ai') ||
-        q.contains('ты человек')) {
+        q.contains('ты человек');
+    if (asksName) {
+      return _pick('my-name', const [
+        'Меня зовут Мира. Я косметолог CULT — можно просто поговорить о коже или сразу про визит.',
+        'Я Мира. Работаю с эстетикой и уходом в CULT: слушаю задачу и предлагаю спокойный следующий шаг.',
+        'Мира. Приятно познакомиться — расскажите, что сейчас важнее для кожи или самочувствия.',
+      ], q);
+    }
+    if (asksAbout) {
       return _pick('who-am-i', const [
-        'Я Мира — косметолог-консультант CULT в приложении. Не заменяю очный осмотр, но могу разобрать задачу и предложить наши услуги или шоп. О чём подумаем?',
-        'Меня зовут Мира. Я из команды CULT: говорю как на приёме, опираюсь на наш прайс и формулы. Клинический вердикт — за врачом очно. Чем помочь?',
-        'Я Мира, эксперт CULT по уходу и эстетике. Рядом голосом: кожа, энергия, запись — без роботского сценария.',
+        'Я Мира, косметолог CULT в приложении. Не заменяю очный осмотр, но могу разобрать задачу и предложить наши услуги или шоп. О чём подумаем?',
+        'Я из команды CULT, зовут Мира. Говорю как на приёме: кожа, энергия, запись — без роботского сценария. Чем помочь?',
+        'Коротко: я Мира. Помогаю сориентироваться в протоколах CULT и домашнем уходе; окончательное решение — за врачом очно.',
       ], q);
     }
     if (q.contains('на английском') ||
@@ -2186,7 +2233,7 @@ class CultAgent {
       return 'I can help in simple English: booking, massage, facials, RF, IV drips, and shop formulas at CULT Sochi (Chernomorskaya 6, 9:00–21:00). '
           'For an interpreter or English-speaking staff — ask admin in chat. Clinical decisions need a doctor. Or continue in Russian.';
     }
-    if (words.length <= 4 &&
+    if (words.length <= 6 &&
         const {
           'подскажи',
           'посоветуй',
@@ -2202,10 +2249,12 @@ class CultAgent {
           compact.startsWith('порекомендуй')) {
         return null;
       }
+      // «Помоги с морщинами» / «подскажи про сухость» → concern, not empty tip.
+      if (_concernReply(q, gender: gender) != null) return null;
       return _pick('tip-soft', const [
-        'Конечно, давайте вместе. Коротко: лицо или тело, что хотите улучшить, и был ли уже курс у нас?',
-        'С удовольствием, вместе разберём. Что ближе — лицо, самочувствие или сразу запись?',
-        'Да, подскажу. Одного ориентира хватит: лицо, тело, энергия — и разложу спокойно.',
+        'Конечно, давайте вместе. Коротко: лицо или тело, что хотите улучшить?',
+        'С удовольствием, вместе разберём. Что ближе — лицо, самочувствие или запись?',
+        'Да, подскажу. Одного ориентира хватит: лицо, тело или энергия.',
       ], q);
     }
     if (compact == 'нужен совет' ||
@@ -2809,12 +2858,11 @@ class CultAgent {
       final chair = _lineService(hydra) ?? 'увлажняющий уход HydraPure';
       final home = _lineProduct(barrier) ?? 'Lumen Barrier Cream';
       return _pick('concern-dry', [
-        'Сухость в CULT обычно ведём как барьер: в кресле — $chair, дома — $home. '
-            'Кислоты в первый визит не торопим. Скажите «крем» для цены или «запись» на уход.',
-        'Стянутость часто про влагу и барьер. Спокойный путь: $chair и дома $home. '
-            'Могу назвать цену крема или помочь с записью на уход.',
-        'Похоже на обезвоженность и слабый барьер. Не сушим кожу кислотами сразу — сначала $chair, дома $home. '
-            'Что удобнее: шоп или визит?',
+        'Стянутость очень знакома — чаще всего это барьер, а не «надо сильнее кислоты». '
+            'У нас спокойный путь: $chair в кресле и дома $home. Хотите сначала крем или визит?',
+        'Если кожа шелушится и стягивает, я бы не сушила её пилингом сразу. '
+            'В CULT обычно: $chair, дома — $home. Могу подсказать по крему или записать на уход.',
+        'Похоже на обезвоженность и слабый барьер. Давайте мягко: $chair и $home, без агрессии в первый шаг. Что ближе — шоп или кресло?',
       ], q);
     }
     if (q.contains('жирн') ||
@@ -2874,14 +2922,20 @@ class CultAgent {
     if (q.contains('морщин') ||
         q.contains('мими') ||
         q.contains('лоб') ||
-        q.contains('гусиные')) {
+        q.contains('гусиные') ||
+        q.contains('избавиться от морщ') ||
+        q.contains('убрать морщ') ||
+        q.contains('разгладить')) {
       final inject = _lineService(botox) ?? 'ботулинотерапия';
-      final soft = _lineService(massage) ?? 'массаж';
+      final soft = _lineService(massage) ?? 'скульптурный массаж';
+      final home = _lineProduct(peptide) ?? 'Veil Peptide Serum';
       return _pick('concern-wrinkle', [
-        'Мимические линии: медицинский путь — $inject после осмотра; мягкий вход — $soft или уход без укола в первый визит. '
-            'Какой темп ближе — инъекции или без уколов сначала?',
-        'По морщинкам два спокойных сценария: $soft / уход без укола или $inject после осмотра. Что ближе вам сейчас?',
-        'Линии мимики не обязательно сразу уколами. Можно начать с $soft, а $inject обсудить на консультации. Куда склоняетесь?',
+        'Морщинки часто обидно замечать в зеркале — понимаю. Мягкий старт у нас: $soft или плотный уход, дома — $home. '
+            'Если хотите заметнее и быстрее — $inject после осмотра. С чего вам спокойнее начать?',
+        'От мимических линий обычно идём двумя путями: без укола — $soft и пептиды, или $inject, когда готовы. '
+            'Я не тороплю к инъекциям. Что ближе — мягкий ритуал или обсудить уколы на консультации?',
+        'Избавиться «насовсем» честно нельзя обещать, но освежить — да. В CULT чаще начинают с $soft, '
+            'а $inject подключают точечно после осмотра. Расскажите, зона — лоб, глаза или носогубки?',
       ], q);
     }
     if (q.contains('овал') ||
