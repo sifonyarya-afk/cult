@@ -816,7 +816,7 @@ class Contact {
 }
 
 /// Bump when shipping a user-visible feature so Settings proves the Mac build is fresh.
-const cultBuildTag = 'fix-module-verifier';
+const cultBuildTag = 'tts-spoken-brief';
 
 const contacts = <Contact>[
   Contact(

@@ -1,12 +1,15 @@
 import 'package:flutter_tts/flutter_tts.dart';
 
-/// On-device speech for CULT Агент: natural RU voice + speakable copy.
+/// On-device speech for CULT Агент: natural RU voice + short spoken lines.
 class CultTts {
   CultTts({FlutterTts? engine}) : _tts = engine ?? FlutterTts();
 
   final FlutterTts _tts;
   var _ready = false;
+  var _speakGen = 0;
   String? selectedVoiceLabel;
+  var _rate = 0.49;
+  var _pitch = 1.03;
 
   Future<void> prepare() async {
     if (_ready) return;
@@ -28,22 +31,48 @@ class CultTts {
         );
       } catch (_) {}
       await _tts.setLanguage('ru-RU');
-      // Premium voices sound most natural near the iOS default.
-      await _tts.setSpeechRate(0.50);
-      await _tts.setPitch(1.02);
       await _tts.setVolume(1.0);
       try {
         await _tts.setQueueMode(1);
       } catch (_) {}
       selectedVoiceLabel = await _pickHumanVoice();
+      await _applyProsody();
       _ready = true;
     } catch (_) {
       _ready = false;
     }
   }
 
-  /// Prefer Premium / Enhanced Milena by identifier when iOS exposes it.
+  Future<void> _applyProsody() async {
+    await _tts.setSpeechRate(_rate);
+    await _tts.setPitch(_pitch);
+  }
+
+  /// Prefer Premium / Enhanced Milena — try known Apple ids first.
   Future<String?> _pickHumanVoice() async {
+    const preferredIds = <String>[
+      'com.apple.voice.premium.ru-RU.Milena',
+      'com.apple.ttsbundle.Milena-premium',
+      'com.apple.voice.enhanced.ru-RU.Milena',
+      'com.apple.ttsbundle.Milena-enhanced',
+      'com.apple.voice.compact.ru-RU.Milena',
+      'com.apple.ttsbundle.Milena-compact',
+    ];
+    for (final id in preferredIds) {
+      try {
+        final ok = await _tts.setVoice({'identifier': id});
+        if (ok == 1) {
+          _tuneForQuality(id);
+          await _tts.setLanguage('ru-RU');
+          return id.contains('premium')
+              ? 'Milena (premium)'
+              : id.contains('enhanced')
+              ? 'Milena (enhanced)'
+              : 'Milena';
+        }
+      } catch (_) {}
+    }
+
     try {
       final raw = await _tts.getVoices;
       if (raw is! List) return null;
@@ -64,21 +93,36 @@ class CultTts {
       final id = best['identifier']?.trim() ?? '';
       if (id.isNotEmpty) {
         await _tts.setVoice({'identifier': id});
+        _tuneForQuality('$id ${best['quality']}');
       } else {
         await _tts.setVoice({
           'name': best['name'] ?? 'Milena',
           'locale': best['locale'] ?? 'ru-RU',
         });
+        _tuneForQuality(best['quality'] ?? '');
       }
-      // Re-apply language after voice — some iOS builds reset locale.
       await _tts.setLanguage(best['locale'] ?? 'ru-RU');
-      await _tts.setSpeechRate(0.50);
-      await _tts.setPitch(1.02);
       final name = best['name'] ?? 'ru-RU';
       final quality = best['quality'] ?? '';
       return quality.isEmpty ? name : '$name ($quality)';
     } catch (_) {
       return null;
+    }
+  }
+
+  void _tuneForQuality(String hint) {
+    final h = hint.toLowerCase();
+    if (h.contains('premium')) {
+      // Premium carries emotion best a touch under default speed.
+      _rate = 0.48;
+      _pitch = 1.02;
+    } else if (h.contains('enhanced')) {
+      _rate = 0.47;
+      _pitch = 1.03;
+    } else {
+      // Compact: slightly slower + warmer pitch reads less robotic.
+      _rate = 0.44;
+      _pitch = 1.06;
     }
   }
 
@@ -100,6 +144,7 @@ class CultTts {
   }
 
   Future<void> stop() async {
+    _speakGen++;
     try {
       await _tts.stop();
     } catch (_) {}
@@ -110,21 +155,51 @@ class CultTts {
     if (trimmed.isEmpty) return;
     await prepare();
     if (!_ready) return;
-    final spoken = forSpeech(trimmed);
+    final spoken = toSpokenBrief(trimmed);
     if (spoken.isEmpty) return;
+    final gen = ++_speakGen;
     try {
       await _tts.stop();
-      // Soft pause before speech — feels less abrupt on iOS.
-      await Future<void>.delayed(const Duration(milliseconds: 120));
-      if (spoken.length <= 360) {
+      await _applyProsody();
+      await Future<void>.delayed(const Duration(milliseconds: 160));
+      if (gen != _speakGen) return;
+
+      // Prefer one calm utterance — sounds like a person, not a slideshow.
+      if (spoken.length <= 300) {
         await _tts.speak(spoken);
         return;
       }
       for (final chunk in speechChunks(spoken)) {
+        if (gen != _speakGen) return;
         await _tts.speak(chunk);
-        await Future<void>.delayed(const Duration(milliseconds: 80));
+        await Future<void>.delayed(const Duration(milliseconds: 140));
       }
     } catch (_) {}
+  }
+
+  /// Short spoken form for TTS; full reply stays in the chat bubble.
+  static String toSpokenBrief(String text) {
+    final full = forSpeech(text);
+    if (full.length <= 280) return full;
+    final sentences = full
+        .split(RegExp(r'(?<=[.!?…])\s+'))
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (sentences.isEmpty) return full;
+    final buf = StringBuffer();
+    for (var i = 0; i < sentences.length; i++) {
+      final sentence = sentences[i];
+      final next = buf.isEmpty ? sentence : '$buf $sentence';
+      if (buf.isNotEmpty && next.length > 280) break;
+      if (buf.isNotEmpty) buf.write(' ');
+      buf.write(sentence);
+      if (buf.length >= 200 && i >= 1) break;
+    }
+    var out = buf.toString().trim();
+    if (out.isEmpty) out = sentences.first;
+    if (!RegExp(r'[.!?…]$').hasMatch(out)) out = '$out.';
+    return out;
   }
 
   /// Flatten punctuation and pronounce English catalog names in Russian.
@@ -138,9 +213,9 @@ class CultTts {
     }
     s = s
         .replaceAll('·', ',')
-        .replaceAll('—', ',')
-        .replaceAll('–', ',')
-        .replaceAll('→', ',')
+        .replaceAll('—', ', ')
+        .replaceAll('–', ', ')
+        .replaceAll('→', ', ')
         .replaceAll('«', '')
         .replaceAll('»', '')
         .replaceAll('₽', ' рублей')
@@ -148,19 +223,21 @@ class CultTts {
         .replaceAll('/', ' ')
         .replaceAll('\n', '. ');
 
-    // UI chrome → spoken Russian.
     s = s
         .replaceAll('меню Прайс', 'раздел прайс')
         .replaceAll('меню «Прайс»', 'раздел прайс')
         .replaceAll('«Прайс»', 'прайс')
+        .replaceAll('Прайс', 'прайс')
         .replaceAll('«Магазин»', 'магазин')
         .replaceAll('«Услуги»', 'услуги')
         .replaceAll('«Голос»', 'голос')
         .replaceAll('«+»', 'плюс')
         .replaceAll('«Инфузии»', 'инфузии')
-        .replaceAll('«Аппаратная»', 'аппаратная');
+        .replaceAll('«Аппаратная»', 'аппаратная')
+        .replaceAll('«Врачи»', 'врачи')
+        .replaceAll('«Мои записи»', 'мои записи');
 
-    // 45 000 / 14 200 → «45 тысяч», «14 тысяч 200»
+    // 45 000 / 14 200 → «45 тысяч» / «14 тысяч 200» — Premium reads this smoothly.
     s = s.replaceAllMapped(RegExp(r'\b(\d{1,3})\s(\d{3})\b'), (m) {
       final hi = m.group(1)!;
       final lo = m.group(2)!;
@@ -168,19 +245,16 @@ class CultTts {
       return '$hi тысяч $lo';
     });
 
-    // Soften dense clauses for Premium TTS pacing.
+    // Breath-friendly pauses after clauses.
     s = s
         .replaceAll(RegExp(r',\s*'), ', ')
+        .replaceAll(RegExp(r';\s*'), '; ')
         .replaceAll(RegExp(r'\.\s*'), '. ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
 
-    // Keep replies speakable — drop a trailing UI essay if huge.
-    if (s.length > 520) {
-      final cut = s.substring(0, 520);
-      final stop = cut.lastIndexOf('. ');
-      s = stop > 180 ? cut.substring(0, stop + 1) : '$cut.';
-    }
+    // Soften stacked questions / exclamations for TTS.
+    s = s.replaceAll('?.', '?').replaceAll('!.', '!');
 
     if (s.isEmpty) return s;
     if (!RegExp(r'[.!?…]$').hasMatch(s)) s = '$s.';
@@ -199,7 +273,7 @@ class CultTts {
     for (final part in parts) {
       if (buf.isEmpty) {
         buf = part;
-      } else if (buf.length + part.length < 220) {
+      } else if (buf.length + part.length < 180) {
         buf = '$buf $part';
       } else {
         merged.add(buf);
@@ -212,7 +286,7 @@ class CultTts {
 
   /// Short line spoken on chat open (full seed stays on screen).
   static const spokenGreeting =
-      'Здравствуйте. Я рядом, можно просто поговорить. Нажмите голос — внимательно слушаю.';
+      'Здравствуйте. Я рядом. Нажмите голос — спокойно вас слушаю.';
 
   static const _phonetics = <String, String>{
     'Veil Peptide Serum': 'Вейл Пептайд Сёрум',
@@ -226,6 +300,7 @@ class CultTts {
     'Aura Mineral Mist': 'Аура Минерал Мист',
     'Home Bio-Scan Kit': 'Хоум Био Скан Кит',
     'Circadian Light Panel': 'Циркадиан Лайт Панел',
+    'AlethiaPro': 'Алетиа Про',
     'NAD+ Micro-Patch': 'эн эй ди плюс Майкро Патч',
     'NAD+ Energy': 'эн эй ди плюс Энерджи',
     'NAD+': 'эн эй ди плюс',
