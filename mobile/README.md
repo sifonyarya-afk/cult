@@ -4,29 +4,44 @@
 
 **CULT Агент** (главная → баннер или Чат → CULT Агент): кнопка **«Голос»**, микрофон внизу, динамик в шапке. При открытии чата iOS спросит Микрофон и «Распознавание речи»; приветствие озвучивается.
 
-Если бота нет совсем или только старое «Я ассистент…» — на Mac собирается **не тот код**. Удаление приложения с телефона не обновляет исходники. Проверка из корня репозитория:
+Если бота нет / микрофон не спрашивает — на Mac почти всегда **старый коммит** (например `b7f4d26`) и `git pull` не прошёл.
+
+В zsh строка после `#` — не комментарий (если нет `INTERACTIVE_COMMENTS`). Не копируйте команды с `# …` в конец: будет `fatal: '#' does not appear to be a git repository` и `pathspec '#'`.
+
+**Скопируйте блок целиком, без правок (комментариев в нём нет):**
 
 ```bash
 cd ~/Desktop/cult/cult
-pwd
+git status
+git stash push -u -m "local before pull"
+git pull origin main
 git rev-parse --short HEAD
 git log -1 --oneline
 grep -n "CULT Агент" mobile/lib/data.dart
 grep speech_to_text mobile/pubspec.yaml
 ```
 
-Должны увидеть метку вроде `voice-agent-…`, строку `CULT Агент` и `speech_to_text`. Если `grep` пустой — вы не в том каталоге или не сделали `git pull`. Затем:
+После `pull` хеш **не** должен быть `b7f4d26`. `grep` обязан показать `CULT Агент` и `speech_to_text`. Если `pull` снова ругается на локальные файлы:
 
 ```bash
-git stash push -u -m "local ios" -- mobile/ios   # если pull ругается
-git pull
-cd mobile
+cd ~/Desktop/cult/cult
+git fetch origin
+git reset --hard origin/main
+```
+
+Это сбросит только локальные правки Xcode/`pubspec.lock` в этой папке. Затем:
+
+```bash
+cd ~/Desktop/cult/cult/mobile
 flutter pub get
-(cd ios && pod install)
+rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
+cd ios
+pod install
+cd ..
 flutter run
 ```
 
-В приложении: вкладка **Чат** — чёрная кнопка **CULT Агент**; на главной — баннер сверху; в **Настройки** → «Сборка приложения» = `voice-agent-…`.
+В `flutter pub get` должны появиться `speech_to_text` и `flutter_tts`. В приложении: Чат → чёрная кнопка **CULT Агент**; Настройки → Сборка = `voice-agent-visible`.
 
 Нужны Mac, Xcode и Flutter.
 
@@ -68,23 +83,27 @@ open ios/Runner.xcworkspace
 
 Предупреждение CocoaPods про `platform iOS 15.0` / «no platform was specified» можно игнорировать, если в конце есть `Pod installation complete!`.
 
-### `git pull` ругается на локальные изменения в `ios/`
+### `git pull` ругается на локальные изменения / zsh и `#`
 
-`flutter run` и Xcode сами правят `Podfile` / `project.pbxproj` / `Runner.xcscheme`. Чтобы подтянуть фиксы с GitHub, из **корня репозитория** (папка `cult`, не `mobile/ios`):
+`flutter run` и Xcode правят `Podfile`, `project.pbxproj`, `Runner.xcscheme`, `pubspec.lock`. Stash нужен **всех** грязных файлов, не только `mobile/ios`.
+
+Не вставляйте в Terminal команды с `# комментарий` — в zsh это ломает `git pull`/`git stash`.
 
 ```bash
 cd ~/Desktop/cult/cult
-git stash push -u -m "local ios" -- mobile/ios
-git pull
-cd mobile
-flutter pub get
-rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
-(cd ios && pod install)
-flutter devices
-flutter run
+git stash push -u -m "local before pull"
+git pull origin main
 ```
 
-Не делайте `cd ios` перед `flutter clean` / `flutter pub get` — Flutter сам уходит в `mobile`, и следующий `cd ios` ломает путь (`ios/ios/...`).
+Если merge всё ещё abort:
+
+```bash
+cd ~/Desktop/cult/cult
+git fetch origin
+git reset --hard origin/main
+```
+
+Затем сборка из `mobile` (см. блок в начале README).
 
 ### `No Podfile found` / `pod install` из `mobile`
 
