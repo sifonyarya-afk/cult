@@ -575,7 +575,7 @@ class CultTts {
   static List<String> speechChunks(String spoken) => breathGroups(spoken);
 
   static const spokenGreeting =
-      'Привет, я Мира. Расскажите, что у вас — я слушаю.';
+      'Привет, я Мира. Расскажите, что у вас — я рядом и слушаю.';
 
   /// Split into short breath groups for more human rhythm.
   static List<String> breathGroups(String spoken) {

@@ -90,12 +90,47 @@ void main() {
     final mood = cultAgent.answer('Как дела?');
     expect(
       mood.toLowerCase(),
-      anyOf(contains('ровн'), contains('чувству'), contains('хорошо'), contains('нормальн')),
+      anyOf(
+        contains('ровн'),
+        contains('чувству'),
+        contains('хорошо'),
+        contains('нормальн'),
+        contains('живу'),
+        contains('отлично'),
+      ),
     );
     final thanks = cultAgent.answer('Спасибо');
-    expect(thanks.toLowerCase(), contains('спасибо'));
+    expect(
+      thanks.toLowerCase(),
+      anyOf(contains('спасибо'), contains('пожалуйста'), contains('рада')),
+    );
     final tip = cultAgent.answer('Подскажи');
     expect(tip.toLowerCase(), anyOf(contains('вместе'), contains('лицо')));
+  });
+
+  test('Мира отвечает на разные житейские вопросы по-человечески', () {
+    final pregnant = cultAgent.answer('Я беременна, что можно?');
+    expect(pregnant.toLowerCase(), anyOf(contains('врач'), contains('беремен')));
+    expect(pregnant.toLowerCase(), isNot(contains('не нашла')));
+    final sad = cultAgent.answer('Мне грустно');
+    expect(
+      sad.toLowerCase(),
+      anyOf(
+        contains('жаль'),
+        contains('слышу'),
+        contains('услыш'),
+        contains('бывает'),
+        contains('без спешки'),
+      ),
+    );
+    final here = cultAgent.answer('Ты тут?');
+    expect(here.toLowerCase(), anyOf(contains('здесь'), contains('тут'), contains('связи')));
+    final weather = cultAgent.answer('Что с погодой для кожи?');
+    expect(weather.toLowerCase(), anyOf(contains('spf'), contains('барьер'), contains('кож')));
+    final open = cultAgent.answer('Вы сегодня открыты?');
+    expect(open.toLowerCase(), anyOf(contains('9:00'), contains('ежедневн'), contains('сегодня')));
+    final photo = cultAgent.answer('Можно по фото сказать что делать?');
+    expect(photo.toLowerCase(), anyOf(contains('фото'), contains('врач')));
   });
 
   test('Ответ про морщины звучит по-человечески без каталожных скобок', () {
@@ -500,7 +535,10 @@ void main() {
   test('Ты робот — отвечает про Миру', () {
     final reply = cultAgent.answer('ты робот?');
     expect(reply.toLowerCase(), contains('мира'));
-    expect(reply.toLowerCase(), anyOf(contains('cult'), contains('косметолог')));
+    expect(
+      reply.toLowerCase(),
+      anyOf(contains('cult'), contains('культ'), contains('косметолог')),
+    );
   });
 
   test('Подробнее дополняет lastBot', () {

@@ -830,7 +830,7 @@ class Contact {
 }
 
 /// Bump when shipping a user-visible feature so a Mac pull proves the build is fresh.
-const cultBuildTag = 'mira-actions-v30';
+const cultBuildTag = 'mira-human-v31';
 
 const contacts = <Contact>[
   Contact(
@@ -838,7 +838,7 @@ const contacts = <Contact>[
     name: 'Мира',
     role: 'Косметолог CULT · голосом',
     seed:
-        'Привет, я Мира. Могу записать на услугу, положить уход в корзину, вызвать трансфер или перевести к администратору и врачу. С чего начнём?',
+        'Привет, я Мира. Говорите как удобно — про кожу, самочувствие или визит. Могу записать, положить уход в корзину, вызвать трансфер или перевести к человеку. С чего начнём?',
   ),
   Contact(
     id: 'admin',
