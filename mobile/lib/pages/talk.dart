@@ -417,10 +417,10 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     }
   }
 
-  Future<void> _speak(String text) async {
+  Future<void> _speak(String text, {bool tight = false}) async {
     if (!_isAgent || !_speakReplies || text.trim().isEmpty) return;
     if (!mounted) return;
-    await _tts.speak(text);
+    await _tts.speak(text, tight: tight);
   }
 
   Future<void> _toggleListen(ClinicStore store) async {
@@ -490,7 +490,16 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     if (_isAgent && (_speakReplies || fromVoice)) {
       final reply = store.threads[widget.contactId]?.lastOrNull;
       if (reply != null && reply.from == 'them') {
-        _speak(reply.text);
+        // Cut previous utterance so replies don't overlap on fast turns.
+        final line = reply.text;
+        final tight = fromVoice;
+        () async {
+          try {
+            await _tts.stop();
+          } catch (_) {}
+          if (!mounted) return;
+          await _speak(line, tight: tight);
+        }();
       }
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {

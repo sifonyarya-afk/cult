@@ -60,6 +60,16 @@ void main() {
     expect(brief.length, lessThan(220));
   });
 
+  test('toSpokenBrief tight короче обычного', () {
+    final long =
+        '${List.filled(6, 'Это предложение про массаж и запись через плюс.').join(' ')} '
+        'Стоит примерно 18 тысяч рублей.';
+    final normal = CultTts.toSpokenBrief(long);
+    final tight = CultTts.toSpokenBrief(long, maxLen: 170);
+    expect(tight.length, lessThanOrEqualTo(normal.length));
+    expect(tight.length, lessThanOrEqualTo(200));
+  });
+
   test('breathGroups дробит длинную фразу', () {
     final words = List.filled(24, 'слово').join(' ');
     final groups = CultTts.breathGroups(words);
