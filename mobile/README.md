@@ -62,6 +62,32 @@ flutter run
 
 Не делайте `cd ios` перед `flutter clean` / `flutter pub get` — Flutter сам уходит в `mobile`, и следующий `cd ios` ломает путь (`ios/ios/...`).
 
+### `No Podfile found` / `pod install` из `mobile`
+
+`Podfile` лежит в `mobile/ios`. Из папки `mobile` вызывайте так:
+
+```bash
+(cd ios && pod install)
+```
+
+или `cd ios && pod install && cd ..`. Не запускайте голый `pod install` в `mobile` — CocoaPods ищет Podfile рядом и пишет `No Podfile found`.
+
+После `git pull` с голосовым агентом в `flutter pub get` должны появиться `speech_to_text` и `flutter_tts`. Если их нет — код ещё старый, сделайте `git pull` из корня `cult`.
+
+### `TUIPredictionViewCell` / Auto Layout / `NSAutoresizingMaskLayoutConstraint`
+
+Это системная клавиатура iOS (подсказки над клавиатурой), не баг CULT. Можно игнорировать. На работу приложения не влияет.
+
+### `Lost connection to device`
+
+Отладчик потерял iPhone. Разблокируйте телефон, проверьте кабель/Wi‑Fi debugging, затем снова:
+
+```bash
+cd ~/Desktop/cult/cult/mobile
+flutter devices
+flutter run
+```
+
 ### `Installing and launching...` крутится долго
 
 `Xcode build done` уже был — ошибка не в компиляции, а в установке/отладчике на телефоне.
