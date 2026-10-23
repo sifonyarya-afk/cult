@@ -41,7 +41,9 @@ cd ..
 flutter run
 ```
 
-В `flutter pub get` должны появиться `speech_to_text 7.4.0` и `flutter_tts` (не 7.5 — он требует Dart 3.12). В приложении: Чат → чёрная кнопка **CULT Агент**; Настройки → Сборка = `agent-voice-doctor`.
+В `flutter pub get` должны появиться `speech_to_text 7.4.0` и `flutter_tts` (не 7.5 — он требует Dart 3.12). В приложении: Чат → чёрная кнопка **CULT Агент**; Настройки → Сборка = `tts-milena-premium`.
+
+**Живой голос на iPhone:** Настройки → Универсальный доступ → Spoken Content (Проговорённый контент) → Голоса → Русский → скачайте **Premium** или **Enhanced** (Милена). Без этого iOS отдаёт плоский compact-голос.
 
 Нужны Mac, Xcode и Flutter.
 

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 import '../data.dart';
 import '../store.dart';
 import '../theme.dart';
+import '../tts.dart';
 import '../widgets.dart';
 import '../yclients.dart';
 import 'cabinet.dart';
@@ -274,13 +274,12 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
   final _text = TextEditingController();
   final _scroll = ScrollController();
   final _speech = SpeechToText();
-  final _tts = FlutterTts();
+  final _tts = CultTts();
   var _markedRead = false;
   var _listening = false;
   var _speechReady = false;
   var _speechDenied = false;
   var _speakReplies = true;
-  var _ttsReady = false;
   var _bootedVoice = false;
 
   bool get _isAgent => widget.contactId == 'bot';
@@ -350,124 +349,8 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
       if (!mounted) return;
       final store = ClinicScope.of(context);
       store.markChatRead(widget.contactId);
-      if (_isAgent) _bootAgentVoice(store);
+      if (_isAgent) _bootAgentVoice();
     });
-  }
-
-  Future<void> _prepareVoice() async {
-    if (!_isAgent || _ttsReady) return;
-    try {
-      await _tts.awaitSpeakCompletion(true);
-      try {
-        await _tts.setSharedInstance(true);
-        await _tts.setIosAudioCategory(
-          IosTextToSpeechAudioCategory.playback,
-          [
-            IosTextToSpeechAudioCategoryOptions.allowBluetooth,
-            IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
-            IosTextToSpeechAudioCategoryOptions.mixWithOthers,
-          ],
-          IosTextToSpeechAudioMode.voicePrompt,
-        );
-      } catch (_) {}
-      await _tts.setLanguage('ru-RU');
-      // Slightly slower, calmer — less robotic, less mid-phrase cut-off.
-      await _tts.setSpeechRate(0.42);
-      await _tts.setPitch(0.96);
-      await _tts.setVolume(1.0);
-      await _pickHumanVoice();
-      _ttsReady = true;
-    } catch (_) {
-      _ttsReady = false;
-    }
-  }
-
-  /// Prefer an enhanced / natural Russian voice when the OS exposes one.
-  Future<void> _pickHumanVoice() async {
-    try {
-      final raw = await _tts.getVoices;
-      if (raw is! List) return;
-      Map<String, String>? best;
-      var bestScore = -1;
-      for (final entry in raw) {
-        if (entry is! Map) continue;
-        final voice = <String, String>{
-          for (final e in entry.entries) '${e.key}': '${e.value}',
-        };
-        final locale =
-            (voice['locale'] ?? voice['localeId'] ?? '').toLowerCase();
-        final name = (voice['name'] ?? '').toLowerCase();
-        final quality = (voice['quality'] ?? '').toLowerCase();
-        final gender = (voice['gender'] ?? '').toLowerCase();
-        if (!locale.contains('ru')) continue;
-        var score = 1;
-        if (locale.contains('ru-ru') || locale.contains('ru_ru')) score += 2;
-        if (quality.contains('enhanced') ||
-            quality.contains('premium') ||
-            quality.contains('superior')) {
-          score += 6;
-        }
-        if (name.contains('enhanced') ||
-            name.contains('premium') ||
-            name.contains('neural') ||
-            name.contains('natural')) {
-          score += 4;
-        }
-        if (gender.contains('female') ||
-            name.contains('female') ||
-            name.contains('milena') ||
-            name.contains('katya') ||
-            name.contains('irina')) {
-          score += 3;
-        }
-        if (score > bestScore) {
-          bestScore = score;
-          best = voice;
-        }
-      }
-      if (best != null) await _tts.setVoice(best);
-    } catch (_) {}
-  }
-
-  /// Flatten catalog punctuation so TTS finishes every clause.
-  String _forSpeech(String text) {
-    var s = text
-        .replaceAll('·', ',')
-        .replaceAll('—', ',')
-        .replaceAll('–', ',')
-        .replaceAll('→', ',')
-        .replaceAll('«', '')
-        .replaceAll('»', '')
-        .replaceAll('₽', ' рублей')
-        .replaceAll('\n', '. ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    if (s.isEmpty) return s;
-    if (!RegExp(r'[.!?…]$').hasMatch(s)) s = '$s.';
-    return s;
-  }
-
-  List<String> _speechChunks(String spoken) {
-    final parts = spoken
-        .split(RegExp(r'(?<=[.!?…])\s+'))
-        .map((c) => c.trim())
-        .where((c) => c.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) return [spoken];
-    final merged = <String>[];
-    var buf = '';
-    for (final part in parts) {
-      if (buf.isEmpty) {
-        buf = part;
-      } else if (buf.length + part.length < 140) {
-        buf = '$buf $part';
-      } else {
-        merged.add(buf);
-        buf = part;
-      }
-    }
-    if (buf.isNotEmpty) merged.add(buf);
-    return merged;
   }
 
   Future<bool> _ensureSpeech() async {
@@ -501,10 +384,10 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     }
   }
 
-  Future<void> _bootAgentVoice(ClinicStore store) async {
+  Future<void> _bootAgentVoice() async {
     if (!_isAgent || _bootedVoice) return;
     _bootedVoice = true;
-    await _prepareVoice();
+    await _tts.prepare();
     // Asks iOS for Microphone + Speech Recognition as soon as the chat opens.
     final ok = await _ensureSpeech();
     if (!mounted) return;
@@ -514,30 +397,25 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
         'Разрешите Микрофон и «Распознавание речи» в Настройках → CULT.',
       );
     }
+    final voice = _tts.selectedVoiceLabel;
+    if (voice != null &&
+        !voice.toLowerCase().contains('premium') &&
+        !voice.toLowerCase().contains('enhanced')) {
+      showCultSnack(
+        context,
+        'Для живого голоса: Настройки → Универсальный доступ → Spoken Content → Голоса → русский → Premium/Enhanced.',
+      );
+    }
     if (_speakReplies) {
-      final greeting = store.threads['bot']?.firstOrNull?.text ??
-          _chatSeedFallback;
-      await _speak(greeting);
+      // Short spoken line — full seed stays as text in the bubble.
+      await _speak(CultTts.spokenGreeting);
     }
   }
 
-  static const _chatSeedFallback =
-      'Здравствуйте. Я консультант CULT. Нажмите «Голос» — слушаю вас.';
-
   Future<void> _speak(String text) async {
     if (!_isAgent || !_speakReplies || text.trim().isEmpty) return;
-    await _prepareVoice();
-    if (!_ttsReady) return;
-    final spoken = _forSpeech(text);
-    if (spoken.isEmpty) return;
-    final chunks = _speechChunks(spoken);
-    try {
-      await _tts.stop();
-      for (final chunk in chunks) {
-        if (!mounted || !_speakReplies) return;
-        await _tts.speak(chunk);
-      }
-    } catch (_) {}
+    if (!mounted) return;
+    await _tts.speak(text);
   }
 
   Future<void> _toggleListen(ClinicStore store) async {
