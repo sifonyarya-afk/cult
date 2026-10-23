@@ -1298,4 +1298,40 @@ void main() {
     final scent = cultAgent.answer('Хочу домашний уход без отдушки для чувствительной кожи');
     expect(scent.toLowerCase(), anyOf(contains('отдуш'), contains('lumen'), contains('барьер')));
   });
+
+  test('Аутоиммунное+IV, корочки≠очки, астма+RF', () {
+    final auto = cultAgent.answer('Можно ли капельницу при аутоиммунном заболевании?');
+    expect(auto.toLowerCase(), contains('аутоиммун'));
+    expect(auto.toLowerCase(), isNot(contains('силы на нуле')));
+    final crust = cultAgent.answer('Что делать если после RF появились корочки?');
+    expect(crust.toLowerCase(), anyOf(contains('короч'), contains('rf'), contains('барьер')));
+    expect(crust.toLowerCase(), isNot(contains('оправой')));
+    expect(crust.toLowerCase(), isNot(contains('ботулин')));
+    final asthma = cultAgent.answer('У меня астма — RF можно?');
+    expect(asthma.toLowerCase(), anyOf(contains('rf'), contains('астм')));
+    expect(asthma.toLowerCase(), isNot(contains('капельницу не назначаю')));
+  });
+
+  test('IPL+ретинол, филлер губы частота, макияж после чистки', () {
+    final ret = cultAgent.answer('После IPL можно наносить ретинол через пять дней?');
+    expect(ret.toLowerCase(), contains('ipl'));
+    expect(ret.toLowerCase(), anyOf(contains('ретинол'), contains('пауз')));
+    final lips = cultAgent.answer('Как часто можно колоть филлер в губы?');
+    expect(lips.toLowerCase(), contains('филлер'));
+    expect(lips.toLowerCase(), isNot(contains('ботулин обычно не колют')));
+    final makeup = cultAgent.answer('После чистки можно красить лицо вечером?');
+    expect(makeup.toLowerCase(), anyOf(contains('чистк'), contains('макияж'), contains('лёгк'), contains('легк')));
+    expect(makeup.toLowerCase(), isNot(contains('я рядом')));
+  });
+
+  test('SMAS+ботокс, поцелуи после мезо, мужской без блеска', () {
+    final combo = cultAgent.answer('Можно ли совместить SMAS и ботокс через месяц?');
+    expect(combo.toLowerCase(), anyOf(contains('smas'), contains('ботулин')));
+    expect(combo.toLowerCase(), isNot(contains('скажите пару процедур')));
+    final kiss = cultAgent.answer('После биоревитализации можно целоваться в тот же день?');
+    expect(kiss.toLowerCase(), anyOf(contains('поцел'), contains('целов'), contains('папул')));
+    final men = cultAgent.answer('Хочу спокойный уход для мужчины без блеска');
+    expect(men.toLowerCase(), anyOf(contains('блеск'), contains('барбер'), contains('мат')));
+    expect(men.toLowerCase(), isNot(contains('кому подбираем')));
+  });
 }
