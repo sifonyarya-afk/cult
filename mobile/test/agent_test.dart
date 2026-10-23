@@ -1188,4 +1188,43 @@ void main() {
     expect(glasses.toLowerCase(), anyOf(contains('очк'), contains('бот')));
     expect(glasses.toLowerCase(), isNot(contains('подбирает врач после осмотра')));
   });
+
+  test('Щитовидка/гепатит + капельница; RF+варикоз', () {
+    final thyroid = cultAgent.answer('Можно ли капельницу при заболеваниях щитовидки?');
+    expect(thyroid.toLowerCase(), contains('щитовид'));
+    expect(thyroid.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final hep = cultAgent.answer('У меня гепатит в анамнезе — капельницу можно?');
+    expect(hep.toLowerCase(), contains('гепатит'));
+    expect(hep.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final varicose = cultAgent.answer('Можно ли делать RF при варикозе ног?');
+    expect(varicose.toLowerCase(), contains('варикоз'));
+    expect(varicose.toLowerCase(), isNot(contains('меню «аппаратная»')));
+  });
+
+  test('Пакет массажей, мужской RF цена, SMAS+перелёт', () {
+    final pack = cultAgent.answer('Есть ли пакет из 5 массажей со скидкой?');
+    expect(pack.toLowerCase(), anyOf(contains('пакет'), contains('курс'), contains('лояльн')));
+    expect(pack.toLowerCase(), isNot(contains('меню «услуги»')));
+    final menRf = cultAgent.answer('Сколько стоит мужской RF-лифтинг?');
+    expect(menRf, contains('42'));
+    expect(menRf.toLowerCase(), contains('rf'));
+    final flight = cultAgent.answer('После SMAS можно лететь на следующий день?');
+    expect(flight.toLowerCase(), anyOf(contains('перел'), contains('рейс'), contains('запас')));
+    expect(flight.toLowerCase(), isNot(contains('массаж посильнее')));
+  });
+
+  test('Каменное лицо, RF горячее, Circadian, HydraPure сауна', () {
+    final stone = cultAgent.answer('Что делать если после ботокса лицо «каменное»?');
+    expect(stone.toLowerCase(), anyOf(contains('камен'), contains('мимик'), contains('чат')));
+    expect(stone.toLowerCase(), isNot(contains('натуральный результат')));
+    final hot = cultAgent.answer('После RF лицо горячее вечером — норма?');
+    expect(hot.toLowerCase(), anyOf(contains('горяч'), contains('тёпл'), contains('тепл'), contains('норм')));
+    expect(hot.toLowerCase(), isNot(contains('я рядом')));
+    final light = cultAgent.answer('Что такое Circadian Light Panel простыми словами?');
+    expect(light.toLowerCase(), anyOf(contains('circadian'), contains('панель'), contains('свет')));
+    expect(light.toLowerCase(), isNot(contains('скажу проще')));
+    final sauna = cultAgent.answer('Сколько нельзя сауну после HydraPure?');
+    expect(sauna.toLowerCase(), contains('hydrapure'));
+    expect(sauna.toLowerCase(), anyOf(contains('саун'), contains('пауз')));
+  });
 }
