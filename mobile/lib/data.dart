@@ -816,7 +816,7 @@ class Contact {
 }
 
 /// Bump when shipping a user-visible feature so Settings proves the Mac build is fresh.
-const cultBuildTag = 'agent-layout-fix-v21';
+const cultBuildTag = 'clinic-think-v22';
 
 const contacts = <Contact>[
   Contact(
