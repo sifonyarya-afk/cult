@@ -80,15 +80,30 @@ void main() {
 
   test('Агент отвечает на привет и как дела как живой консультант', () {
     final hi = cultAgent.answer('Привет');
-    expect(hi.toLowerCase(), contains('здравств'));
+    expect(
+      hi.toLowerCase(),
+      anyOf(contains('здравств'), contains('привет')),
+    );
     expect(hi.toLowerCase(), contains('мира'));
     expect(hi.toLowerCase(), isNot(contains('не нашла')));
+    expect(hi, isNot(contains('(')));
     final mood = cultAgent.answer('Как дела?');
-    expect(mood.toLowerCase(), anyOf(contains('ровн'), contains('чувству')));
+    expect(
+      mood.toLowerCase(),
+      anyOf(contains('ровн'), contains('чувству'), contains('хорошо'), contains('нормальн')),
+    );
     final thanks = cultAgent.answer('Спасибо');
     expect(thanks.toLowerCase(), contains('спасибо'));
     final tip = cultAgent.answer('Подскажи');
     expect(tip.toLowerCase(), anyOf(contains('вместе'), contains('лицо')));
+  });
+
+  test('Ответ про морщины звучит по-человечески без каталожных скобок', () {
+    final wrinkles = cultAgent.answer('Как избавиться от морщин?');
+    expect(wrinkles.toLowerCase(), anyOf(contains('массаж'), contains('морщи')));
+    expect(RegExp(r'«[^»]+»\s*\(').hasMatch(wrinkles), isFalse);
+    expect(wrinkles, isNot(contains('₽')));
+    expect(wrinkles.toLowerCase(), isNot(contains('ориентир по цене')));
   });
 
   test('Мира отвечает на базовые живые вопросы', () {
@@ -113,10 +128,16 @@ void main() {
 
   test('Свободный разговор по жалобе без названия услуги', () {
     final dry = cultAgent.answer('Кожа очень сухая и стягивает');
-    expect(dry.toLowerCase(), anyOf(contains('барьер'), contains('влаг')));
+    expect(
+      dry.toLowerCase(),
+      anyOf(contains('барьер'), contains('barrier'), contains('влаг')),
+    );
     expect(dry.toLowerCase(), isNot(contains('точного совпадения')));
     final tired = cultAgent.answer('Я устала, нет сил');
-    expect(tired.toLowerCase(), contains('инфуз'));
+    expect(
+      tired.toLowerCase(),
+      anyOf(contains('инфуз'), contains('капельн')),
+    );
     final fear = cultAgent.answer('Боюсь что будет больно');
     expect(fear.toLowerCase(), anyOf(contains('анестез'), contains('страх')));
   });

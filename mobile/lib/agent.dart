@@ -105,9 +105,9 @@ class CultAgent {
     final q = _repairAsr(_normalize(text));
     if (q.isEmpty) {
       return _pick('empty', const [
-        'Я рядом. Расскажите, что с кожей или самочувствием — как на приёме, своими словами.',
-        'Слушаю. Чаще всего начинаем с того, что видно в зеркале, или с усталости — а я уже предложу из CULT.',
-        'Давайте с главного: лицо, тело или силы? Подберу спокойный протокол из наших услуг и шопа.',
+        'Я рядом. Расскажите, что с кожей или самочувствием — своими словами, как удобно.',
+        'Слушаю. Можно с того, что видно в зеркале, или с усталости — а я уже предложу, что у нас есть.',
+        'Давайте с главного: лицо, тело или силы? Подберу спокойный вариант из наших услуг и шопа.',
       ], text);
     }
 
@@ -115,7 +115,7 @@ class CultAgent {
       return _pick('filler', const [
         'Пауза нормальна. Можно одно слово — сухость, овал, прыщи, усталость — и я уже в теме.',
         'Ничего страшного. Кожа, силы или массаж — с любого края зайдём.',
-        'Я подожду. Без названий процедур тоже можно: что беспокоит на ощупь или в зеркале.',
+        'Я подожду. Без названий тоже можно: что беспокоит на ощупь или в зеркале.',
       ], text);
     }
 
@@ -1049,6 +1049,11 @@ class CultAgent {
     rest = rest.replaceAll(RegExp(r'\s+'), ' ').trim();
 
     if (rest.length >= 3) {
+      final direct = _clinicService(rest, gender: gender);
+      if (direct != null) return direct.title;
+      final directInf = _clinicInfusion(rest);
+      if (directInf != null) return directInf.title;
+
       final hit = _catalogHit(
         rest,
         localServices: localServices,
@@ -1059,14 +1064,23 @@ class CultAgent {
         gender: gender,
       );
       if (hit != null && hit.score >= 5) {
-        return RegExp(r'«([^»]+)»').firstMatch(hit.reply)?.group(1) ?? rest;
+        // Never take CTA quotes («Запись», «+») — prefer a real catalog title.
+        for (final m in RegExp(r'«([^»]+)»').allMatches(hit.reply)) {
+          final title = m.group(1)?.trim() ?? '';
+          if (!_looksLikeBookableTitle(title)) continue;
+          if (_clinicService(title, gender: gender) != null ||
+              _clinicInfusion(title) != null ||
+              liveServices.any(
+                (s) => _normalize(s.title).contains(_normalize(title)),
+              )) {
+            return title;
+          }
+        }
+        if (rest.length >= 4) return rest;
       }
       if (rest.length >= 4 &&
           !const {'утро', 'вечер', 'день', 'завтра', 'сегодня'}.contains(rest)) {
-        final svc = _clinicService(rest, gender: gender);
-        if (svc != null) return svc.title;
-        final inf = _clinicInfusion(rest);
-        if (inf != null) return inf.title;
+        return rest;
       }
     }
 
@@ -1074,7 +1088,7 @@ class CultAgent {
     final named = RegExp(r'«([^»]+)»').allMatches(topic).toList();
     for (final m in named.reversed) {
       final title = m.group(1)?.trim() ?? '';
-      if (title.length < 3) continue;
+      if (!_looksLikeBookableTitle(title)) continue;
       if (_clinicService(title, gender: gender) != null ||
           _clinicInfusion(title) != null ||
           liveServices.any((s) => _normalize(s.title).contains(_normalize(title)))) {
@@ -1082,6 +1096,26 @@ class CultAgent {
       }
     }
     return null;
+  }
+
+  bool _looksLikeBookableTitle(String title) {
+    final n = _normalize(title);
+    if (title.trim().length < 3) return false;
+    if (const {
+      'запись',
+      '+',
+      'плюс',
+      'услуги',
+      'магазин',
+      'голос',
+      'врачи',
+      'инфузии',
+      'аппаратная',
+      'прайс',
+    }.contains(n)) {
+      return false;
+    }
+    return true;
   }
 
   String? _resolveBookDoctor(String q) {
@@ -1994,16 +2028,16 @@ class CultAgent {
     } else if (bestInfusion == best && infusionHits.isNotEmpty) {
       final item = infusionHits.first.item;
       reply =
-          'По инфузии «${item.title}»: ${item.price}, ${item.duration}. '
+          'Про капельницу ${item.title}: обычно ${item.price}, занимает ${item.duration}. '
           '${item.blurb} '
           'Перед капельницей врач уточнит показания. '
-          'Запись — через «+» или меню «Инфузии».';
+          'Если откликается — можем записаться.';
     } else if (bestDevice == best && deviceHits.isNotEmpty) {
       final item = deviceHits.first.item;
       reply =
-          'Аппаратный протокол «${item.title}»: ${item.meta}. '
-          'Ориентир по цене — ${item.price}. '
-          'Интенсивность подберём на консультации под вашу кожу — подробности в «Аппаратной».';
+          'Про аппарат ${item.title}: ${item.meta}. '
+          'По цене ориентир — ${item.price}. '
+          'Интенсивность подберём на консультации под вашу кожу.';
     } else {
       return null;
     }
@@ -2054,34 +2088,37 @@ class CultAgent {
   String _formatServices(List<Service> items, {required bool wantsPrice}) {
     final parts = <String>[];
     for (final item in items) {
-      final buf = StringBuffer(
-        'По услуге «${item.title}»: ${item.priceLabel}, занимает ${item.duration}. ',
-      );
-      buf.write('${item.blurb} ');
+      final buf = StringBuffer('Про ${item.title}');
+      if (wantsPrice) {
+        buf.write(
+          ' — обычно около ${item.priceLabel}, занимает ${item.duration}',
+        );
+      }
+      buf.write('. ${item.blurb} ');
       if (!wantsPrice && item.results.isNotEmpty) {
-        buf.write('Обычно ждут: ${item.results.take(2).join(', ')}. ');
+        buf.write('Чаще всего ждут: ${item.results.take(2).join(', ')}. ');
       }
       if (item.contraindications.isNotEmpty) {
         buf.write(
-          'Важно учесть противопоказания: ${item.contraindications.take(2).join('; ')}. ',
+          'На осмотре важно сказать про: ${item.contraindications.take(2).join('; ')}. ',
         );
       }
       parts.add(buf.toString().trim());
     }
     return '${parts.join(' ')}\n'
-        'Если откликается — запишем через «+» или «Услуги»; на осмотре уточним детали под вашу кожу.';
+        'Если откликается — можем записаться: нажмите «Запись» или скажите, когда удобно. '
+        'На осмотре уточним детали под вашу кожу.';
   }
 
   String _formatLive(List<YcService> items) {
     final lines = [
       for (final item in items)
         '${item.title}'
-            '${item.priceLabel.isEmpty ? '' : ' — ${item.priceLabel}'}'
-            '${item.durationLabel.isEmpty ? '' : ', ${item.durationLabel}'}'
-            '${item.category.isEmpty ? '' : ', ${item.category}'}',
+            '${item.priceLabel.isEmpty ? '' : ' — примерно ${item.priceLabel}'}'
+            '${item.durationLabel.isEmpty ? '' : ', ${item.durationLabel}'}',
     ];
-    return 'В филиале CULT Сочи сейчас так: ${lines.join('; ')}. '
-        'Полный прайс — в меню «Прайс», запись удобнее через «+». '
+    return 'В филиале в Сочи сейчас так: ${lines.join('; ')}. '
+        'Полный прайс — в меню, а записаться проще кнопкой «Запись». '
         'Могу сузить по зоне или бюджету, если скажете.';
   }
 
@@ -2130,14 +2167,14 @@ class CultAgent {
       final man = gender == ClientGender.man;
       return man
           ? _pick('greet-m', const [
-              'Здравствуйте, я Мира. Рада вас слышать — давайте как на приёме: что сейчас с кожей или самочувствием?',
-              'Здравствуйте! Я Мира, косметолог CULT. Чем могу помочь — освежить вид, разобрать морщинки или просто поговорить?',
-              'Здравствуйте, это Мира. Я рядом: расскажите своими словами про кожу или самочувствие.',
+              'Привет, я Мира. Рада вас слышать — расскажите, что сейчас с кожей или самочувствием?',
+              'Здравствуйте! Я Мира. Чем помочь — освежить вид, разобрать морщинки или просто поговорить?',
+              'Привет, это Мира. Я рядом: говорите своими словами, без сложных названий.',
             ], q)
           : _pick('greet-w', const [
-              'Здравствуйте, я Мира. Рада вас слышать — давайте спокойно: что сейчас с кожей или самочувствием?',
-              'Здравствуйте! Я Мира, косметолог CULT. Чем помочь — освежить вид, морщинки, усталость или запись?',
-              'Здравствуйте, это Мира. Говорите как удобно — я подстроюсь и предложу из наших протоколов.',
+              'Привет, я Мира. Рада вас слышать — что сейчас с кожей или самочувствием?',
+              'Здравствуйте! Я Мира. Чем помочь — освежить вид, морщинки, усталость или запись?',
+              'Привет, это Мира. Говорите как удобно — я подстроюсь.',
             ], q);
     }
     if (q.contains('как дела') ||
@@ -2150,9 +2187,9 @@ class CultAgent {
         compact == 'как самочувствие' ||
         compact == 'как настроение') {
       return _pick('how-are', const [
-        'Спасибо, у меня всё ровно — и я целиком для вас. А вы как себя чувствуете сегодня?',
-        'Хорошо, спасибо. Как вы себя чувствуете: кожа спокойная или что-то тянет?',
-        'Всё ровно, спасибо. Расскажите про себя — вместе найдём, что подтянуть.',
+        'Спасибо, у меня всё хорошо — и я целиком для вас. А вы как себя чувствуете сегодня?',
+        'Хорошо, спасибо. А у вас как: кожа спокойная или что-то тянет?',
+        'Нормально, спасибо. Расскажите про себя — вместе найдём, что подтянуть.',
       ], q);
     }
     if (words.any(
@@ -2210,16 +2247,16 @@ class CultAgent {
         q.contains('ты человек');
     if (asksName) {
       return _pick('my-name', const [
-        'Меня зовут Мира. Я косметолог CULT — можно просто поговорить о коже или сразу про визит.',
-        'Я Мира. Работаю с эстетикой и уходом в CULT: слушаю задачу и предлагаю спокойный следующий шаг.',
-        'Мира. Приятно познакомиться — расскажите, что сейчас важнее для кожи или самочувствия.',
+        'Меня зовут Мира. Можно просто поговорить о коже или сразу про визит — как вам удобнее.',
+        'Я Мира. Слушаю, что беспокоит, и предлагаю спокойный следующий шаг из нашей клиники.',
+        'Мира. Приятно познакомиться — что сейчас важнее: кожа или самочувствие?',
       ], q);
     }
     if (asksAbout) {
       return _pick('who-am-i', const [
-        'Я Мира, косметолог CULT в приложении. Не заменяю очный осмотр, но могу разобрать задачу и предложить наши услуги или шоп. О чём подумаем?',
-        'Я из команды CULT, зовут Мира. Говорю как на приёме: кожа, энергия, запись — без роботского сценария. Чем помочь?',
-        'Коротко: я Мира. Помогаю сориентироваться в протоколах CULT и домашнем уходе; окончательное решение — за врачом очно.',
+        'Я Мира, косметолог клиники Культ. Очный осмотр не заменяю, но могу разобрать задачу и предложить услуги или уход из шопа. О чём подумаем?',
+        'Я из команды Культ, зовут Мира. Говорю как на приёме: кожа, энергия, запись — без сценария. Чем помочь?',
+        'Коротко: я Мира, косметолог Культ. Помогаю сориентироваться в уходах и домашнем уходе; окончательное решение — за врачом очно.',
       ], q);
     }
     if (q.contains('на английском') ||
@@ -2252,9 +2289,9 @@ class CultAgent {
       // «Помоги с морщинами» / «подскажи про сухость» → concern, not empty tip.
       if (_concernReply(q, gender: gender) != null) return null;
       return _pick('tip-soft', const [
-        'Конечно, давайте вместе. Коротко: лицо или тело, что хотите улучшить?',
-        'С удовольствием, вместе разберём. Что ближе — лицо, самочувствие или запись?',
-        'Да, подскажу. Одного ориентира хватит: лицо, тело или энергия.',
+        'Конечно, давайте вместе. Лицо или тело — что хотите улучшить?',
+        'С удовольствием разберём. Что ближе — лицо, самочувствие или запись?',
+        'Да, подскажу. Хватит одного слова: лицо, тело или энергия.',
       ], q);
     }
     if (compact == 'нужен совет' ||
@@ -2306,7 +2343,7 @@ class CultAgent {
           'давай',
           'конечно',
         }.contains(compact)) {
-      return 'Хорошо. Тогда скажите чуть конкретнее: лицо, тело, энергия или запись — продолжим в вашем темпе.';
+      return 'Хорошо. Тогда чуть конкретнее: лицо, тело, энергия или запись — продолжим в вашем темпе.';
     }
     if (words.length <= 4 &&
         const {
@@ -2316,7 +2353,7 @@ class CultAgent {
           'потом',
           'ну ладно потом',
         }.contains(compact)) {
-      return 'Хорошо, без давления. Если позже захотите совет или запись — просто напишите или нажмите «Голос».';
+      return 'Хорошо, без давления. Если позже захотите совет или запись — просто напишите или скажите голосом.';
     }
     if (q.contains('голос стран') ||
         q.contains('робот голос') ||
@@ -2324,7 +2361,7 @@ class CultAgent {
         q.contains('неживой голос')) {
       return _pick('voice-robot', const [
         'Понимаю, синтетический голос раздражает. Могу отвечать короче — скажите «короче» или тему одним словом.',
-        'Слышу. Давайте текстом короче и по делу: одно слово — сухость, массаж, запись — и продолжим.',
+        'Слышу вас. Давайте короче и по делу: одно слово — сухость, массаж, запись — и продолжим.',
         'Ок, без лишней озвучки. Напишите или скажите коротко, что важно — отвечу спокойно.',
       ], q);
     }
@@ -2859,9 +2896,9 @@ class CultAgent {
       final home = _lineProduct(barrier) ?? 'Lumen Barrier Cream';
       return _pick('concern-dry', [
         'Стянутость очень знакома — чаще всего это барьер, а не «надо сильнее кислоты». '
-            'У нас спокойный путь: $chair в кресле и дома $home. Хотите сначала крем или визит?',
-        'Если кожа шелушится и стягивает, я бы не сушила её пилингом сразу. '
-            'В CULT обычно: $chair, дома — $home. Могу подсказать по крему или записать на уход.',
+            'Я бы начала с ухода $chair в кресле и дома с крема $home. Хотите сначала крем или визит?',
+        'Если кожа шелушится и стягивает, я бы не сушила её пилингом сразу — сначала барьер. '
+            'У нас обычно $chair, дома — $home. Могу подсказать по крему или записать на уход.',
         'Похоже на обезвоженность и слабый барьер. Давайте мягко: $chair и $home, без агрессии в первый шаг. Что ближе — шоп или кресло?',
       ], q);
     }
@@ -2870,9 +2907,10 @@ class CultAgent {
         q.contains('расшир') ||
         q.contains('поры') ||
         q.contains('пор ')) {
-      return 'Блеск и поры: сначала осмотр, затем либо плотный уход ${_lineService(hydra) ?? 'HydraPure'}, '
-          'либо уплотнение ${_lineService(rf) ?? 'микроигольчатым RF'} после согласования. '
-          'Жёсткую чистку «в лоб» не предлагаю. Нужна цена RF или запись на консультацию?';
+      return 'С блеском и порами я бы не торопилась с жёсткой чисткой. '
+          'Сначала осмотр, потом либо плотный уход ${_lineService(hydra) ?? 'HydraPure'}, '
+          'либо ${_lineService(rf) ?? 'микроигольчатый RF'} — если врач согласует. '
+          'Сказать примерно цену или сразу про запись?';
     }
     // Not «постакне» — that has its own FAQ path.
     if (((q.contains('акне') || q.contains('acne')) &&
@@ -2883,12 +2921,12 @@ class CultAgent {
         q.contains('высып')) {
       final peelLine = _lineService(peel) ?? 'химический пилинг L3';
       return _pick('concern-acne', [
-        'Воспаления в CULT не «жжём» дома: очный осмотр → щадящий уход или $peelLine по фототипу. '
-            'Запись через «+»; зона одним словом поможет сузить протокол.',
+        'Воспаления дома лучше не «жечь»: нужен осмотр, потом щадящий уход или $peelLine по фототипу. '
+            'Зона одним словом поможет сузить — и можем записаться.',
         'С прыщами и воспалением лучше не экспериментировать самой: осмотр, затем мягкий уход или $peelLine. '
-            'Могу помочь записаться через «+».',
+            'Могу помочь записаться, если скажете когда удобно.',
         'Для высыпаний сначала смотрим кожу вживую — домашний жёсткий разбор часто ухудшает. '
-            'В прайсе дальше уход или $peelLine. Запишем осмотр?',
+            'Дальше обычно уход или $peelLine. Запишем осмотр?',
       ], q);
     }
     if (q.contains('каменн') ||
@@ -2901,8 +2939,8 @@ class CultAgent {
         q.contains('чтобы не заметил') ||
         q.contains('чтобы не было видно') ||
         q.contains('естественн результат')) {
-      return 'Натуральный результат в CULT: старт ${_lineService(massage) ?? 'массажем лица'} или уходом, '
-          'ботулинотерапия/филлеры — только после осмотра и с сохранением мимики. '
+      return 'Если хотите натуральный результат — я бы начала с ${_lineService(massage) ?? 'массажа лица'} или ухода. '
+          'Ботокс и филлеры — только после осмотра и с сохранением мимики. '
           'Что важнее — свежесть без следов или обсудить дозировку на консультации?';
     }
     if (q.contains('помолодеть') ||
@@ -2916,7 +2954,7 @@ class CultAgent {
           ? 'Свежий вид без «перекачки»: ${_lineService(massage) ?? 'барбер-массаж'}, '
               'при необходимости ${_lineService(rf) ?? 'мужской RF-лифтинг'} после осмотра, дома — ${_lineProduct(barrier) ?? 'барьерный крем'}. '
               'Быстрый эффект к дате или курс на плотность?'
-          : 'Омоложение без жёстких обещаний: ${_lineService(massage) ?? 'скульптурный массаж'} или уход, дома ${_lineProduct(barrier) ?? 'барьер'} / ${_lineProduct(peptide) ?? 'пептиды'}; '
+          : 'Омоложение без жёстких обещаний: ${_lineService(massage) ?? 'скульптурный массаж'} или уход, дома ${_lineProduct(barrier) ?? 'барьерный крем'} или ${_lineProduct(peptide) ?? 'пептиды'}. '
               'RF или инъекции — только после осмотра. Свежесть к дате или плотность курсом?';
     }
     if (q.contains('морщин') ||
@@ -2933,8 +2971,8 @@ class CultAgent {
         'Морщинки часто обидно замечать в зеркале — понимаю. Мягкий старт у нас: $soft или плотный уход, дома — $home. '
             'Если хотите заметнее и быстрее — $inject после осмотра. С чего вам спокойнее начать?',
         'От мимических линий обычно идём двумя путями: без укола — $soft и пептиды, или $inject, когда готовы. '
-            'Я не тороплю к инъекциям. Что ближе — мягкий ритуал или обсудить уколы на консультации?',
-        'Избавиться «насовсем» честно нельзя обещать, но освежить — да. В CULT чаще начинают с $soft, '
+            'Я не тороплю к инъекциям. Что ближе — мягкий уход или обсудить уколы на консультации?',
+        'Избавиться «насовсем» честно нельзя обещать, но освежить — да. Чаще начинают с $soft, '
             'а $inject подключают точечно после осмотра. Расскажите, зона — лоб, глаза или носогубки?',
       ], q);
     }
@@ -2943,24 +2981,24 @@ class CultAgent {
         q.contains('брыл') ||
         q.contains('контур лиц')) {
       return man
-          ? 'Овал у мужчин в CULT: ${_lineService(rf) ?? 'мужской RF-лифтинг'} или ${_lineService(massage) ?? 'барбер-массаж'} — контур без объёма «на показ». '
-              'Ориентир по цене или сразу запись на осмотр?'
-          : 'Овал: чаще ${_lineService(massage) ?? 'скульптурный массаж лица'}, при необходимости ${_lineService(rf) ?? 'микроигольчатый RF'}. '
+          ? 'По овалу у мужчин обычно ${_lineService(rf) ?? 'мужской RF-лифтинг'} или ${_lineService(massage) ?? 'барбер-массаж'} — контур без объёма «на показ». '
+              'Сказать примерно цену или сразу про запись на осмотр?'
+          : 'По овалу чаще помогает ${_lineService(massage) ?? 'скульптурный массаж лица'}, при необходимости — ${_lineService(rf) ?? 'микроигольчатый RF'}. '
               'Сравнить два варианта или сразу консультация?';
     }
     if (q.contains('отек') ||
         q.contains('мешк') ||
         q.contains('одутл') ||
         q.contains('пастоз')) {
-      return 'Отёк и тяжесть: в прайсе CULT это ${_lineService(massage) ?? 'скульптурный / лимфодренажный массаж'} плюс питьевой режим. '
-          'Скажите «массаж» — уточню длительность и цену из каталога.';
+      return 'Отёк и тяжесть хорошо снимает ${_lineService(massage) ?? 'скульптурный или лимфодренажный массаж'}, плюс питьевой режим. '
+          'Если скажете «массаж» — уточню, сколько длится и примерно сколько стоит.';
     }
     if (q.contains('пигмент') ||
         q.contains('пятн') ||
         q.contains('веснуш') ||
         q.contains('неравном')) {
-      return 'Пигмент по фототипу: ${_lineService(peel) ?? 'химический пилинг L3'} или аппарат Lumecca IPL из раздела «Аппаратная», без домашнего отбеливания. '
-          'Скажите «пилинг» / «IPL» для цифр или запишем осмотр через «+».';
+      return 'С пигментом идём по фототипу: ${_lineService(peel) ?? 'химический пилинг L3'} или аппарат Lumecca, без домашнего отбеливания. '
+          'Сказать цифры по пилингу или IPL — или запишем осмотр?';
     }
     if (q.contains('тускл') ||
         q.contains('серый') ||
@@ -2973,21 +3011,21 @@ class CultAgent {
         q.contains('перед мероприя') ||
         q.contains('на выход') ||
         q.contains('выглядеть')) {
-      return 'К событию без долгой реабилитации: ${_lineService(hydra) ?? 'HydraPure'} или ${_lineService(massage) ?? 'скульптурный массаж'}; '
-          'при запасе по силам — инфузия ${_lineInfusion(glow) ?? 'Beauty & Glow'}. Назовите дату — подстроим протокол.';
+      return 'К событию без долгой реабилитации хорошо заходит ${_lineService(hydra) ?? 'HydraPure'} или ${_lineService(massage) ?? 'скульптурный массаж'}. '
+          'Если силы позволяют — ещё капельница ${_lineInfusion(glow) ?? 'Beauty & Glow'}. Назовите дату — подстроим.';
     }
     if (q.contains('носогуб') ||
         q.contains('носо губ') ||
         (q.contains('складк') && q.contains('губ'))) {
-      return 'Носогубки: сначала ${_lineService(massage) ?? 'массаж'}/${_lineService(hydra) ?? 'уход'}; '
-          'контурная пластика — только после осмотра, если объём действительно нужен. Запись на консультацию через «+».';
+      return 'По носогубкам я бы начала с ${_lineService(massage) ?? 'массажа'} или ${_lineService(hydra) ?? 'ухода'}. '
+          'Контурную пластику — только после осмотра, если объём действительно нужен. Запишем консультацию?';
     }
     if (q.contains('черные точки') ||
         q.contains('комедон') ||
         q.contains('черн точки') ||
         (q.contains('точки') && q.contains('пор'))) {
-      return 'Комедоны: не выдавливать агрессивно. В CULT — осмотр и ${_lineService(hydra) ?? 'HydraPure'} или ${_lineService(peel) ?? 'пилинг L3'} без пересушивания. '
-          '«Чистка» / «пилинг» — для ориентира из прайса, либо «+» на запись.';
+      return 'Комедоны лучше не выдавливать агрессивно. У нас — осмотр и ${_lineService(hydra) ?? 'HydraPure'} или ${_lineService(peel) ?? 'пилинг L3'}, без пересушивания. '
+          'Сказать про чистку и пилинг подробнее — или сразу про запись?';
     }
     if (q.contains('ультразвук') ||
         q.contains('узи чист') ||
@@ -3000,35 +3038,35 @@ class CultAgent {
         q.contains('энерг') ||
         q.contains('выгоран') ||
         q.contains('иммун')) {
-      return 'Силы в CULT — через инфузии: ${_lineInfusion(nad) ?? 'NAD+ Energy'}, '
-          '${_lineInfusion(immunity) ?? 'Immunity Boost'}, ${_lineInfusion(glow) ?? 'Beauty & Glow'}. '
+      return 'Если силы на нуле, у нас помогают капельницы: ${_lineInfusion(nad) ?? 'NAD+ Energy'}, '
+          '${_lineInfusion(immunity) ?? 'Immunity Boost'} или ${_lineInfusion(glow) ?? 'Beauty & Glow'}. '
           'Могу сравнить три или сразу помочь с записью на капельницу.';
     }
     if (q.contains('сон') || q.contains('не высып') || q.contains('бессон')) {
-      return 'Сон клиника не заменяет, но поддерживает: мягкий уход от отёка и при необходимости ${_lineInfusion(nad) ?? 'NAD+'} / шоп (например Mitochondrial Fuel). '
+      return 'Сон клиника не заменяет, но поддержать можно: мягкий уход от отёка и при необходимости ${_lineInfusion(nad) ?? 'NAD+'} или формула из шопа, например Mitochondrial Fuel. '
           'Скажите «шоп» или «инфузия» — сузим.';
     }
     if (q.contains('глаз') ||
         q.contains('темные круги') ||
         q.contains('темные круги') ||
         q.contains('синяк под')) {
-      return 'Зона глаз: осмотр, затем ${_lineService(meso) ?? 'мезотерапия'} или щадящий уход — без агрессии. '
-          'Больше отёк или тень? От этого зависит протокол.';
+      return 'Зону глаз смотрим спокойно: осмотр, затем ${_lineService(meso) ?? 'мезотерапия'} или щадящий уход — без агрессии. '
+          'Больше отёк или тень? От этого зависит, что предложу.';
     }
     if (q.contains('шея') || q.contains('декольте')) {
-      return 'Шея/декольте в CULT смотрим на консультации: плотность (иногда RF/уход) или домашний крем из шопа. '
-          'Запишем осмотр через «+»?';
+      return 'Шею и декольте смотрим на консультации: иногда плотность через RF или уход, иногда домашний крем из шопа. '
+          'Запишем осмотр?';
     }
     if (q.contains('похудеть') ||
         q.contains('жир на') ||
         q.contains('целлюлит') ||
         q.contains('живот')) {
-      return 'Тело: эстетика CULT (в т.ч. BodyTite в аппаратной) дополняет режим, не заменяет его. '
+      return 'По телу эстетика клиники, в том числе BodyTite, дополняет режим, а не заменяет его. '
           'Без обещаний «минус размеры за раз» — сначала консультация по зоне.';
     }
     if (q.contains('стресс') || q.contains('нервн') || q.contains('тревож')) {
-      return 'Стресс по лицу: в прайсе спокойный вход — ${_lineService(massage) ?? 'массаж лица'} или уход без тяжёлой артиллерии. '
-          'Можно сразу «+» к врачу, если хотите только осмотр и разговор.';
+      return 'Когда стресс читается по лицу, спокойный вход — ${_lineService(massage) ?? 'массаж лица'} или уход без тяжёлой артиллерии. '
+          'Можно просто записаться к врачу на осмотр и разговор.';
     }
     if (q.contains('выпаден') ||
         q.contains('волосы лезут') ||
@@ -3036,12 +3074,12 @@ class CultAgent {
         q.contains('редеют волос') ||
         (q.contains('волос') &&
             (q.contains('реде') || q.contains('теря') || q.contains('густот')))) {
-      return 'Выпадение: в CULT сначала осмотр и причина, затем обсуждаем ${_lineService(meso) ?? 'мезотерапию'} кожи головы — не «чудо-укол сразу». '
-          'Запись на консультацию через «+».';
+      return 'С выпадением сначала смотрим причину на осмотре, потом обсуждаем ${_lineService(meso) ?? 'мезотерапию'} кожи головы — не «чудо-укол сразу». '
+          'Запишем консультацию?';
     }
     if (q.contains('растяж') || q.contains('стрии')) {
       return 'Растяжки ведём аккуратно и курсом: аппаратные и инъекционные протоколы подбирает врач после осмотра — без обещания «как не было». '
-          'Могу записать на консультацию через «+».';
+          'Могу записать на консультацию.';
     }
     if (q.contains('детокс') || q.contains('очищен организм') || q.contains('вывести токсин')) {
       return '«Детокс» в клинике — скорее про поддержку: инфузии, режим и кожа, а не про чудо за час. '
@@ -3912,7 +3950,7 @@ class CultAgent {
     return variants[i];
   }
 
-  /// Soften canned openers; keep clinic facts intact.
+  /// Soften canned openers into spoken Russian; keep clinic facts intact.
   String _naturalize(
     String reply, {
     required String seed,
@@ -3924,8 +3962,9 @@ class CultAgent {
     // Drop stacked identical CTA tails when we already said them last turn.
     if (lastBot != null && lastBot.isNotEmpty) {
       final prev = _normalize(lastBot);
-      if (prev.contains('через «+»') &&
-          _normalize(out).contains('через «+»') &&
+      if ((prev.contains('через «+»') || prev.contains('кнопкой «запись»')) &&
+          (_normalize(out).contains('через «+»') ||
+              _normalize(out).contains('кнопкой «запись»')) &&
           out.split(RegExp(r'[.!?]')).length > 2) {
         out = out
             .replaceAll(
@@ -3950,13 +3989,23 @@ class CultAgent {
       out = out.replaceFirst('Скажите «', 'Можно «');
     }
 
+    // Strip leftover catalog dumps: «Title» (12 000 ₽, 60 мин) → Title
+    out = out.replaceAllMapped(
+      RegExp(r'«([^»]+)»\s*\([^)]*(?:₽|руб|мин|час)[^)]*\)'),
+      (m) => m.group(1)!,
+    );
+    out = out.replaceAllMapped(
+      RegExp(r'«([^»]+)»\s*\(\d[\d\s\u00a0]*₽\)'),
+      (m) => m.group(1)!,
+    );
+
     // Vary a few overused robotic openers so replies don't sound copy-pasted.
     final swaps = <String, List<String>>{
       'Слышу вас —': ['Поняла вас —', 'Услышала —', 'Хорошо, '],
       'Слышу вас.': ['Поняла. ', 'Услышала. ', 'Хорошо. '],
       'В CULT без угадываний:': [
         'Давайте без угадываний: ',
-        'Опираясь на прайс: ',
+        'По прайсу так: ',
         'Спокойно и по делу: ',
       ],
       'Слышу про': ['Понимаю про', 'Учту', 'Беру в расчёт'],
@@ -3976,6 +4025,16 @@ class CultAgent {
         'Не буду крутить то же. ',
         'Ок, дальше по делу. ',
       ],
+      'Ориентир по цене —': [
+        'Стоит примерно ',
+        'По цене около ',
+        'Обычно это около ',
+      ],
+      'Ориентир по цене': [
+        'По цене примерно',
+        'Обычно около',
+        'Стоит примерно',
+      ],
     };
     for (final entry in swaps.entries) {
       if (out.startsWith(entry.key)) {
@@ -3985,10 +4044,28 @@ class CultAgent {
       }
     }
 
-    // Soften doubled identical sentence openers inside one reply.
+    // Soften doubled identical sentence openers / clinic jargon mid-reply.
     out = out.replaceAll('Скажите, скажите', 'Скажите');
     out = out.replaceAll('Скажите Скажите', 'Скажите');
     out = out.replaceAll(' в CULT обычно ', ' у нас обычно ');
+    out = out.replaceAll(' в CULT ', ' у нас ');
+    out = out.replaceAll('В CULT ', 'У нас ');
+    out = out.replaceAll(' из прайса CULT', '');
+    out = out.replaceAll(' из прайса', '');
+    out = out.replaceAll('в прайсе CULT это ', '');
+    out = out.replaceAll('в прайсе это ', '');
+    out = out.replaceAll('Запись через «+»', 'Можем записаться');
+    out = out.replaceAll('запишем через «+»', 'запишем');
+    out = out.replaceAll('Запишем через «+»', 'Запишем');
+    out = out.replaceAll('через «+»', 'кнопкой «Запись»');
+    out = out.replaceAll('Ориентир по цене —', 'Стоит примерно');
+    out = out.replaceAll('Ориентир по цене', 'По цене примерно');
+    out = out.replaceAll('Ориентир по времени уже есть:', 'По времени уже есть:');
+    out = out.replaceAll('Ориентир по времени приняла:', 'Время приняла:');
+    out = out.replaceAll('Ориентир из прайса CULT:', 'Из прайса:');
+    out = out.replaceAll(' наших протоколов', ' наших процедур');
+    out = out.replaceAll('подстроим протокол', 'подстроим план');
+    out = out.replaceAll('сузить протокол', 'сузить план');
 
     return out.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
@@ -4025,19 +4102,25 @@ class CultAgent {
     return null;
   }
 
+  /// Bare clinic name for mid-sentence talk — no price dump (that sounds like a robot).
   String? _lineService(Service? item) {
     if (item == null) return null;
-    return '«${item.title}» (${item.priceLabel}, ${item.duration})';
+    var t = item.title.trim();
+    // Chair protocol "Инфузия HydraPure" reads like an IV drip aloud — keep the brand.
+    if (t.toLowerCase().startsWith('инфузия ')) {
+      t = t.substring('инфузия '.length).trim();
+    }
+    return t;
   }
 
   String? _lineProduct(Product? item) {
     if (item == null) return null;
-    return '«${item.name}» (${_rub(item.price)})';
+    return item.name;
   }
 
   String? _lineInfusion(Infusion? item) {
     if (item == null) return null;
-    return '«${item.title}» (${item.price})';
+    return item.title;
   }
 
   /// Push-style catalog cards from the latest reply + user topic.

@@ -190,15 +190,16 @@ class CultTts {
 
   void _tuneForQuality(String hint) {
     final h = hint.toLowerCase();
+    // Slightly slower + softer pitch reads closer to a calm cosmetologist.
     if (h.contains('premium')) {
-      _rate = 0.46;
-      _pitch = 1.03;
+      _rate = 0.44;
+      _pitch = 1.02;
     } else if (h.contains('enhanced')) {
-      _rate = 0.45;
-      _pitch = 1.04;
+      _rate = 0.43;
+      _pitch = 1.03;
     } else {
-      _rate = 0.42;
-      _pitch = 1.07;
+      _rate = 0.40;
+      _pitch = 1.05;
     }
   }
 
@@ -279,7 +280,7 @@ class CultTts {
             'lang': 'ru-RU',
             'voice': 'alena',
             'emotion': 'good',
-            'speed': '0.95',
+            'speed': '0.92',
             'format': 'mp3',
           },
         )
@@ -306,16 +307,23 @@ class CultTts {
       await Future<void>.delayed(const Duration(milliseconds: 140));
       if (gen != _speakGen) return;
 
-      // Breath groups with tiny pitch sway — breaks flat “robot” monotone.
+      // Breath groups with tiny pitch/rate sway — breaks flat “robot” monotone.
       final groups = breathGroups(spoken);
       for (var i = 0; i < groups.length; i++) {
         if (gen != _speakGen) return;
-        final sway = (i % 2 == 0) ? 0.025 : -0.02;
-        await _tts.setPitch((_pitch + sway).clamp(0.9, 1.2));
-        await _tts.setSpeechRate(_rate);
+        final pitchSway = (i % 2 == 0) ? 0.02 : -0.018;
+        final rateSway = (i % 3 == 0) ? -0.015 : 0.01;
+        await _tts.setPitch((_pitch + pitchSway).clamp(0.9, 1.18));
+        await _tts.setSpeechRate((_rate + rateSway).clamp(0.32, 0.55));
         await _tts.speak(groups[i]);
         if (i < groups.length - 1) {
-          await Future<void>.delayed(const Duration(milliseconds: 110));
+          final pause = groups[i].endsWith('.') ||
+                  groups[i].endsWith('!') ||
+                  groups[i].endsWith('?') ||
+                  groups[i].endsWith('…')
+              ? 160
+              : 95;
+          await Future<void>.delayed(Duration(milliseconds: pause));
         }
       }
       await _applyProsody();
@@ -329,8 +337,12 @@ class CultTts {
       'Обратите внимание на': 'Посмотрите,',
       'Ориентир по цене —': 'Стоит примерно',
       'Ориентир по цене': 'Цена примерно',
+      'По цене ориентир —': 'Стоит примерно',
+      'ориентировочно': 'примерно',
+      'обычно около': 'примерно',
       'По протоколу': 'По процедуре',
       'По услуге': 'По процедуре',
+      'Про услугу': 'Про',
       'Точного совпадения в каталоге пока не вижу.':
           'Давайте подберём вместе, без сложных названий.',
       'Хорошо, давайте разберём без каталога.': 'Хорошо, давайте разберёмся.',
@@ -348,14 +360,21 @@ class CultTts {
           'Я Мира, косметолог клиники Культ.',
       'окончательное решение по протоколу всегда за очным специалистом':
           'окончательное решение всегда за врачом на приёме',
-      'Нажмите «Голос»': 'Нажмите голос',
-      'через «+»': 'через плюс на главной',
-      'через плюс на главной на главной': 'через плюс на главной',
+      'Нажмите «Голос»': 'скажите голосом',
+      'нажмите «Запись»': 'нажмите запись',
+      'кнопкой «Запись»': 'кнопкой запись',
+      'через «+»': 'кнопкой запись',
+      'через плюс на главной на главной': 'кнопкой запись',
       'меню «Запись»': 'меню запись',
       'меню «Услуги»': 'меню услуги',
       'меню «Врачи»': 'меню врачи',
       'вкладки «Магазин»': 'вкладки магазин',
       'во вкладке «Магазин»': 'в магазине',
+      'в прайсе CULT': 'у нас',
+      'из прайса CULT': 'из прайса',
+      'В CULT ': 'У нас ',
+      ' в CULT ': ' у нас ',
+      'CULT Сочи': 'Культ в Сочи',
       '1) ': 'Во-первых, ',
       '2) ': 'Во-вторых, ',
       '3) ': 'В-третьих, ',
@@ -475,31 +494,30 @@ class CultTts {
     return out;
   }
 
-  /// Split into short breath groups for more human rhythm.
-  static List<String> breathGroups(String spoken) {
-    final words = spoken.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
-    if (words.length <= 10) return [spoken];
-    final groups = <String>[];
-    var buf = <String>[];
-    for (final word in words) {
-      buf.add(word);
-      final endClause = word.endsWith(',') ||
-          word.endsWith(';') ||
-          word.endsWith('.') ||
-          word.endsWith('!') ||
-          word.endsWith('?') ||
-          word.endsWith('…');
-      if (buf.length >= 9 || (endClause && buf.length >= 5)) {
-        groups.add(buf.join(' '));
-        buf = [];
-      }
-    }
-    if (buf.isNotEmpty) groups.add(buf.join(' '));
-    return groups;
-  }
-
   static String forSpeech(String text) {
     var s = humanize(text);
+
+    // Drop catalog parentheses before phonetics: "Title (12 000 ₽, 60 мин)".
+    s = s.replaceAllMapped(
+      RegExp(r'«([^»]+)»\s*\([^)]*(?:₽|руб|мин|час)[^)]*\)'),
+      (m) => m.group(1)!,
+    );
+    s = s.replaceAllMapped(
+      RegExp(r'([A-Za-zА-Яа-яЁё0-9][^()]{0,40}?)\s*\(([^)]*(?:₽|руб)[^)]*)\)'),
+      (m) {
+        final name = m.group(1)!.trim();
+        final inside = m.group(2)!;
+        // Keep a soft price mention only when the user likely asked for it.
+        if (inside.contains('₽') || inside.toLowerCase().contains('руб')) {
+          final price = RegExp(r'[\d\s\u00a0]+').firstMatch(inside)?.group(0)?.trim();
+          if (price != null && price.isNotEmpty) {
+            return '$name, примерно $price рублей';
+          }
+        }
+        return name;
+      },
+    );
+
     for (final entry in _phonetics.entries) {
       s = s.replaceAllMapped(
         RegExp(RegExp.escape(entry.key), caseSensitive: false),
@@ -510,32 +528,39 @@ class CultTts {
         .replaceAll('·', ',')
         .replaceAll('—', ', ')
         .replaceAll('–', ', ')
-        .replaceAll('→', ', ')
+        .replaceAll('→', '. ')
         .replaceAll('«', '')
         .replaceAll('»', '')
         .replaceAll('₽', ' рублей')
         .replaceAll('+', ' плюс ')
-        .replaceAll('/', ' ')
+        .replaceAll('/', ' или ')
         .replaceAll('\n', '. ');
 
     s = s
         .replaceAll('меню Прайс', 'раздел прайс')
-        .replaceAll('«Прайс»', 'прайс')
-        .replaceAll('«Магазин»', 'магазин')
-        .replaceAll('«Услуги»', 'услуги')
-        .replaceAll('«Голос»', 'голос')
-        .replaceAll('«+»', 'плюс')
-        .replaceAll('«Инфузии»', 'инфузии')
-        .replaceAll('«Аппаратная»', 'аппаратная');
+        .replaceAll('Прайс', 'прайс')
+        .replaceAll('Магазин', 'магазин')
+        .replaceAll('Услуги', 'услуги')
+        .replaceAll('Голос', 'голос')
+        .replaceAll('Инфузии', 'инфузии')
+        .replaceAll('Аппаратная', 'аппаратная')
+        .replaceAll(' занимает ', ', это около ')
+        .replaceAll(' мин.', ' минут.')
+        .replaceAll(' мин,', ' минут,')
+        .replaceAll(' мин ', ' минут ')
+        .replaceAllMapped(RegExp(r'(\d+)\s*мин\b'), (m) => '${m.group(1)} минут');
 
-    s = s.replaceAllMapped(RegExp(r'\b(\d{1,3})\s(\d{3})\b'), (m) {
+    s = s.replaceAllMapped(RegExp(r'\b(\d{1,3})[\s\u00a0](\d{3})\b'), (m) {
       final hi = m.group(1)!;
       final lo = m.group(2)!;
       if (lo == '000') return '$hi тысяч';
       return '$hi тысяч $lo';
     });
 
+    // Soften leftover stiff scraps after catalog cleanup.
     s = s
+        .replaceAll(RegExp(r'\s*,\s*,+'), ',')
+        .replaceAll(RegExp(r'\.\s*\.+'), '.')
         .replaceAll(RegExp(r',\s*'), ', ')
         .replaceAll(RegExp(r';\s*'), '; ')
         .replaceAll(RegExp(r'\.\s*'), '. ')
@@ -550,7 +575,31 @@ class CultTts {
   static List<String> speechChunks(String spoken) => breathGroups(spoken);
 
   static const spokenGreeting =
-      'Здравствуйте, я Мира — косметолог CULT. Расскажите, что у вас, я рядом.';
+      'Привет, я Мира. Расскажите, что у вас — я слушаю.';
+
+  /// Split into short breath groups for more human rhythm.
+  static List<String> breathGroups(String spoken) {
+    final words = spoken.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    if (words.length <= 8) return [spoken];
+    final groups = <String>[];
+    var buf = <String>[];
+    for (final word in words) {
+      buf.add(word);
+      final endClause = word.endsWith(',') ||
+          word.endsWith(';') ||
+          word.endsWith('.') ||
+          word.endsWith('!') ||
+          word.endsWith('?') ||
+          word.endsWith('…');
+      // Shorter groups ≈ more human pauses between clauses.
+      if (buf.length >= 7 || (endClause && buf.length >= 4)) {
+        groups.add(buf.join(' '));
+        buf = [];
+      }
+    }
+    if (buf.isNotEmpty) groups.add(buf.join(' '));
+    return groups;
+  }
 
   static const _phonetics = <String, String>{
     'Veil Peptide Serum': 'Вейл Пептайд Сёрум',

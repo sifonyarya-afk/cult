@@ -22,8 +22,20 @@ void main() {
 
   test('spokenGreeting короткий для озвучки', () {
     expect(CultTts.spokenGreeting.length, lessThan(160));
-    expect(CultTts.spokenGreeting.toLowerCase(), contains('здравствуйте'));
+    expect(
+      CultTts.spokenGreeting.toLowerCase(),
+      anyOf(contains('здравствуйте'), contains('привет')),
+    );
     expect(CultTts.spokenGreeting.toLowerCase(), contains('мира'));
+  });
+
+  test('forSpeech не читает каталожные скобки с ценой', () {
+    final spoken = CultTts.forSpeech(
+      'Мягкий старт: «Скульптурный массаж лица» (18 000 ₽, 60 мин) и дома Veil Peptide.',
+    );
+    expect(spoken.toLowerCase(), contains('массаж'));
+    expect(spoken, isNot(contains('(')));
+    expect(spoken, isNot(contains('»')));
   });
 
   test('toSpokenBrief complete договаривает длинный ответ', () {
