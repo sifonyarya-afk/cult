@@ -1011,4 +1011,49 @@ void main() {
     expect(wash.toLowerCase(), anyOf(contains('умыв'), contains('вод'), contains('барьер')));
     expect(wash.toLowerCase(), isNot(contains('если сложно сформулировать')));
   });
+
+  test('ОРВИ+ботокс и капельница после операции', () {
+    final orvi = cultAgent.answer('Можно ли делать ботокс при ОРВИ без температуры?');
+    expect(orvi.toLowerCase(), anyOf(contains('орви'), contains('простуд'), contains('отлож')));
+    expect(orvi.toLowerCase(), isNot(contains('массаж иногда допустим')));
+    final op = cultAgent.answer('Можно ли капельницу если недавно была операция?');
+    expect(op.toLowerCase(), anyOf(contains('операц'), contains('допуск'), contains('врач')));
+    expect(op.toLowerCase(), isNot(contains('меню «инфузии»')));
+  });
+
+  test('Гусиные лапки без ботокса и массаж после ботокса', () {
+    final crow = cultAgent.answer('Хочу убрать гусиные лапки без ботокса');
+    expect(crow.toLowerCase(), anyOf(contains('гусин'), contains('лапк'), contains('глаз')));
+    expect(crow.toLowerCase(), isNot(contains('инъекции снимаем со стола')));
+    final mass = cultAgent.answer('После ботокса можно делать массаж лица?');
+    expect(mass.toLowerCase(), anyOf(contains('бот'), contains('массаж'), contains('отклад')));
+    expect(mass.toLowerCase(), isNot(contains('мануальный лифтинг контура')));
+  });
+
+  test('Брови после ботокса ≠ перманент; Mitochondrial Fuel простыми словами', () {
+    final brows = cultAgent.answer('После ботокса брови разной высоты — норма?');
+    expect(brows.toLowerCase(), anyOf(contains('бров'), contains('асимметр'), contains('бот')));
+    expect(brows.toLowerCase(), isNot(contains('перманентн')));
+    final fuel = cultAgent.answer('Что такое Mitochondrial Fuel простыми словами?');
+    expect(fuel.toLowerCase(), contains('mitochondrial'));
+    expect(fuel.toLowerCase(), isNot(contains('скажите проще')));
+    expect(fuel, isNot(contains('₽')));
+  });
+
+  test('Подготовка к массажу и изотретиноин+пилинг', () {
+    final prep = cultAgent.answer('Как подготовиться к скульптурному массажу?');
+    expect(prep.toLowerCase(), contains('массаж'));
+    expect(prep.toLowerCase(), isNot(contains('меню «услуги»')));
+    final iso = cultAgent.answer('Можно ли делать пилинг если пью изотретиноин?');
+    expect(iso.toLowerCase(), contains('изотретиноин'));
+    expect(iso.toLowerCase(), isNot(contains('если откликается — можем записаться')));
+  });
+
+  test('Продление сертификата и запись на имя подруги', () {
+    final cert = cultAgent.answer('Хочу продлить сертификат');
+    expect(cert.toLowerCase(), anyOf(contains('продл'), contains('администратор'), contains('срок')));
+    expect(cert.toLowerCase(), isNot(contains('купить сертификат')));
+    final friend = cultAgent.answer('Можно ли записаться на имя подруги?');
+    expect(friend.toLowerCase(), anyOf(contains('администратор'), contains('другого'), contains('подруг'), contains('гост')));
+  });
 }
