@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import '../data.dart';
 import '../store.dart';
@@ -26,7 +28,7 @@ class ChatPage extends StatelessWidget {
         Text('Центр поддержки', style: cultHeadline(30)),
         const SizedBox(height: 6),
         const Text(
-          'Администратор, бот или специалист — ответим по делу.',
+          'Администратор, CULT Агент (голос) или специалист — ответим по делу.',
           style: TextStyle(color: Cult.muted),
         ),
         if (store.hasUnreadChat) ...[
@@ -215,9 +217,20 @@ class ChatThreadPage extends StatefulWidget {
 class _ChatThreadPageState extends State<ChatThreadPage> {
   final _text = TextEditingController();
   final _scroll = ScrollController();
+  final _speech = SpeechToText();
+  final _tts = FlutterTts();
   var _markedRead = false;
+  var _listening = false;
+  var _speechReady = false;
+  var _speakReplies = true;
+  var _ttsReady = false;
+
+  bool get _isAgent => widget.contactId == 'bot';
 
   static const _quick = <String>[
+    'Сколько стоит RF',
+    'Есть Mitochondrial Fuel',
+    'Состав Veil Peptide',
     'Хочу записаться',
     'Часы работы',
     'Как добраться',
@@ -258,6 +271,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     'Команда врачей',
     'ИИ-подбор',
     'Состав средств',
+    'Голосом',
   ];
 
   static const _followUp = <String>[
@@ -277,23 +291,116 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ClinicScope.of(context).markChatRead(widget.contactId);
+      if (_isAgent) _prepareVoice();
     });
+  }
+
+  Future<void> _prepareVoice() async {
+    if (!_isAgent || _ttsReady) return;
+    try {
+      await _tts.setLanguage('ru-RU');
+      await _tts.setSpeechRate(0.48);
+      await _tts.setPitch(1.0);
+      _ttsReady = true;
+    } catch (_) {
+      _ttsReady = false;
+    }
+  }
+
+  Future<void> _speak(String text) async {
+    if (!_isAgent || !_speakReplies || text.trim().isEmpty) return;
+    await _prepareVoice();
+    if (!_ttsReady) return;
+    try {
+      await _tts.stop();
+      await _tts.speak(text);
+    } catch (_) {}
+  }
+
+  Future<void> _toggleListen(ClinicStore store) async {
+    if (!_isAgent) return;
+    if (_listening) {
+      await _speech.stop();
+      if (mounted) setState(() => _listening = false);
+      return;
+    }
+    try {
+      await _tts.stop();
+    } catch (_) {}
+    final available = _speechReady
+        ? true
+        : await _speech.initialize(
+            onError: (error) {
+              if (!mounted) return;
+              setState(() => _listening = false);
+              showCultSnack(context, 'Микрофон: ${error.errorMsg}');
+            },
+            onStatus: (status) {
+              if (!mounted) return;
+              if (status == 'done' || status == 'notListening') {
+                setState(() => _listening = false);
+              }
+            },
+          );
+    if (!available) {
+      if (mounted) {
+        showCultSnack(
+          context,
+          'Нет доступа к микрофону. Разрешите речь в настройках iPhone.',
+        );
+      }
+      return;
+    }
+    _speechReady = true;
+    if (mounted) setState(() => _listening = true);
+    HapticFeedback.mediumImpact();
+    await _speech.listen(
+      onResult: (result) {
+        if (!mounted) return;
+        _text.value = TextEditingValue(
+          text: result.recognizedWords,
+          selection: TextSelection.collapsed(
+            offset: result.recognizedWords.length,
+          ),
+        );
+        if (result.finalResult && result.recognizedWords.trim().isNotEmpty) {
+          setState(() => _listening = false);
+          _send(store, result.recognizedWords, fromVoice: true);
+        }
+      },
+      listenOptions: SpeechListenOptions(
+        localeId: 'ru_RU',
+        listenFor: const Duration(seconds: 28),
+        pauseFor: const Duration(seconds: 3),
+        partialResults: true,
+        cancelOnError: true,
+        listenMode: ListenMode.confirmation,
+      ),
+    );
   }
 
   @override
   void dispose() {
+    _speech.stop();
+    _tts.stop();
     _text.dispose();
     _scroll.dispose();
     super.dispose();
   }
 
-  void _send(ClinicStore store, String raw) {
+  void _send(ClinicStore store, String raw, {bool fromVoice = false}) {
     final text = raw.trim();
     if (text.isEmpty) return;
     HapticFeedback.selectionClick();
     store.sendMessage(widget.contactId, text);
     store.markChatRead(widget.contactId);
     _text.clear();
+    if (_isAgent && (_speakReplies || fromVoice)) {
+      final reply = store.threads[widget.contactId]?.lastOrNull;
+      if (reply != null && reply.from == 'them') {
+        _speak(reply.text);
+      }
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scroll.hasClients) return;
       _scroll.animateTo(
@@ -359,6 +466,32 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
           ],
         ),
         actions: [
+          if (_isAgent)
+            IconButton(
+              tooltip: _speakReplies
+                  ? 'Ответы голосом включены'
+                  : 'Ответы голосом выключены',
+              onPressed: () async {
+                cultTapFeedback();
+                final next = !_speakReplies;
+                setState(() => _speakReplies = next);
+                if (!next) {
+                  try {
+                    await _tts.stop();
+                  } catch (_) {}
+                }
+                if (!mounted) return;
+                showCultSnack(
+                  context,
+                  next ? 'Ответы буду проговаривать' : 'Только текст',
+                );
+              },
+              icon: Icon(
+                _speakReplies
+                    ? Icons.volume_up_outlined
+                    : Icons.volume_off_outlined,
+              ),
+            ),
           if (messages.isNotEmpty)
             IconButton(
               tooltip: 'Скопировать переписку',
@@ -381,6 +514,25 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
       ),
       body: Column(
         children: [
+          if (_isAgent && _listening)
+            Material(
+              color: Cult.gold.withValues(alpha: 0.35),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.mic, size: 18, color: Cult.ink),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Слушаю… спросите про услугу или товар',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           Expanded(
             child: NotificationListener<ScrollNotification>(
               onNotification: (notification) {
@@ -475,6 +627,23 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    if (_isAgent) ...[
+                      IconButton(
+                        tooltip: _listening ? 'Стоп' : 'Спросить голосом',
+                        onPressed: () => _toggleListen(store),
+                        style: IconButton.styleFrom(
+                          backgroundColor: _listening
+                              ? Cult.secondary
+                              : const Color(0xFFF3EFEA),
+                          foregroundColor: _listening
+                              ? Colors.white
+                              : Cult.ink,
+                          minimumSize: const Size(48, 48),
+                        ),
+                        icon: Icon(_listening ? Icons.stop : Icons.mic_none),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
                     Expanded(
                       child: TextField(
                         controller: _text,
@@ -485,7 +654,9 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                         onSubmitted: (_) => _send(store, _text.text),
                         decoration: InputDecoration(
                           hintText: widget.contactId == 'bot'
-                              ? 'Спросите про запись, уход, оплату…'
+                              ? (_listening
+                                    ? 'Говорите…'
+                                    : 'Услуга, цена или формула…')
                               : widget.contactId == 'specialist'
                               ? 'Опишите симптом или вопрос врачу…'
                               : 'Напишите администратору…',

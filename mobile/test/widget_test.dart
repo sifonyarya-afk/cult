@@ -26,6 +26,13 @@ void main() {
     expect(find.text('Онлайн запись'), findsOneWidget);
     expect(find.text('Магазин биохакинга'), findsOneWidget);
     expect(find.text('Чат с врачом'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('CULT Агент'),
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('CULT Агент'), findsOneWidget);
+    expect(find.textContaining('голосом про услуги'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Мои анализы'));
     await tester.pumpAndSettle();
