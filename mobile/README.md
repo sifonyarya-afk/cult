@@ -40,7 +40,29 @@ open ios/Runner.xcworkspace
 
 Не делайте `cd ios` перед этим блоком. Сообщение Flutter `Changing current working directory to: .../mobile` меняет каталог только внутри Flutter, не в вашем терминале — если вы уже были в `ios`, следующий `cd ios` ищет несуществующий `ios/ios`.
 
-Предупреждение CocoaPods про `platform iOS 15.0` можно игнорировать, если в конце есть `Pod installation complete!`.
+Предупреждение CocoaPods про `platform iOS 15.0` / «no platform was specified» можно игнорировать, если в конце есть `Pod installation complete!`.
+
+### `git pull` ругается на локальные изменения в `ios/`
+
+`flutter run` и Xcode сами правят `Podfile` / `project.pbxproj` / `Runner.xcscheme`. Чтобы подтянуть фиксы с GitHub, из **корня репозитория** (папка `cult`, не `mobile/ios`):
+
+```bash
+cd ~/Desktop/cult/cult
+git stash push -u -m "local ios" -- mobile/ios
+git pull
+cd mobile
+flutter pub get
+rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
+(cd ios && pod install)
+flutter devices
+flutter run
+```
+
+Не делайте `cd ios` перед `flutter clean` / `flutter pub get` — Flutter сам уходит в `mobile`, и следующий `cd ios` ломает путь (`ios/ios/...`).
+
+### `Installing and launching...` крутится долго
+
+Сборка уже прошла. На iPhone: разблокируйте экран, подтвердите «Доверять этому компьютеру», включите **Режим разработчика**. Подождите 1–2 минуты. Если зависло — `Ctrl+C`, затем снова `flutter run` (телефон разблокирован, кабель плотно вставлен).
 
 ### `module 'Flutter' not found` / `shared_preferences_foundation` / VerifyModule
 
