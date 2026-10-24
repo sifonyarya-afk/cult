@@ -2154,4 +2154,24 @@ void main() {
     expect(scan.toLowerCase(), contains('bio-scan'));
     expect(scan.toLowerCase(), isNot(contains('скажу проще')));
   });
+
+  test('v73: IPL+аспирин, криолиполиз, Bio-Scan самовывоз, набор после филлера', () {
+    final asa = cultAgent.answer('Можно ли делать IPL если пью аспирин?');
+    expect(asa.toLowerCase(), anyOf(contains('ipl'), contains('свет')));
+    expect(asa.toLowerCase(), contains('аспирин'));
+    expect(asa.toLowerCase(), isNot(contains('раздел «аппаратная»')));
+    final cryo = cultAgent.answer('Делаете ли криолиполиз?');
+    expect(cryo.toLowerCase(), contains('криолиполиз'));
+    expect(cryo.toLowerCase(), isNot(contains('липосакцию')));
+    final scan = cultAgent.answer('Можно ли купить Home Bio-Scan с самовывозом сегодня?');
+    expect(scan.toLowerCase(), contains('bio-scan'));
+    expect(scan.toLowerCase(), contains('самовывоз'));
+    expect(scan.toLowerCase(), isNot(contains('посмотрела')));
+    final hydraRf = cultAgent.answer('Можно ли совместить HydraPure и RF через две недели?');
+    expect(hydraRf.toLowerCase(), contains('через'));
+    expect(hydraRf.toLowerCase(), isNot(contains('скажите пару процедур')));
+    final kit = cultAgent.answer('Хочу домашний набор после филлера');
+    expect(kit.toLowerCase(), contains('филлер'));
+    expect(kit.toLowerCase(), isNot(contains('инъекции (ботулин')));
+  });
 }
