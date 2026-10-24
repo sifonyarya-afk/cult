@@ -1409,4 +1409,43 @@ void main() {
     expect(conf.toLowerCase(), anyOf(contains('кнопк'), contains('нельзя')));
     expect(conf.toLowerCase(), isNot(contains('или откройте запись в меню')));
   });
+
+  test('Липосакция, панкреатит+IV, Aptos, латекс', () {
+    final lipo = cultAgent.answer('Делаете ли липосакцию?');
+    expect(lipo.toLowerCase(), anyOf(contains('липосак'), contains('не делаем'), contains('хирург')));
+    expect(lipo.toLowerCase(), isNot(contains('контурная пластика')));
+    final panc = cultAgent.answer('Можно ли капельницу при панкреатите?');
+    expect(panc.toLowerCase(), contains('панкреатит'));
+    expect(panc.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final aptos = cultAgent.answer('Делаете ли лифтинг нитями Aptos?');
+    expect(aptos.toLowerCase(), anyOf(contains('нит'), contains('aptos'), contains('осмотр')));
+    expect(aptos.toLowerCase(), isNot(contains('я рядом')));
+    final latex = cultAgent.answer('У меня аллергия на латекс — филлер можно?');
+    expect(latex.toLowerCase(), contains('латекс'));
+    expect(latex.toLowerCase(), isNot(contains('анестезию, металлы или косметику')));
+  });
+
+  test('IPL+чистка, ботокс+Beauty, домашний уход после RF', () {
+    final combo = cultAgent.answer('Можно ли совместить IPL и чистку в один день?');
+    expect(combo.toLowerCase(), anyOf(contains('ipl'), contains('чистк')));
+    expect(combo.toLowerCase(), isNot(contains('скажите пару процедур')));
+    final glow = cultAgent.answer('Можно ли совместить ботокс и Beauty & Glow через неделю?');
+    expect(glow.toLowerCase(), anyOf(contains('ботулин'), contains('beauty'), contains('капель')));
+    expect(glow.toLowerCase(), isNot(contains('скажите пару')));
+    final home = cultAgent.answer('Хочу домашний уход после микроигольчатого RF');
+    expect(home.toLowerCase(), anyOf(contains('барьер'), contains('rf'), contains('дом')));
+    expect(home.toLowerCase(), isNot(contains('меню «аппаратная»')));
+  });
+
+  test('Рассрочка Ultherapy, сертификат маме, спорт после IPL', () {
+    final credit = cultAgent.answer('Есть ли рассрочка на Ultherapy?');
+    expect(credit.toLowerCase(), contains('рассроч'));
+    expect(credit.toLowerCase(), isNot(contains('массаж посильнее')));
+    final gift = cultAgent.answer('Можно ли подарить сертификат на день рождения маме?');
+    expect(gift.toLowerCase(), contains('сертификат'));
+    expect(gift.toLowerCase(), isNot(contains('под дату')));
+    final sport = cultAgent.answer('Сколько нельзя спорт после IPL?');
+    expect(sport.toLowerCase(), contains('ipl'));
+    expect(sport.toLowerCase(), isNot(contains('напишите, что делали')));
+  });
 }

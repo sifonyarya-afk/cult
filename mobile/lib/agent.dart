@@ -887,6 +887,9 @@ class CultAgent {
         q.contains('давай запишемся') ||
         q.contains('давайте запишемся') ||
         q.contains('хочу записаться') ||
+        q.contains('можно записаться') ||
+        q.contains('можно ли записаться') ||
+        q.contains('записаться на') ||
         q.contains('хочу на процедуру') ||
         q.contains('запишемся') ||
         q.contains('на запись') ||
@@ -898,6 +901,7 @@ class CultAgent {
                 q.contains('пилинг') ||
                 q.contains('инфуз') ||
                 q.contains('капель') ||
+                q.contains('nad') ||
                 q.contains('консульт') ||
                 q.contains('чистка') ||
                 q.contains('лазер') ||
@@ -1116,7 +1120,7 @@ class CultAgent {
     }
     rest = rest.replaceAll(RegExp(r'\s+'), ' ').trim();
 
-    // Short device aliases (IPL/RF/SMAS) after stripping slot words.
+    // Short device/infusion aliases after stripping slot words.
     final restN = _normalize(rest);
     if (restN.contains('ipl') ||
         restN.contains('айпи') ||
@@ -1133,6 +1137,15 @@ class CultAgent {
         restN == 'рф' ||
         restN.contains('микроиголь')) {
       return 'Микроигольчатый RF';
+    }
+    if (restN.contains('nad') || restN.contains('над+')) {
+      return 'NAD+ Energy';
+    }
+    if (restN.contains('beauty') && restN.contains('glow')) {
+      return 'Beauty & Glow';
+    }
+    if (restN.contains('immunity') || restN.contains('иммунит')) {
+      return 'Immunity Boost';
     }
 
     if (rest.length >= 3) {
@@ -1934,8 +1947,23 @@ class CultAgent {
         compact == 'с утра' ||
         compact == 'на вечер' ||
         compact == 'на утро';
+    // Named service + slot → let [_bookFlow] / catalog teach own the turn.
+    final namedService = q.contains('nad') ||
+        q.contains('beauty') ||
+        q.contains('glow') ||
+        q.contains('массаж') ||
+        q.contains('пилинг') ||
+        q.contains('ботокс') ||
+        q.contains('rf') ||
+        q.contains('рф') ||
+        q.contains('ipl') ||
+        q.contains('smas') ||
+        q.contains('капель') ||
+        q.contains('hydrapure') ||
+        q.contains('чистка');
     // Don't steal «сегодня вечером событие» from situation/event flow.
     if (!(morning || evening || weekend || weekday.isNotEmpty)) return null;
+    if (namedService && bookingCue) return null;
     if (!bookingCue && !bareSlot && weekday.isEmpty) return null;
     if (!bookingCue && weekend && weekday.isEmpty) return null;
     if ((morning || evening) && !bookingCue && !bareSlot) return null;
@@ -3004,6 +3032,14 @@ class CultAgent {
         return 'После RF обычно пауза на баню, сауну и жёсткий спорт несколько дней — кожа восстанавливается, лишний жар не нужен. '
             'Точный срок скажет врач по вашему протоколу. Когда была процедура?';
       }
+      if (q.contains('ipl') || q.contains('айпи') || q.contains('lumecca')) {
+        return 'После IPL спорт, бассейн и сауну обычно ставят на паузу пару дней — пот и жар раздражают зону вспышки; SPF обязателен. '
+            'Точный срок скажет врач по протоколу. Когда была вспышка?';
+      }
+      if (q.contains('массаж') || q.contains('лимфодрен')) {
+        return 'После массажа баню и сауну в тот же день лучше не планировать — сосуды и лимфа ещё «разогреты»; чаще пауза до следующего дня, без жёсткого пара. '
+            'Лёгкая прогулка обычно ок. Когда был массаж?';
+      }
       if (q.contains('капель') || q.contains('инфуз') || q.contains('капельниц')) {
         return 'После капельницы баню и сауну в тот же день лучше не планировать — сосуды и самочувствие ещё «разгоняются»; чаще пауза до следующего дня. '
             'Точнее скажет врач по составу. Когда была инфузия?';
@@ -3698,12 +3734,26 @@ class CultAgent {
         !q.contains('алкогол') &&
         !q.contains('пить') &&
         !q.contains('выпить') &&
-        !q.contains('нельзя')) {
+        !q.contains('нельзя') &&
+        !q.contains('массаж') &&
+        !q.contains('вместе')) {
       final botox = _clinicService('ботулинотерап', gender: gender);
       if (botox != null) {
         return 'По ботулинотерапии ориентир из прайса — ${botox.priceLabel}, ${botox.duration}. '
             'Итог по единицам и зонам утверждает врач на осмотре. Запишем консультацию или сразу зону?';
       }
+    }
+
+    if ((q.contains('ботокс') || q.contains('ботулин')) &&
+        q.contains('массаж') &&
+        (q.contains('скольк') || q.contains('стоит') || q.contains('цен') || q.contains('вместе'))) {
+      final botox = _clinicService('ботулинотерап', gender: gender);
+      final massage = _clinicService('скульптурн', gender: gender) ??
+          _clinicService('массаж', gender: gender);
+      final b = botox == null ? 'ботулинотерапия' : '${botox.title} — ориентир ${botox.priceLabel}';
+      final m = massage == null ? 'скульптурный массаж' : '${massage.title} — ориентир ${massage.priceLabel}';
+      return 'По отдельности: $b; $m. Вместе в один визит — не всегда: порядок и допуск решает врач. '
+          'Запишем консультацию или два окна отдельно?';
     }
 
     if ((q.contains('шелуш') || q.contains('облазит') || q.contains('лезет кож')) &&
@@ -3811,13 +3861,22 @@ class CultAgent {
     }
 
     if ((q.contains('синяк') || q.contains('гематом') || q.contains('синяч')) &&
+        (q.contains('rf') || q.contains('рф') || q.contains('микроиголь'))) {
+      return 'Синяк после RF бывает реже, чем после уколов, но возможен — холод по схеме врача, без разминания зоны и зала несколько дней. '
+          'Если пятно растёт, очень болит или с температурой — сразу врачу в чат. Могу перевести к специалисту.';
+    }
+
+    if ((q.contains('синяк') || q.contains('гематом') || q.contains('синяч')) &&
         (q.contains('филлер') ||
             q.contains('укол') ||
             q.contains('инъек') ||
             q.contains('ботокс') ||
             q.contains('мезо') ||
             q.contains('биоревитал') ||
-            q.contains('после'))) {
+            q.contains('после')) &&
+        !q.contains('rf') &&
+        !q.contains('рф') &&
+        !q.contains('микроиголь')) {
       if (q.contains('боюсь') ||
           q.contains('страх') ||
           q.contains('фотосесс') ||
@@ -4279,8 +4338,24 @@ class CultAgent {
             'Запишем консультацию — разложим безопасную связку.';
       }
       if ((q.contains('ipl') || q.contains('айпи') || q.contains('lumecca')) &&
+          (q.contains('чистк') || q.contains('чистка'))) {
+        return 'IPL и чистку в один день ставят не всегда — после света кожа чувствительная, жёсткое очищение часто разносят. Порядок решает врач по фототипу. '
+            'Запишем консультацию — скажем, дружат ли они у вас.';
+      }
+      if ((q.contains('ipl') || q.contains('айпи') || q.contains('lumecca')) &&
           q.contains('массаж')) {
         return 'IPL и массаж иногда разносят по дням — после света кожа чувствительная; мягкий массаж позже часто ок по решению врача. '
+            'Запишем консультацию — скажем порядок.';
+      }
+      if ((q.contains('ботокс') || q.contains('ботулин')) &&
+          (q.contains('beauty') || q.contains('glow') || q.contains('капель') || q.contains('инфуз')) &&
+          (q.contains('через') || q.contains('недел') || q.contains('дней'))) {
+        return 'Ботулин и Beauty & Glow / капельницу через неделю часто уже обсуждают как рабочий интервал — в один день обычно не ставят без решения врача. '
+            'Запишем консультацию — разложим календарь под ваши даты.';
+      }
+      if ((q.contains('ботокс') || q.contains('ботулин')) &&
+          (q.contains('beauty') || q.contains('glow') || q.contains('капель') || q.contains('инфуз'))) {
+        return 'Ботулин и капельницу в один день ставят не всегда — зависит от самочувствия и решения врача; часто разносят визиты. '
             'Запишем консультацию — скажем порядок.';
       }
       if (q.contains('массаж') &&
@@ -4491,8 +4566,18 @@ class CultAgent {
           'Если сильный дискомфорт, лучше сдвинуть дату. Решает врач по самочувствию; могу записать на консультацию.';
     }
 
+    if ((q.contains('ботокс') || q.contains('ботулин')) &&
+        (q.contains('самолет') ||
+            q.contains('перелет') ||
+            q.contains('лететь') ||
+            q.contains('летать') ||
+            q.contains('авиа')) &&
+        !q.contains('филлер')) {
+      return 'После ботулина перелёт через 2–3 дня часто уже обсуждают как рабочий ориентир — без разминания зоны и жёсткого давления в первые сутки; точнее врач по зонам. '
+          'Когда вылет и когда кололи?';
+    }
+
     if ((q.contains('филлер') ||
-            q.contains('ботокс') ||
             q.contains('инъек') ||
             q.contains('после укол')) &&
         (q.contains('самолет') ||
@@ -4829,6 +4914,10 @@ class CultAgent {
         q.contains('смас') ||
         q.contains('ultherap') ||
         q.contains('альтера')) {
+      if (q.contains('рассрочк') || q.contains('кредит') || q.contains('частям')) {
+        return 'Рассрочку и оплату частями на Ultherapy® / SMAS уточняйте на ресепшен или у администратора в чате — условия зависят от суммы протокола. '
+            'Могу открыть чат админа. Запишем консультацию по SMAS параллельно?';
+      }
       if (q.contains('простыми') || q.contains('что такое')) {
         return 'SMAS простыми словами — более глубокий аппаратный лифтинг каркаса лица, не массаж и не «укол в губы». '
             'Делают после осмотра, с честными ожиданиями по реабилитации. Запишем консультацию?';
@@ -5688,9 +5777,12 @@ class CultAgent {
 
     if (q.contains('нитев') ||
         q.contains('нитевой лифтинг') ||
+        q.contains('aptos') ||
+        q.contains('аптос') ||
         (q.contains('нити') &&
-            (q.contains('лифтинг') || q.contains('подтя') || q.contains('делаете') || q.contains('есть ли')))) {
-      return 'Нитевой лифтинг обсуждаем только на осмотре: тип нитей, зоны и ожидания — не «как SMAS за один визит». '
+            (q.contains('лифтинг') || q.contains('подтя') || q.contains('делаете') || q.contains('есть ли'))) ||
+        (q.contains('лифтинг') && q.contains('нит'))) {
+      return 'Нитевой лифтинг (в т.ч. Aptos) обсуждаем только на осмотре: тип нитей, зоны и ожидания — не «как SMAS за один визит». '
           'Могу записать на консультацию или открыть чат специалиста. Какая зона важнее?';
     }
 
@@ -6290,7 +6382,18 @@ class CultAgent {
     }
 
     if ((q.contains('рассрочк') || q.contains('кредит') || q.contains('частям')) &&
-        (q.contains('rf') || q.contains('рф') || q.contains('курс') || q.contains('есть ли'))) {
+        (q.contains('rf') ||
+            q.contains('рф') ||
+            q.contains('курс') ||
+            q.contains('есть ли') ||
+            q.contains('smas') ||
+            q.contains('смас') ||
+            q.contains('ultherap') ||
+            q.contains('альтера'))) {
+      if (q.contains('smas') || q.contains('смас') || q.contains('ultherap') || q.contains('альтера')) {
+        return 'Рассрочку и оплату частями на Ultherapy® / SMAS уточняйте на ресепшен или у администратора в чате — условия зависят от суммы протокола. '
+            'Могу открыть чат админа. Запишем консультацию по SMAS параллельно?';
+      }
       return 'Рассрочку и оплату частями на курс RF уточняйте на ресепшен или у администратора в чате — условия зависят от суммы. '
           'Могу открыть чат админа. Запишем консультацию по RF параллельно?';
     }
@@ -6363,6 +6466,64 @@ class CultAgent {
             (q.contains('увеличи') || q.contains('пластик') || q.contains('операц')))) {
       return 'Увеличение груди и маммопластику не делаем — CULT про кожу, инъекции, аппаратную и инфузии, не пластическую хирургию тела. '
           'По лицу и телу без имплантов могу предложить уход, массаж или консультацию. Что важнее сейчас?';
+    }
+
+    if (q.contains('липосакц') || (q.contains('липо') && (q.contains('операц') || q.contains('делаете')))) {
+      return 'Липосакцию и хирургическое удаление жира не делаем — CULT про кожу, инъекции, аппаратную и инфузии, не пластическую хирургию тела. '
+          'Овал и контур без операции иногда смотрят массажем и RF после осмотра. Запишем консультацию?';
+    }
+
+    if ((q.contains('панкреатит') || q.contains('поджелудоч')) &&
+        (q.contains('капель') || q.contains('инфуз') || q.contains('капельниц') || q.contains('можно'))) {
+      return 'При панкреатите капельницу не назначаю сама — нагрузку на ЖКТ и состав смотрит врач, иногда нужен допуск смежника и свежие анализы. '
+          'Могу открыть чат специалиста или записать на консультацию перед инфузией.';
+    }
+
+    if ((q.contains('домашн') || q.contains('крем') || q.contains('сыворот') || q.contains('уход')) &&
+        (q.contains('после rf') ||
+            q.contains('после рф') ||
+            ((q.contains('rf') || q.contains('рф') || q.contains('микроиголь')) && q.contains('после')))) {
+      return 'После микроигольчатого RF дома обычно мягкий барьерный уход без кислот и ретинола первые дни, SPF; точный лист даст врач. '
+          'Могу положить Lumen Barrier в корзину или открыть чат, если зона сильно жжёт. Когда была процедура?';
+    }
+
+    if ((q.contains('латекс') || q.contains('latex')) &&
+        (q.contains('филлер') || q.contains('ботокс') || q.contains('инъек') || q.contains('можно'))) {
+      return 'Аллергию на латекс обязательно скажите до инъекций — перчатки и расходники подбирают иначе, без самозаписи. '
+          'Запишем консультацию — врач учтёт реакцию на осмотре.';
+    }
+
+    if ((q.contains('сертификат') || q.contains('подарить')) &&
+        (q.contains('маме') ||
+            q.contains('мамы') ||
+            q.contains('мама') ||
+            q.contains('день рожден'))) {
+      return 'Сертификат CULT на день рождения маме — хороший жест: номинал выбираете сами, код в профиле или через администратора. '
+          'Можно сразу записать её на массаж или уход. Какой примерно бюджет?';
+    }
+
+    if ((q.contains('горят') ||
+            q.contains('горит') ||
+            q.contains('жжет') ||
+            q.contains('жжёт') ||
+            q.contains('печет') ||
+            q.contains('печёт')) &&
+        (q.contains('филлер') || q.contains('губ')) &&
+        (q.contains('после') || q.contains('норма'))) {
+      return 'Лёгкое жжение губ на следующий день после филлера иногда бывает — холод по схеме врача, без разминания, без кислот. '
+          'Если жжение сильное, нарастает, белеет зона или сильная боль — сразу врачу в чат. Могу открыть чат специалиста.';
+    }
+
+    if ((q.contains('ботокс') || q.contains('ботулин')) &&
+        q.contains('массаж') &&
+        (q.contains('скольк') || q.contains('стоит') || q.contains('цен') || q.contains('вместе'))) {
+      final botox = _clinicService('ботулинотерап', gender: gender);
+      final massage = _clinicService('скульптурн', gender: gender) ??
+          _clinicService('массаж', gender: gender);
+      final b = botox == null ? 'ботулинотерапия' : '${botox.title} — ориентир ${botox.priceLabel}';
+      final m = massage == null ? 'скульптурный массаж' : '${massage.title} — ориентир ${massage.priceLabel}';
+      return 'По отдельности: $b; $m. Вместе в один визит — не всегда: порядок и допуск решает врач. '
+          'Запишем консультацию или два окна отдельно?';
     }
 
     if ((q.contains('ферритин') ||
@@ -6605,7 +6766,10 @@ class CultAgent {
       return 'К близкой дате не берём тяжёлую реабилитацию. Чаще — уход с сыворотками или скульптурный массаж, иногда лёгкая инфузия Beauty & Glow. '
           'Скажите точную дату и зону (лицо / отёк / тон) — предложу один спокойный протокол и запись.';
     }
-    if ((event || weekish) && !clinicalInterval) {
+    if ((event || weekish) &&
+        !clinicalInterval &&
+        !q.contains('сертификат') &&
+        !q.contains('подарить')) {
       return 'Под дату есть запас — можно сочетать мягкий старт сейчас и при необходимости курс после осмотра. '
           'Назовите, что важнее в кадре: тон, овал, свежесть или энергия — сузим до двух вариантов.';
     }
@@ -7096,7 +7260,8 @@ class CultAgent {
     }
     // «скульптурный массаж» contains «скульпт» — don't steal into contour inject.
     if ((q.contains('контурн') || q.contains('липо') || q.contains('скульптурир')) &&
-        !q.contains('массаж')) {
+        !q.contains('массаж') &&
+        !q.contains('липосакц')) {
       return 'Контурная пластика и скульптурирование — в «Инъекциях». Объём и зоны согласуем на консультации.';
     }
     if (q.contains('ресепшен') ||
@@ -7196,6 +7361,7 @@ class CultAgent {
         !q.contains('никель') &&
         !q.contains('никел') &&
         !q.contains('йод') &&
+        !q.contains('латекс') &&
         !q.contains('ферритин')) {
       return 'Сообщите об аллергиях на анестезию, металлы или косметику до процедуры — в чате врача или на осмотре. Не скрывайте реакции: подберём безопасный протокол.';
     }
@@ -7437,7 +7603,10 @@ class CultAgent {
         !q.contains('жар') &&
         !q.contains('инфаркт') &&
         !q.contains('инсульт') &&
-        !q.contains('сердечн')) {
+        !q.contains('сердечн') &&
+        !q.contains('домашн') &&
+        !q.contains('синяк') &&
+        !q.contains('гематом')) {
       return 'Аппаратная — в меню «Аппаратная»: RF, IPL и SMAS. Спросите название — отвечу ценой и длительностью; интенсивность всегда уточняем на консультации под вашу кожу.';
     }
     if ((q.contains('инъек') || q.contains('филлер') || q.contains('ботокс')) &&
@@ -7492,7 +7661,12 @@ class CultAgent {
         !q.contains('аспирин') &&
         !q.contains('омега') &&
         !q.contains('глаз выше') &&
-        !q.contains('глаз ниже')) {
+        !q.contains('глаз ниже') &&
+        !q.contains('горят') &&
+        !q.contains('горит') &&
+        !q.contains('жжет') &&
+        !q.contains('жжёт') &&
+        !q.contains('латекс')) {
       return 'Инъекции (ботулин, филлеры, мезо) подбирает врач после осмотра — можно начать с консультации без процедуры в тот же день. '
           'Скажите зону или цель: мимика, губы, плотность — сузим и при желании запишем.';
     }
@@ -7537,6 +7711,8 @@ class CultAgent {
         !q.contains('йод') &&
         !q.contains('ферритин') &&
         !q.contains('желч') &&
+        !q.contains('панкреатит') &&
+        !q.contains('поджелудоч') &&
         !q.contains('йог') &&
         !q.contains('спорт') &&
         !q.contains('тренир')) {
@@ -7630,9 +7806,12 @@ class CultAgent {
     if (q.contains('консультац')) {
       return 'Консультацию удобно открыть через «+» на главной или в карточке врача. Первый визит часто начинается с осмотра — без давления «сделать всё сразу».';
     }
-    if (q.contains('гематом') ||
-        q.contains('синяк после') ||
-        q.contains('синяки после')) {
+    if ((q.contains('гематом') ||
+            q.contains('синяк после') ||
+            q.contains('синяки после')) &&
+        !q.contains('rf') &&
+        !q.contains('рф') &&
+        !q.contains('микроиголь')) {
       return 'Гематома и синяк после инъекций бывают; обычно спадают за несколько дней — холод по схеме врача, без разминания зоны. '
           'Если нарастает боль, температура или асимметрия — сразу напишите врачу в чат.';
     }
