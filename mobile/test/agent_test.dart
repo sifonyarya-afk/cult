@@ -1653,4 +1653,28 @@ void main() {
     expect(fly.toLowerCase(), contains('пилинг'));
     expect(fly.toLowerCase(), isNot(contains('после процедуры обычно')));
   });
+
+  test('Экстрасистолия+IV, колит+IV, военный прайс', () {
+    final ex = cultAgent.answer('У меня экстрасистолия — капельницу можно?');
+    expect(ex.toLowerCase(), anyOf(contains('экстрасистол'), contains('аритм'), contains('кардиолог')));
+    expect(ex.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final col = cultAgent.answer('Можно ли капельницу при колите?');
+    expect(col.toLowerCase(), contains('колит'));
+    expect(col.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final mil = cultAgent.answer('Есть ли военный прайс или скидка военнослужащим?');
+    expect(mil.toLowerCase(), contains('военн'));
+    expect(mil.toLowerCase(), isNot(contains('меню «прайс»')));
+  });
+
+  test('Головокружение после массажа, тяжёлый лоб, новокаин+IV', () {
+    final dizzy = cultAgent.answer('После массажа голова кружится — норма?');
+    expect(dizzy.toLowerCase(), anyOf(contains('круж'), contains('головокруж'), contains('массаж')));
+    expect(dizzy.toLowerCase(), isNot(contains('меню «услуги»')));
+    final heavy = cultAgent.answer('После ботокса лоб тяжёлый на третий день — норма?');
+    expect(heavy.toLowerCase(), anyOf(contains('тяжёл'), contains('тяжел'), contains('лоб')));
+    expect(heavy.toLowerCase(), isNot(contains('скульптурный массаж лица или плотный')));
+    final nov = cultAgent.answer('У меня аллергия на новокаин — капельницу можно?');
+    expect(nov.toLowerCase(), contains('новокаин'));
+    expect(nov.toLowerCase(), isNot(contains('сообщите об аллергиях на анестезию')));
+  });
 }
