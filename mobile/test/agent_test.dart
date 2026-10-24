@@ -2080,4 +2080,26 @@ void main() {
     expect(rfB.toLowerCase(), contains('через'));
     expect(rfB.toLowerCase(), isNot(contains('в разных визитах')));
   });
+
+  test('v69: сосуды лазер, магний+RF, мезо выпускной, чистка+брадикардия', () {
+    final vessels = cultAgent.answer('Делаете ли удаление сосудов лазером?');
+    expect(vessels.toLowerCase(), anyOf(contains('сосуд'), contains('ipl')));
+    expect(vessels.toLowerCase(), isNot(contains('давайте проще')));
+    final mg = cultAgent.answer('Можно ли делать RF если пью магний?');
+    expect(mg.toLowerCase(), contains('rf'));
+    expect(mg.toLowerCase(), contains('магний'));
+    expect(mg.toLowerCase(), isNot(contains('инъекции')));
+    final meso = cultAgent.answer('Боюсь отёка после мезо к выпускному через десять дней');
+    expect(meso.toLowerCase(), anyOf(contains('мезо'), contains('выпускн')));
+    expect(meso.toLowerCase(), isNot(contains('без сауны и бассейна пару дней')));
+    final brady = cultAgent.answer('У меня брадикардия — чистку можно?');
+    expect(brady.toLowerCase(), contains('чистк'));
+    expect(brady.toLowerCase(), isNot(contains('пилинг и часть кислот')));
+    final cert = cultAgent.answer('Можно ли оформить сертификат только на шоп голосом?');
+    expect(cert.toLowerCase(), contains('голос'));
+    expect(cert.toLowerCase(), contains('шоп'));
+    final peelT = cultAgent.answer('После пилинга лицо стянуто на четвёртый день — норма?');
+    expect(peelT.toLowerCase(), contains('стянут'));
+    expect(peelT.toLowerCase(), isNot(contains('лёгкая краснота')));
+  });
 }

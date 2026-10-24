@@ -4,7 +4,7 @@
 
 **Мира** — косметолог CULT на центральной жемчужине нижней панели. Живой голос без карточек-подсказок: слушает → отвечает → слушает. Запись на услугу — только после уточнений и кнопки **«Запись»**. Чат с администратором/врачом — через меню ☰. iOS спросит Микрофон и «Распознавание речи».
 
-Если агента нет / старый UI — на Mac почти всегда **старый коммит** и `git pull` не прошёл. Актуальная метка: **`mira-train-v68`** (`cultBuildTag` в `mobile/lib/data.dart`).
+Если агента нет / старый UI — на Mac почти всегда **старый коммит** и `git pull` не прошёл. Актуальная метка: **`mira-train-v69`** (`cultBuildTag` в `mobile/lib/data.dart`).
 
 В zsh строка после `#` — не комментарий (если нет `INTERACTIVE_COMMENTS`). Не копируйте команды с `# …` в конец: будет `fatal: '#' does not appear to be a git repository` и `pathspec '#'`.
 
@@ -21,7 +21,7 @@ grep cultBuildTag mobile/lib/data.dart
 grep speech_to_text mobile/pubspec.yaml
 ```
 
-После `pull` `cultBuildTag` должен быть `mira-train-v68`. Если `pull` снова ругается на локальные файлы:
+После `pull` `cultBuildTag` должен быть `mira-train-v69`. Если `pull` снова ругается на локальные файлы:
 
 ```bash
 cd ~/Desktop/cult/cult
@@ -222,7 +222,7 @@ rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
 open ios/Runner.xcworkspace
 ```
 
-В Xcode: Product → Clean Build Folder → Run. Метка сборки: `mira-train-v68`.
+В Xcode: Product → Clean Build Folder → Run. Метка сборки: `mira-train-v69`.
 
 ### `module 'Flutter' not found` / VerifyModule (`url_launcher_ios`, `shared_preferences_foundation`)
 
