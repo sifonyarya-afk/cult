@@ -2134,4 +2134,24 @@ void main() {
     expect(hot.toLowerCase(), anyOf(contains('горяч'), contains('тёпл'), contains('тепл')));
     expect(hot.toLowerCase(), isNot(contains('избавиться «насовсем»')));
   });
+
+  test('v72: мезо+омега, HydraPure стянуто, SMAS+пилинг цена, Bio-Scan', () {
+    final omega = cultAgent.answer('Можно ли делать мезо если пью омега-3?');
+    expect(omega.toLowerCase(), anyOf(contains('мезо'), contains('омега'), contains('рыбий')));
+    expect(omega.toLowerCase(), isNot(contains('про мезотерапия')));
+    final hydra = cultAgent.answer('После HydraPure лицо стянуто вечером — норма?');
+    expect(hydra.toLowerCase(), contains('hydrapure'));
+    expect(hydra.toLowerCase(), contains('стянут'));
+    expect(hydra.toLowerCase(), isNot(contains('про инфузия')));
+    final price = cultAgent.answer('Сколько стоит SMAS и пилинг вместе?');
+    expect(price.toLowerCase(), contains('пилинг'));
+    expect(price.toLowerCase(), anyOf(contains('smas'), contains('ultherap')));
+    expect(price.toLowerCase(), isNot(contains('итог после осмотра и карты зон')));
+    final vit = cultAgent.answer('Можно ли делать RF если пью витамин D?');
+    expect(vit.toLowerCase(), contains('rf'));
+    expect(vit.toLowerCase(), isNot(contains('ботулин')));
+    final scan = cultAgent.answer('Что такое Home Bio-Scan простыми словами?');
+    expect(scan.toLowerCase(), contains('bio-scan'));
+    expect(scan.toLowerCase(), isNot(contains('скажу проще')));
+  });
 }
