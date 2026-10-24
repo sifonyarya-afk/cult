@@ -1448,4 +1448,39 @@ void main() {
     expect(sport.toLowerCase(), contains('ipl'));
     expect(sport.toLowerCase(), isNot(contains('напишите, что делали')));
   });
+
+  test('Абдоминопластика, пересадка волос, пролактин+IV', () {
+    final abdo = cultAgent.answer('Делаете ли абдоминопластику?');
+    expect(abdo.toLowerCase(), anyOf(contains('абдоминопласт'), contains('не делаем'), contains('хирург')));
+    expect(abdo.toLowerCase(), isNot(contains('давайте проще')));
+    final hair = cultAgent.answer('Делаете ли пересадку волос?');
+    expect(hair.toLowerCase(), anyOf(contains('пересадк'), contains('не делаем'), contains('трихо')));
+    expect(hair.toLowerCase(), isNot(contains('не уверена')));
+    final prol = cultAgent.answer('У меня повышенный пролактин — капельницу можно?');
+    expect(prol.toLowerCase(), contains('пролактин'));
+    expect(prol.toLowerCase(), isNot(contains('меню «инфузии»')));
+  });
+
+  test('Язва+IV, SMAS+брекеты, RF+пилинг через 10 дней', () {
+    final ulcer = cultAgent.answer('Можно ли капельницу при язвенной болезни?');
+    expect(ulcer.toLowerCase(), anyOf(contains('язв'), contains('жкт')));
+    expect(ulcer.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final braces = cultAgent.answer('Можно ли делать SMAS если стоят брекеты?');
+    expect(braces.toLowerCase(), anyOf(contains('smas'), contains('брекет')));
+    expect(braces.toLowerCase(), isNot(contains('запишем скульптурный массаж')));
+    final peel = cultAgent.answer('Можно ли совместить RF и пилинг через десять дней?');
+    expect(peel.toLowerCase(), anyOf(contains('rf'), contains('пилинг'), contains('7–10'), contains('через')));
+    expect(peel.toLowerCase(), isNot(contains('скажите пару')));
+  });
+
+  test('Асимметрия страх, пакет массажей, бонусы подруге', () {
+    final asym = cultAgent.answer('Боюсь асимметрии после филлера губ');
+    expect(asym.toLowerCase(), contains('асимметр'));
+    expect(asym.toLowerCase(), isNot(contains('без уколов в губы')));
+    final pack = cultAgent.answer('Есть ли скидка на пакет из пяти массажей?');
+    expect(pack.toLowerCase(), anyOf(contains('пакет'), contains('5 масс'), contains('курс')));
+    expect(pack.toLowerCase(), isNot(contains('акции точнее скажет')));
+    final bonus = cultAgent.answer('Можно ли оплатить бонусами CULT капельницу подруге?');
+    expect(bonus.toLowerCase(), anyOf(contains('подруг'), contains('сертификат'), contains('владельц')));
+  });
 }
