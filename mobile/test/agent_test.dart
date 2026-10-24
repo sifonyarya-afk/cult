@@ -1556,4 +1556,40 @@ void main() {
     final ship = cultAgent.answer('Можно ли заказать шоп с доставкой за город?');
     expect(ship.toLowerCase(), anyOf(contains('город'), contains('област'), contains('курьер')));
   });
+
+  test('Аритмия+IV, лабиопластика, холецистит+IV', () {
+    final arr = cultAgent.answer('У меня аритмия — капельницу можно?');
+    expect(arr.toLowerCase(), contains('аритм'));
+    expect(arr.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final lab = cultAgent.answer('Делаете ли лабиопластику?');
+    expect(lab.toLowerCase(), contains('лабиопласт'));
+    expect(lab.toLowerCase(), isNot(contains('не уверена')));
+    final chol = cultAgent.answer('Можно ли капельницу при холецистите?');
+    expect(chol.toLowerCase(), contains('холецист'));
+    expect(chol.toLowerCase(), isNot(contains('меню «инфузии»')));
+  });
+
+  test('Детский прайс, биоревитал частота, латекс+IV', () {
+    final kids = cultAgent.answer('Есть ли детский прайс до 16 лет?');
+    expect(kids.toLowerCase(), anyOf(contains('детск'), contains('18')));
+    expect(kids.toLowerCase(), isNot(contains('цифра в паспорте')));
+    final freq = cultAgent.answer('Как часто можно колоть биоревитализацию?');
+    expect(freq.toLowerCase(), anyOf(contains('недел'), contains('интервал'), contains('курс')));
+    expect(freq.toLowerCase(), isNot(contains('без сауны и бассейна')));
+    final latex = cultAgent.answer('У меня аллергия на латекс — капельницу можно?');
+    expect(latex.toLowerCase(), anyOf(contains('капельниц'), contains('инфуз')));
+    expect(latex.toLowerCase(), isNot(contains('до инъекций')));
+  });
+
+  test('Сертификат+карта, IPL+перелёт, вторая услуга', () {
+    final pay = cultAgent.answer('Можно ли оплатить визит сертификатом частично картой?');
+    expect(pay.toLowerCase(), anyOf(contains('остат'), contains('карт'), contains('частич')));
+    expect(pay.toLowerCase(), isNot(contains('другого человека')));
+    final fly = cultAgent.answer('После IPL можно лететь через четыре дня?');
+    expect(fly.toLowerCase(), contains('ipl'));
+    expect(fly.toLowerCase(), isNot(contains('разделе «аппаратная»')));
+    final add = cultAgent.answer('Хочу добавить вторую услугу к уже собранной записи');
+    expect(add.toLowerCase(), anyOf(contains('вторую'), contains('админ'), contains('мои записи')));
+    expect(add.toLowerCase(), isNot(contains('скажите услугу и когда')));
+  });
 }
