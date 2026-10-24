@@ -2102,4 +2102,17 @@ void main() {
     expect(peelT.toLowerCase(), contains('стянут'));
     expect(peelT.toLowerCase(), isNot(contains('лёгкая краснота')));
   });
+
+  test('v70: SMAS+омега, мешки без филлера, SMAS+RF интервал', () {
+    final omega = cultAgent.answer('Можно ли делать SMAS если пью омега-3?');
+    expect(omega.toLowerCase(), contains('smas'));
+    expect(omega.toLowerCase(), anyOf(contains('омега'), contains('рыбий')));
+    expect(omega.toLowerCase(), isNot(contains('массаж посильнее')));
+    final bags = cultAgent.answer('Хочу убрать мешки под глазами без филлера');
+    expect(bags.toLowerCase(), contains('мешк'));
+    expect(bags.toLowerCase(), isNot(contains('тёмные круги без уколов')));
+    final smasRf = cultAgent.answer('Можно ли совместить SMAS и RF через месяц?');
+    expect(smasRf.toLowerCase(), contains('через'));
+    expect(smasRf.toLowerCase(), isNot(contains('скажите пару процедур')));
+  });
 }
