@@ -2197,4 +2197,22 @@ void main() {
     expect(patch.toLowerCase(), contains('самовывоз'));
     expect(patch.toLowerCase(), isNot(contains('посмотрела')));
   });
+
+  test('v75: IPL+RF, железо+мезо, розацеа+ботокс, набор HydraPure', () {
+    final iplRf = cultAgent.answer('Можно ли совместить IPL и RF через три недели?');
+    expect(iplRf.toLowerCase(), contains('через'));
+    expect(iplRf.toLowerCase(), isNot(contains('скажите пару процедур')));
+    final iron = cultAgent.answer('Можно ли делать мезо если пью железо?');
+    expect(iron.toLowerCase(), contains('мезо'));
+    expect(iron.toLowerCase(), isNot(contains('ботулин')));
+    final ros = cultAgent.answer('У меня розацеа — ботокс можно?');
+    expect(ros.toLowerCase(), anyOf(contains('ботулин'), contains('ботокс')));
+    expect(ros.toLowerCase(), isNot(contains('иногда смотрят ipl и спокойный протокол')));
+    final barber = cultAgent.answer('Можно ли совместить барбер и RF через неделю?');
+    expect(barber.toLowerCase(), contains('через'));
+    expect(barber.toLowerCase(), isNot(contains('скажите пару процедур')));
+    final kit = cultAgent.answer('Хочу домашний набор после HydraPure');
+    expect(kit.toLowerCase(), contains('hydrapure'));
+    expect(kit.toLowerCase(), isNot(contains('про инфузия')));
+  });
 }
