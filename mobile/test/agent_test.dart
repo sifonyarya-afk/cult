@@ -1628,4 +1628,29 @@ void main() {
     expect(home.toLowerCase(), anyOf(contains('барьер'), contains('чистк'), contains('lumen')));
     expect(home.toLowerCase(), isNot(contains('биомаркер')));
   });
+
+  test('Чистка горячее, витамин D+ботокс, хлоргексидин+IV', () {
+    final hot = cultAgent.answer('После чистки лицо горячее вечером — норма?');
+    expect(hot.toLowerCase(), anyOf(contains('горяч'), contains('чистк'), contains('барьер')));
+    expect(hot.toLowerCase(), isNot(contains('если сложно')));
+    final vit = cultAgent.answer('Можно ли делать ботокс если пью витамин D?');
+    expect(vit.toLowerCase(), anyOf(contains('витамин'), contains('бот')));
+    expect(vit.toLowerCase(), isNot(contains('витаминная iv')));
+    final chx = cultAgent.answer('У меня аллергия на хлоргексидин — капельницу можно?');
+    expect(chx.toLowerCase(), contains('хлоргексид'));
+    expect(chx.toLowerCase(), isNot(contains('сообщите об аллергиях на анестезию')));
+  });
+
+  test('Beauty+лимфо цена, акне+Glow, пилинг+перелёт', () {
+    final price = cultAgent.answer('Сколько стоит Beauty & Glow и лимфодренаж вместе?');
+    expect(price.toLowerCase(), anyOf(contains('beauty'), contains('glow')));
+    expect(price.toLowerCase(), anyOf(contains('лимфо'), contains('массаж')));
+    expect(price.toLowerCase(), contains('отдельн'));
+    final acne = cultAgent.answer('У меня акне — Beauty & Glow можно?');
+    expect(acne.toLowerCase(), anyOf(contains('акне'), contains('beauty'), contains('glow')));
+    expect(acne.toLowerCase(), isNot(contains('химический пилинг')));
+    final fly = cultAgent.answer('После пилинга можно лететь через пять дней?');
+    expect(fly.toLowerCase(), contains('пилинг'));
+    expect(fly.toLowerCase(), isNot(contains('после процедуры обычно')));
+  });
 }

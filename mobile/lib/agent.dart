@@ -1173,10 +1173,21 @@ class CultAgent {
       'можно ли',
       'уже собранной',
       'уже собранную',
+      'к эларе',
+      'к эларе ',
+      'к элара',
+      'к джулиану',
+      'к джулиану ',
+      'к джулиан',
+      'к alethiapro',
+      'к алетиа',
     ]) {
       rest = rest.replaceAll(noise, ' ');
     }
-    rest = rest.replaceAll(RegExp(r'\s+'), ' ').trim();
+    rest = rest
+        .replaceAll(RegExp(r'\sк\s+[а-яa-z]{3,}\b'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
 
     // Short device/infusion aliases after stripping slot words.
     final restN = _normalize(rest);
@@ -1216,6 +1227,12 @@ class CultAgent {
     }
     if (restN.contains('immunity') || restN.contains('иммунит')) {
       return 'Immunity Boost';
+    }
+    if (restN.contains('пилинг') || restN.contains('l3') || restN.contains('химическ')) {
+      return 'Химический пилинг L3';
+    }
+    if (restN.contains('скульптурн') && restN.contains('массаж')) {
+      return 'Скульптурный массаж лица';
     }
 
     if (rest.length >= 3) {
@@ -1303,12 +1320,22 @@ class CultAgent {
   }
 
   String? _resolveBookDoctor(String q) {
+    bool wordish(String token) {
+      if (token.length < 5) return false; // avoid «торн» ⊂ «вторник»
+      if (q.contains(token)) return true;
+      // «Элара» → «эларе» / «элару»; «Джулиан» → «джулиану».
+      final stem = token.substring(0, token.length - 1);
+      return stem.length >= 4 &&
+          RegExp('(?:^|[^а-яa-z])$stem[а-яa-z]?(?:[^а-яa-z]|\$)')
+              .hasMatch(q);
+    }
+
     for (final d in doctors) {
       final n = _normalize(d.name);
-      final short = n.split(RegExp(r'\s+')).where((w) => w.length >= 4);
-      if (q.contains(n)) return d.name;
+      if (n.length >= 4 && q.contains(n)) return d.name;
+      final short = n.split(RegExp(r'[^a-zа-я0-9]+')).where((w) => w.length >= 5);
       for (final w in short) {
-        if (q.contains(w)) return d.name;
+        if (wordish(w)) return d.name;
       }
     }
     return null;
@@ -1787,7 +1814,12 @@ class CultAgent {
             ),
             '',
           )
+          .replaceAll(RegExp(r'\s+к\s+\d{1,2}([:.]\d{2})?\b.*$'), '')
+          .replaceAll(RegExp(r'\s+в\s+\d{1,2}([:.]\d{2})?\b.*$'), '')
           .trim();
+      if (place == 'отеля' || place == 'отель' || place == 'отеле') {
+        return 'Отель';
+      }
       if (place.length >= 3 &&
           !place.contains('трансфер') &&
           !place.contains('машин') &&
@@ -1796,12 +1828,19 @@ class CultAgent {
         return place[0].toUpperCase() + place.substring(1);
       }
     }
+    if (q.contains('отел') &&
+        !q.contains('риксос') &&
+        !q.contains('marriott') &&
+        !q.contains('марриотт')) {
+      return 'Отель';
+    }
     // Bare hotel / address-ish line while awaiting.
-    if (q.contains('отел') || q.contains('улиц') || q.contains('проспект')) {
+    if (q.contains('улиц') || q.contains('проспект')) {
       final cleaned = q
           .replaceAll('нужен трансфер', '')
           .replaceAll('трансфер', '')
           .replaceAll('пожалуйста', '')
+          .replaceAll(RegExp(r'\s+к\s+\d{1,2}([:.]\d{2})?\b.*$'), '')
           .replaceAll(RegExp(r'\s+'), ' ')
           .trim();
       if (cleaned.length >= 5) {
@@ -4019,10 +4058,18 @@ class CultAgent {
           'После мягкого ухода или массажа часто можно раньше, без плотного тона в первый вечер. Что делали или планируете?';
     }
 
-    if ((q.contains('красн') || q.contains('покрасн') || q.contains('горит') || q.contains('жжет')) &&
+    if ((q.contains('красн') ||
+            q.contains('покрасн') ||
+            q.contains('горит') ||
+            q.contains('жжет') ||
+            q.contains('жжёт') ||
+            q.contains('горяч') ||
+            q.contains('жар') ||
+            q.contains('печёт') ||
+            q.contains('печет')) &&
         (q.contains('после чистк') || (q.contains('после') && q.contains('чистк'))) &&
-        (q.contains('норма') || q.contains('вечером') || q.contains('что делать'))) {
-      return 'Лёгкое покраснение после чистки вечером часто норма — мягкое умывание, барьерный крем, без кислот и сауны. '
+        (q.contains('норма') || q.contains('вечером') || q.contains('что делать') || q.contains('лицо'))) {
+      return 'Тёплое или слегка «горячее» лицо вечером после чистки часто норма — мягкое умывание, барьерный крем, без кислот и сауны. '
           'Если жжение сильное, отёк или гной — к врачу в чат. Могу положить Lumen Barrier или открыть чат.';
     }
 
@@ -4749,6 +4796,17 @@ class CultAgent {
             q.contains('вылет'))) {
       return 'После IPL перелёт через 3–4 дня часто уже обсуждают как рабочий ориентир — SPF в салоне обязателен, без свежего загара; точнее врач по фототипу и зоне. '
           'Когда вспышка и когда вылет?';
+    }
+
+    if ((q.contains('пилинг') || q.contains('кислот') || q.contains('l3')) &&
+        (q.contains('самолет') ||
+            q.contains('перелет') ||
+            q.contains('лететь') ||
+            q.contains('летать') ||
+            q.contains('авиа') ||
+            q.contains('вылет'))) {
+      return 'После пилинга перелёт через 4–5 дней часто уже обсуждают как рабочий ориентир — SPF в салоне обязателен, без кислот «добить»; точнее врач по глубине. '
+          'Когда делали пилинг и когда вылет?';
     }
 
     if ((q.contains('ботокс') || q.contains('ботулин')) &&
@@ -5806,8 +5864,24 @@ class CultAgent {
           'Оформим сертификат или сразу «Запись»?';
     }
 
+    if ((q.contains('лимфодренаж') || q.contains('лимфодрен') || q.contains('массаж')) &&
+        (q.contains('beauty') || q.contains('glow') || q.contains('капель') || q.contains('инфуз')) &&
+        (q.contains('скольк') || q.contains('стоит') || q.contains('цен') || q.contains('вместе'))) {
+      final glow = _clinicInfusion('beauty') ?? _clinicInfusion('glow');
+      final lymph = _clinicService('лимфодренаж', gender: gender) ??
+          _clinicService('скульптурн', gender: gender);
+      final g = glow == null ? 'Beauty & Glow' : '${glow.title} — ориентир ${glow.price}';
+      final m = lymph == null ? 'лимфодренажный массаж' : '${lymph.title} — ориентир ${lymph.priceLabel}';
+      return 'По отдельности: $g; $m. В один визит часто ставят, если самочувствие ровное — порядок скажет врач или админ. '
+          'Запишем оба окна или сначала консультацию?';
+    }
+
     if ((q.contains('лимфодренаж') || q.contains('лимфодрен')) &&
-        (q.contains('скольк') || q.contains('стоит') || q.contains('цен'))) {
+        (q.contains('скольк') || q.contains('стоит') || q.contains('цен')) &&
+        !q.contains('beauty') &&
+        !q.contains('glow') &&
+        !q.contains('капель') &&
+        !q.contains('инфуз')) {
       final lymph = _clinicService('лимфодренаж', gender: gender) ??
           _clinicService('скульптурн', gender: gender);
       if (lymph != null) {
@@ -6183,6 +6257,16 @@ class CultAgent {
           'Напишите, что пьёте и как давно — или откроем чат специалиста.';
     }
 
+    if ((q.contains('витамин d') ||
+            q.contains('витамин д') ||
+            q.contains('витамином d') ||
+            q.contains('витамином д') ||
+            q.contains('vitamin d')) &&
+        (q.contains('ботокс') || q.contains('ботулин') || q.contains('филлер') || q.contains('инъек') || q.contains('можно'))) {
+      return 'Витамин D сам по себе редко отменяет ботулин — врачу важно знать дозу и другие препараты/БАДы. '
+          'Без осмотра «пейте и колите» не обещаю. Запишем консультацию — скажете про витамин D на осмотре.';
+    }
+
     if ((q.contains('опущ') || q.contains('птоз') || q.contains('упало век') || q.contains('нависло век')) &&
         (q.contains('ботокс') || q.contains('ботулин') || q.contains('после'))) {
       return 'Опущенное веко после ботулина — повод сразу написать врачу: иногда нужна коррекция, сами не массируем и не «поднимаем» кремами. '
@@ -6457,6 +6541,13 @@ class CultAgent {
     if ((q.contains('розацеа') || q.contains('купероз')) &&
         (q.contains('капель') || q.contains('инфуз') || q.contains('beauty') || q.contains('glow'))) {
       return 'При розацеа капельницу Beauty & Glow не назначаю вслепую — сначала допуск врача, на лице без обострения; иногда важнее уход и IPL, чем инфузия. '
+          'Запишем консультацию или откроем чат специалиста?';
+    }
+
+    if ((q.contains('акне') || q.contains('acne') || q.contains('прыщ') || q.contains('воспал')) &&
+        (q.contains('beauty') || q.contains('glow') || q.contains('капель') || q.contains('инфуз')) &&
+        !q.contains('постакне')) {
+      return 'При активном акне капельницу Beauty & Glow не назначаю вслепую — сначала осмотр и спокойный протокол для кожи; инфузия не замена лечению воспалений. '
           'Запишем консультацию или откроем чат специалиста?';
     }
 
@@ -7037,6 +7128,16 @@ class CultAgent {
           'Могу открыть чат специалиста или записать на консультацию перед инфузией.';
     }
 
+    if ((q.contains('хлоргексидин') || q.contains('хлоргексид') || q.contains('chlorhexidine')) &&
+        (q.contains('капель') ||
+            q.contains('инфуз') ||
+            q.contains('капельниц') ||
+            q.contains('аллерг') ||
+            q.contains('можно'))) {
+      return 'Аллергию на хлоргексидин обязательно скажите до капельницы — антисептик и обработку кожи подбирают иначе, без самозаписи. '
+          'Могу открыть чат специалиста или записать на консультацию перед инфузией.';
+    }
+
     if ((q.contains('латекс') || q.contains('latex')) &&
         (q.contains('филлер') || q.contains('ботокс') || q.contains('инъек') || q.contains('можно'))) {
       return 'Аллергию на латекс обязательно скажите до инъекций — перчатки и расходники подбирают иначе, без самозаписи. '
@@ -7470,12 +7571,17 @@ class CultAgent {
           'Сказать примерно цену или сразу про запись?';
     }
     // Not «постакне» — that has its own FAQ path.
-    if (((q.contains('акне') || q.contains('acne')) &&
-            !q.contains('постакне') &&
-            !q.contains('postacne')) ||
-        q.contains('прыщ') ||
-        q.contains('воспал') ||
-        q.contains('высып')) {
+    // Beauty & Glow / IV with acne — [_teachReply] owns; don't steal to peel FAQ.
+    if ((((q.contains('акне') || q.contains('acne')) &&
+                !q.contains('постакне') &&
+                !q.contains('postacne')) ||
+            q.contains('прыщ') ||
+            q.contains('воспал') ||
+            q.contains('высып')) &&
+        !q.contains('beauty') &&
+        !q.contains('glow') &&
+        !q.contains('капель') &&
+        !q.contains('инфуз')) {
       final peelLine = _lineService(peel) ?? 'химический пилинг L3';
       return _pick('concern-acne', [
         'Воспаления дома лучше не «жечь»: нужен осмотр, потом щадящий уход или $peelLine по фототипу. '
@@ -7940,6 +8046,14 @@ class CultAgent {
         q.contains('сколько бонус')) {
       return 'Лояльность CULT: welcome-бонус 3 000 ₽ новым клиентам, начисление и списание — в профиле (до 30% чека бонусами на платине). '
           'Отдельного кэшбека милями банков обычно нет — детали у администратора.';
+    }
+    if ((q.contains('корпоративн') ||
+            q.contains('корпоративный прайс') ||
+            (q.contains('для компании') && q.contains('прайс')) ||
+            (q.contains('для фирмы') && q.contains('прайс'))) &&
+        (q.contains('прайс') || q.contains('цен') || q.contains('скидк') || q.contains('есть'))) {
+      return 'Отдельного «корпоративного прайса» в меню нет — для компаний администратор согласует пакет или сертификаты; скидки зависят от объёма. '
+          'Могу открыть чат админа. Сколько человек примерно?';
     }
     if (q.contains('корпоратив') ||
         q.contains('для сотрудник') ||
