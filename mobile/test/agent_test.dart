@@ -2215,4 +2215,28 @@ void main() {
     expect(kit.toLowerCase(), contains('hydrapure'));
     expect(kit.toLowerCase(), isNot(contains('про инфузия')));
   });
+
+  test('v76: RF+омега, лимфо стянуто, гинекомастия, мезонити, чистка+массаж', () {
+    final omega = cultAgent.answer('Можно ли делать RF если пью омега-3?');
+    expect(omega.toLowerCase(), contains('rf'));
+    expect(omega.toLowerCase(), anyOf(contains('омега'), contains('рыбий')));
+    expect(omega.toLowerCase(), isNot(contains('меню «аппаратная»')));
+    final lymph = cultAgent.answer('Что делать если после лимфодренажа лицо стянуто вечером?');
+    expect(lymph.toLowerCase(), anyOf(contains('лимфо'), contains('массаж')));
+    expect(lymph.toLowerCase(), contains('стянут'));
+    expect(lymph.toLowerCase(), isNot(contains('меню «услуги»')));
+    final gyn = cultAgent.answer('Делаете ли гинекомастию?');
+    expect(gyn.toLowerCase(), contains('гинекомаст'));
+    expect(gyn.toLowerCase(), isNot(contains('я рядом')));
+    final threads = cultAgent.answer('Делаете ли мезонити?');
+    expect(threads.toLowerCase(), anyOf(contains('мезонит'), contains('нитев')));
+    expect(threads.toLowerCase(), isNot(contains('после золотых нитей')));
+    final price = cultAgent.answer('Сколько стоит чистка и массаж вместе?');
+    expect(price.toLowerCase(), contains('чистк'));
+    expect(price.toLowerCase(), contains('массаж'));
+    expect(price.toLowerCase(), isNot(contains('мануальный лифтинг контура')));
+    final cup = cultAgent.answer('У меня купероз — SMAS можно?');
+    expect(cup.toLowerCase(), contains('smas'));
+    expect(cup.toLowerCase(), isNot(contains('иногда смотрят ipl и спокойный протокол')));
+  });
 }
