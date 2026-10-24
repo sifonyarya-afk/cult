@@ -1964,4 +1964,35 @@ void main() {
     expect(lymph.toLowerCase(), anyOf(contains('лимфодрен'), contains('beauty')));
     expect(lymph.toLowerCase(), isNot(contains('совмещать можно не всё')));
   });
+
+  test('Массаж горячее, коллаген+мезо, экстрасистолия+SMAS, IPL шелушение', () {
+    final hot = cultAgent.answer('После массажа лицо горячее вечером — норма?');
+    expect(hot.toLowerCase(), contains('массаж'));
+    expect(hot.toLowerCase(), anyOf(contains('тёпл'), contains('тепл'), contains('горяч')));
+    expect(hot.toLowerCase(), isNot(contains('если сложно сформулировать')));
+    final col = cultAgent.answer('Можно ли делать мезо если пью коллаген?');
+    expect(col.toLowerCase(), contains('коллаген'));
+    expect(col.toLowerCase(), anyOf(contains('мезо'), contains('биоревитал')));
+    final smas = cultAgent.answer('У меня экстрасистолия — SMAS можно?');
+    expect(smas.toLowerCase(), anyOf(contains('экстрасистол'), contains('аритм')));
+    expect(smas.toLowerCase(), contains('smas'));
+    expect(smas.toLowerCase(), isNot(contains('не «массаж посильнее»')));
+    final ipl = cultAgent.answer('После IPL шелушится лицо на четвёртый день — норма?');
+    expect(ipl.toLowerCase(), contains('ipl'));
+    expect(ipl.toLowerCase(), contains('шелуш'));
+    expect(ipl.toLowerCase(), isNot(contains('обезвоженность')));
+  });
+
+  test('Бровь выше, RF+перелёт, Beauty с собой', () {
+    final brow = cultAgent.answer('Что делать если после ботокса одна бровь выше?');
+    expect(brow.toLowerCase(), anyOf(contains('бров'), contains('асимметр'), contains('высот')));
+    expect(brow.toLowerCase(), isNot(contains('другой студии')));
+    final flight = cultAgent.answer('После RF можно лететь через пять дней?');
+    expect(flight.toLowerCase(), contains('rf'));
+    expect(flight.toLowerCase(), anyOf(contains('перел'), contains('лететь')));
+    expect(flight.toLowerCase(), isNot(contains('напишите дату вылета в чат')));
+    final bag = cultAgent.answer('Что взять с собой на Beauty & Glow?');
+    expect(bag.toLowerCase(), contains('капельниц'));
+    expect(bag.toLowerCase(), isNot(contains('на первый визит')));
+  });
 }
