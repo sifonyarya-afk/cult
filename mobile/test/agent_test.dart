@@ -1677,4 +1677,53 @@ void main() {
     expect(nov.toLowerCase(), contains('новокаин'));
     expect(nov.toLowerCase(), isNot(contains('сообщите об аллергиях на анестезию')));
   });
+
+  test('Стенокардия+IV, зуд после чистки, пенсионный прайс, родинки лазером', () {
+    final sten = cultAgent.answer('У меня стенокардия — капельницу можно?');
+    expect(sten.toLowerCase(), contains('стенокард'));
+    expect(sten.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final itch = cultAgent.answer('После чистки зудит лицо — норма?');
+    expect(itch.toLowerCase(), anyOf(contains('зуд'), contains('чистк'), contains('барьер')));
+    expect(itch.toLowerCase(), isNot(contains('если сложно')));
+    final pens = cultAgent.answer('Есть ли пенсионный прайс?');
+    expect(pens.toLowerCase(), contains('пенсион'));
+    expect(pens.toLowerCase(), isNot(contains('меню «прайс»')));
+    final mole = cultAgent.answer('Делаете ли удаление родинок лазером?');
+    expect(mole.toLowerCase(), anyOf(contains('родин'), contains('новообразован')));
+    expect(mole.toLowerCase(), anyOf(contains('лазер'), contains('осмотр'), contains('врач')));
+    expect(mole.toLowerCase(), isNot(contains('меню «')));
+  });
+
+  test('Цинк+ботокс, щёки после филлера, барбер+мужской цена, RF шелушится', () {
+    final zn = cultAgent.answer('Можно ли делать ботокс если пью цинк?');
+    expect(zn.toLowerCase(), contains('цинк'));
+    expect(zn.toLowerCase(), isNot(contains('витаминная iv')));
+    final cheeks = cultAgent.answer('После филлера щёки горят на второй день — норма?');
+    expect(cheeks.toLowerCase(), anyOf(contains('щек'), contains('щёк'), contains('лиц'), contains('филлер')));
+    expect(cheeks.toLowerCase(), isNot(contains('жжение губ')));
+    final price = cultAgent.answer('Сколько стоит барбер-массаж и мужской уход вместе?');
+    expect(price.toLowerCase(), contains('барбер'));
+    expect(price.toLowerCase(), anyOf(contains('мужск'), contains('уход')));
+    expect(price.toLowerCase(), contains('отдельн'));
+    final rf = cultAgent.answer('Что делать если после RF лицо шелушится на четвёртый день?');
+    expect(rf.toLowerCase(), contains('rf'));
+    expect(rf.toLowerCase(), anyOf(contains('шелуш'), contains('барьер')));
+    expect(rf.toLowerCase(), isNot(contains('обезвоженность и слабый барьер')));
+  });
+
+  test('Neuro-Regen самовывоз, набор после мезо, брови после ботокса, йод+ботокс', () {
+    final neuro = cultAgent.answer('Можно ли купить Neuro-Regen с самовывозом сегодня?');
+    expect(neuro.toLowerCase(), anyOf(contains('neuro'), contains('нейро'), contains('самовывоз')));
+    expect(neuro.toLowerCase(), isNot(contains('близкой дате')));
+    final home = cultAgent.answer('Хочу домашний набор после мезо');
+    expect(home.toLowerCase(), anyOf(contains('барьер'), contains('мезо'), contains('lumen')));
+    expect(home.toLowerCase(), isNot(contains('без сауны и бассейна пару дней')));
+    final brows = cultAgent.answer('После ботокса можно красить брови через два дня?');
+    expect(brows.toLowerCase(), contains('бров'));
+    expect(brows.toLowerCase(), isNot(contains('макияж на зону обычно откладывают минимум на сутки')));
+    final iodine = cultAgent.answer('У меня аллергия на йод — ботокс можно?');
+    expect(iodine.toLowerCase(), contains('йод'));
+    expect(iodine.toLowerCase(), anyOf(contains('бот'), contains('инъек')));
+    expect(iodine.toLowerCase(), isNot(contains('до капельницы')));
+  });
 }
