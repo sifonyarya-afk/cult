@@ -7268,9 +7268,10 @@ class CultAgent {
         !q.contains('после укол') &&
         !q.contains('желч') &&
         !q.contains('желчно') &&
-        !q.contains('каменн') &&
         !q.contains('мочекамен') &&
         !q.contains('желчнокамен') &&
+        !q.contains('каменн болезни') &&
+        !q.contains('каменной болезни') &&
         !q.contains('капель') &&
         !q.contains('инфуз')) {
       return 'Если хотите натуральный результат — я бы начала с ${_lineService(massage) ?? 'массажа лица'} или ухода. '
