@@ -634,7 +634,12 @@ class CultAgent {
         q.contains('сравни инфуз') ||
         q.contains('какие капельниц') ||
         q.contains('какие инфуз') ||
-        (q.contains('nad') && q.contains('immunity')) ||
+        (q.contains('nad') &&
+            q.contains('immunity') &&
+            !q.contains('скольк') &&
+            !q.contains('стоит') &&
+            !q.contains('цен') &&
+            !q.contains('вместе')) ||
         (q.contains('капельниц') && q.contains('сравни'))) {
       return 'Коротко по трём: NAD+ — энергия и ясность; Immunity — поддержка; Beauty & Glow — кожа и «свежий» вид. '
           'Перед капельницей врач уточнит показания. Могу помочь записаться через «+» или открыть меню «Инфузии».';
@@ -3985,6 +3990,23 @@ class CultAgent {
           'Запишем консультацию по инфузиям или два окна отдельно?';
     }
 
+    if ((q.contains('nad') || q.contains('над+')) &&
+        (q.contains('immunity') || q.contains('иммунит')) &&
+        (q.contains('скольк') || q.contains('стоит') || q.contains('цен') || q.contains('вместе')) &&
+        !q.contains('beauty') &&
+        !q.contains('glow')) {
+      final nad = _clinicInfusion('nad');
+      final imm = _clinicInfusion('immunity');
+      final n = nad == null
+          ? 'NAD+ Energy — по прайсу'
+          : 'NAD+ Energy — ориентир ${nad.price}';
+      final i = imm == null
+          ? 'Immunity Boost — по прайсу'
+          : 'Immunity Boost — ориентир ${imm.price}';
+      return 'По отдельности: $n; $i. Вместе в один день ставят не всегда — зависит от составов и самочувствия, итог сложит администратор. '
+          'Запишем консультацию по инфузиям или два окна отдельно?';
+    }
+
     if ((q.contains('hydrapure') || q.contains('hydra') || q.contains('гидрапур')) &&
         q.contains('массаж') &&
         (q.contains('скольк') || q.contains('стоит') || q.contains('цен') || q.contains('вместе'))) {
@@ -4925,6 +4947,15 @@ class CultAgent {
           !q.contains('лимфодрен')) {
         return 'Beauty & Glow / капельницу и массаж часто ставят в один визит, если самочувствие ровное — порядок скажет врач или админ по слоту. '
             'Что важнее первым — силы или тело?';
+      }
+      if ((q.contains('лимфодрен') || (q.contains('массаж') && q.contains('лимф'))) &&
+          (q.contains('beauty') || q.contains('glow') || q.contains('капель') || q.contains('инфуз') || q.contains('nad') || q.contains('immunity'))) {
+        if (q.contains('через') || q.contains('недел') || q.contains('день') || q.contains('дней')) {
+          return 'Лимфодренаж и Beauty & Glow / капельницу через день часто уже дружат, если самочувствие ровное — в один визит тоже иногда ставят; порядок скажет врач или админ. '
+              'Запишем оба окна или консультацию по связке?';
+        }
+        return 'Лимфодренаж и Beauty & Glow / капельницу часто ставят в один визит или соседние дни, если самочувствие ровное — порядок скажет врач или админ по слоту. '
+            'Что важнее первым — тело или силы?';
       }
       if ((q.contains('лимфодрен') || (q.contains('массаж') && q.contains('лимф'))) &&
           (q.contains('rf') || q.contains('рф') || q.contains('микроиголь'))) {
@@ -7231,8 +7262,17 @@ class CultAgent {
     }
 
     if ((q.contains('магний') || q.contains('magnesium')) &&
-        (q.contains('ботокс') || q.contains('ботулин') || q.contains('можно'))) {
-      return 'Магний сам по себе редко отменяет ботулин — врачу важно знать дозу и другие препараты/БАДы. '
+        (q.contains('ботокс') ||
+            q.contains('ботулин') ||
+            q.contains('филлер') ||
+            q.contains('инъек') ||
+            q.contains('можно'))) {
+      final what = q.contains('филлер')
+          ? 'филлер'
+          : (q.contains('ботокс') || q.contains('ботулин'))
+              ? 'ботулин'
+              : 'инъекции';
+      return 'Магний сам по себе редко отменяет $what — врачу важно знать дозу и другие препараты/БАДы. '
           'Без осмотра «пейте и колите» не обещаю. Запишем консультацию — скажете про магний на осмотре.';
     }
 
@@ -7656,7 +7696,24 @@ class CultAgent {
             q.contains('тахикард') ||
             q.contains('экстрасистол') ||
             q.contains('стенокард')) &&
-        (q.contains('капель') || q.contains('инфуз') || q.contains('капельниц') || q.contains('можно'))) {
+        (q.contains('rf') || q.contains('рф') || q.contains('микроиголь') || q.contains('smas') || q.contains('смас')) &&
+        !q.contains('капель') &&
+        !q.contains('инфуз')) {
+      return 'При аритмии, брадикардии или стенокардии RF и часть аппаратных только с допуском кардиолога и врача CULT — без самозаписи «на аппарат». '
+          'Могу открыть чат специалиста или записать на консультацию после разрешения.';
+    }
+
+    if ((q.contains('аритм') ||
+            q.contains('мерцательн') ||
+            q.contains('фибрилляц') ||
+            q.contains('брадикард') ||
+            q.contains('тахикард') ||
+            q.contains('экстрасистол') ||
+            q.contains('стенокард')) &&
+        (q.contains('капель') || q.contains('инфуз') || q.contains('капельниц') || q.contains('можно')) &&
+        !q.contains('rf') &&
+        !q.contains('рф') &&
+        !q.contains('микроиголь')) {
       if (q.contains('стеноз') || q.contains('аорт') || q.contains('клапан')) {
         return 'При мерцательной аритмии вместе со стенозом аорты или клапанной патологией капельницу не назначаю сама — нужен допуск кардиолога и решение врача CULT по составу и объёму. '
             'Могу открыть чат специалиста или записать на консультацию после разрешения.';

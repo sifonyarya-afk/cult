@@ -1946,4 +1946,22 @@ void main() {
     expect(afib.toLowerCase(), contains('аритм'));
     expect(afib.toLowerCase(), isNot(contains('консультацию по rf')));
   });
+
+  test('Магний+филлер, NAD+Immunity цена, брадикардия+RF, лимфо+Beauty', () {
+    final mag = cultAgent.answer('Можно ли делать филлер если пью магний?');
+    expect(mag.toLowerCase(), contains('магний'));
+    expect(mag.toLowerCase(), contains('филлер'));
+    expect(mag.toLowerCase(), isNot(contains('отменяет ботулин')));
+    final price = cultAgent.answer('Сколько стоит NAD+ и Immunity вместе?');
+    expect(price.toLowerCase(), contains('nad'));
+    expect(price.toLowerCase(), contains('immunity'));
+    expect(price.toLowerCase(), contains('отдельн'));
+    expect(price.toLowerCase(), isNot(contains('по трём')));
+    final brady = cultAgent.answer('У меня брадикардия — RF можно?');
+    expect(brady.toLowerCase(), contains('rf'));
+    expect(brady.toLowerCase(), isNot(contains('капельницу не назначаю')));
+    final lymph = cultAgent.answer('Можно ли совместить лимфодренаж и Beauty через день?');
+    expect(lymph.toLowerCase(), anyOf(contains('лимфодрен'), contains('beauty')));
+    expect(lymph.toLowerCase(), isNot(contains('совмещать можно не всё')));
+  });
 }
