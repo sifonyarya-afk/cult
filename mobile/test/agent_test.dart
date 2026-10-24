@@ -1592,4 +1592,40 @@ void main() {
     expect(add.toLowerCase(), anyOf(contains('вторую'), contains('админ'), contains('мои записи')));
     expect(add.toLowerCase(), isNot(contains('скажите услугу и когда')));
   });
+
+  test('Брадикардия+IV, студенческий прайс, панкреатит ремиссия', () {
+    final brady = cultAgent.answer('У меня брадикардия — капельницу можно?');
+    expect(brady.toLowerCase(), anyOf(contains('брадикард'), contains('аритм'), contains('кардиолог')));
+    expect(brady.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final stud = cultAgent.answer('Есть ли студенческий прайс?');
+    expect(stud.toLowerCase(), contains('студенч'));
+    expect(stud.toLowerCase(), isNot(contains('меню «прайс»')));
+    final panc = cultAgent.answer('Можно ли капельницу при панкреатите в ремиссии?');
+    expect(panc.toLowerCase(), contains('панкреатит'));
+    expect(panc.toLowerCase(), isNot(contains('онколог')));
+  });
+
+  test('Никель+IV, IPL+брекеты, сертификат только шоп', () {
+    final ni = cultAgent.answer('У меня аллергия на никель — капельницу можно?');
+    expect(ni.toLowerCase(), anyOf(contains('капельниц'), contains('инфуз')));
+    expect(ni.toLowerCase(), isNot(contains('до rf')));
+    final br = cultAgent.answer('Можно ли делать IPL если стоят брекеты?');
+    expect(br.toLowerCase(), contains('ipl'));
+    expect(br.toLowerCase(), isNot(contains('массаж лица часто можно')));
+    final shop = cultAgent.answer('Можно ли оплатить сертификатом только шоп без процедуры?');
+    expect(shop.toLowerCase(), anyOf(contains('шоп'), contains('магазин'), contains('номинал')));
+    expect(shop.toLowerCase(), isNot(contains('другого человека')));
+  });
+
+  test('SMAS стянуто, RF сон, домашний набор после чистки', () {
+    final smas = cultAgent.answer('После SMAS лицо стянуто на пятый день — норма?');
+    expect(smas.toLowerCase(), anyOf(contains('стянут'), contains('восстанов')));
+    expect(smas.toLowerCase(), isNot(contains('массаж посильнее')));
+    final sleep = cultAgent.answer('После RF можно спать на животе через сутки?');
+    expect(sleep.toLowerCase(), contains('rf'));
+    expect(sleep.toLowerCase(), isNot(contains('bodytite')));
+    final home = cultAgent.answer('Хочу домашний набор после чистки');
+    expect(home.toLowerCase(), anyOf(contains('барьер'), contains('чистк'), contains('lumen')));
+    expect(home.toLowerCase(), isNot(contains('биомаркер')));
+  });
 }
