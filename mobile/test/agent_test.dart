@@ -2024,4 +2024,36 @@ void main() {
     expect(fuel.toLowerCase(), contains('самовывоз'));
     expect(fuel.toLowerCase(), isNot(contains('посмотрела mitochondrial')));
   });
+
+  test('Аспирин+RF, витамин C+ботокс, HydraPure горячее, тахикардия+массаж', () {
+    final asa = cultAgent.answer('Можно ли делать RF если пью аспирин?');
+    expect(asa.toLowerCase(), contains('аспирин'));
+    expect(asa.toLowerCase(), contains('rf'));
+    expect(asa.toLowerCase(), isNot(contains('меню «аппаратная»')));
+    final vit = cultAgent.answer('Можно ли делать ботокс если пью витамин C?');
+    expect(vit.toLowerCase(), contains('витамин'));
+    expect(vit.toLowerCase(), isNot(contains('витаминная iv')));
+    final hydra = cultAgent.answer('После HydraPure лицо горячее вечером — норма?');
+    expect(hydra.toLowerCase(), contains('hydrapure'));
+    expect(hydra.toLowerCase(), anyOf(contains('тёпл'), contains('тепл'), contains('горяч')));
+    final tach = cultAgent.answer('У меня тахикардия — массаж можно?');
+    expect(tach.toLowerCase(), contains('массаж'));
+    expect(tach.toLowerCase(), isNot(contains('мануальный лифтинг контура')));
+  });
+
+  test('Зуд после ботокса, IPL+чистка, Gluta самовывоз, розацеа+массаж', () {
+    final itch = cultAgent.answer('После ботокса зудит лоб на третий день — норма?');
+    expect(itch.toLowerCase(), anyOf(contains('ботулин'), contains('ботокс'), contains('зуд')));
+    expect(itch.toLowerCase(), isNot(contains('морщинки часто обидно')));
+    final ipl = cultAgent.answer('Можно ли совместить IPL и чистку через две недели?');
+    expect(ipl.toLowerCase(), contains('через'));
+    expect(ipl.toLowerCase(), isNot(contains('в один день ставят не всегда')));
+    final gluta = cultAgent.answer('Можно ли купить Gluta-Pure с самовывозом сегодня?');
+    expect(gluta.toLowerCase(), contains('gluta'));
+    expect(gluta.toLowerCase(), contains('самовывоз'));
+    expect(gluta.toLowerCase(), isNot(contains('посмотрела')));
+    final ros = cultAgent.answer('У меня розацеа — массаж можно?');
+    expect(ros.toLowerCase(), contains('массаж'));
+    expect(ros.toLowerCase(), anyOf(contains('розацеа'), contains('купероз')));
+  });
 }
