@@ -2056,4 +2056,28 @@ void main() {
     expect(ros.toLowerCase(), contains('массаж'));
     expect(ros.toLowerCase(), anyOf(contains('розацеа'), contains('купероз')));
   });
+
+  test('v68: лимфо набор, Lumen простыми, Aura самовывоз, чистка частота', () {
+    final lymph = cultAgent.answer('Хочу домашний набор после лимфодренажа');
+    expect(lymph.toLowerCase(), anyOf(contains('лимфо'), contains('барьер')));
+    expect(lymph.toLowerCase(), isNot(contains('не уверена')));
+    final lumen = cultAgent.answer('Что такое Lumen Barrier простыми словами?');
+    expect(lumen.toLowerCase(), contains('lumen'));
+    expect(lumen.toLowerCase(), contains('простыми'));
+    expect(lumen.toLowerCase(), isNot(contains('посмотрела')));
+    final aura = cultAgent.answer('Можно ли купить Aura Mist с самовывозом завтра?');
+    expect(aura.toLowerCase(), contains('aura'));
+    expect(aura.toLowerCase(), contains('самовывоз'));
+    expect(aura.toLowerCase(), isNot(contains('посмотрела')));
+    final clean = cultAgent.answer('Как часто можно делать чистку лица?');
+    expect(clean.toLowerCase(), contains('чистк'));
+    expect(clean.toLowerCase(), anyOf(contains('3–6'), contains('3-6'), contains('недель')));
+    expect(clean.toLowerCase(), isNot(contains('интервалы зависят от протокола')));
+    final peelM = cultAgent.answer('Сколько стоит пилинг L3 и массаж вместе?');
+    expect(peelM.toLowerCase(), anyOf(contains('пилинг'), contains('массаж')));
+    expect(peelM.toLowerCase(), isNot(contains('в один визит — порядок')));
+    final rfB = cultAgent.answer('Можно ли совместить ботокс и RF через три недели?');
+    expect(rfB.toLowerCase(), contains('через'));
+    expect(rfB.toLowerCase(), isNot(contains('в разных визитах')));
+  });
 }
