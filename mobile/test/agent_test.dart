@@ -1820,4 +1820,53 @@ void main() {
     expect(price.toLowerCase(), contains('пилинг'));
     expect(price.toLowerCase(), contains('отдельн'));
   });
+
+  test('RF стянуто, губы гиалуронка, железо+ботокс, IPL горячее', () {
+    final tight = cultAgent.answer('Что делать если после RF лицо стянуто на третий день?');
+    expect(tight.toLowerCase(), contains('rf'));
+    expect(tight.toLowerCase(), anyOf(contains('стянут'), contains('барьер')));
+    expect(tight.toLowerCase(), isNot(contains('слышу много нюансов')));
+    final lips = cultAgent.answer('Делаете ли увеличение губ гиалуронкой?');
+    expect(lips.toLowerCase(), anyOf(contains('губ'), contains('филлер'), contains('гиалурон')));
+    expect(lips.toLowerCase(), isNot(contains('если сложно сформулировать')));
+    final iron = cultAgent.answer('Можно ли делать ботокс если пью железо?');
+    expect(iron.toLowerCase(), contains('желез'));
+    expect(iron.toLowerCase(), isNot(contains('инъекции (ботулин, филлеры')));
+    final ipl = cultAgent.answer('После IPL лицо горячее вечером — норма?');
+    expect(ipl.toLowerCase(), contains('ipl'));
+    expect(ipl.toLowerCase(), anyOf(contains('горяч'), contains('тёпл'), contains('тепл')));
+    expect(ipl.toLowerCase(), isNot(contains('ближайше')));
+  });
+
+  test('Новокаин+филлер, подарить сертификат, выпускной отёк, брови после RF', () {
+    final nov = cultAgent.answer('У меня аллергия на новокаин — филлер можно?');
+    expect(nov.toLowerCase(), contains('новокаин'));
+    expect(nov.toLowerCase(), anyOf(contains('филлер'), contains('инъек')));
+    expect(nov.toLowerCase(), isNot(contains('до капельницы')));
+    final gift = cultAgent.answer('Можно ли подарить сертификат голосом другому человеку?');
+    expect(gift.toLowerCase(), anyOf(contains('оформить'), contains('номинал'), contains('админ')));
+    expect(gift.toLowerCase(), isNot(contains('оплатить визит другого')));
+    final grad = cultAgent.answer('Боюсь отёка после ботокса к выпускному через неделю');
+    expect(grad.toLowerCase(), anyOf(contains('выпускн'), contains('ботулин'), contains('запас')));
+    expect(grad.toLowerCase(), isNot(contains('близкой дате')));
+    final brows = cultAgent.answer('После RF можно красить брови через два дня?');
+    expect(brows.toLowerCase(), contains('rf'));
+    expect(brows.toLowerCase(), contains('бров'));
+    expect(brows.toLowerCase(), isNot(contains('после ботулина брови')));
+  });
+
+  test('Immunity частота, ретинол шелушение, Cellular самовывоз, именинник', () {
+    final imm = cultAgent.answer('Как часто можно делать Immunity Boost?');
+    expect(imm.toLowerCase(), contains('immunity'));
+    expect(imm.toLowerCase(), isNot(contains('назовите процедуры')));
+    final ret = cultAgent.answer('Кожа шелушится только на подбородке после ретинола');
+    expect(ret.toLowerCase(), contains('ретинол'));
+    expect(ret.toLowerCase(), isNot(contains('обезвоженность и слабый барьер')));
+    final cat = cultAgent.answer('Можно ли купить Cellular Catalyst с самовывозом сегодня?');
+    expect(cat.toLowerCase(), anyOf(contains('cellular'), contains('catalyst'), contains('самовывоз')));
+    expect(cat.toLowerCase(), isNot(contains('посмотрела cellular')));
+    final bday = cultAgent.answer('Есть ли скидка имениннику?');
+    expect(bday.toLowerCase(), contains('именинник'));
+    expect(bday.toLowerCase(), isNot(contains('welcome-бонус')));
+  });
 }
