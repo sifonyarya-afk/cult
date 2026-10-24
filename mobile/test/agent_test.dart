@@ -1771,4 +1771,53 @@ void main() {
     expect(af.toLowerCase(), anyOf(contains('аритм'), contains('кардиолог')));
     expect(af.toLowerCase(), isNot(contains('меню «инфузии»')));
   });
+
+  test('Стеноз аорты+IV, Крон+IV, SMAS горячее, RF+биоревитал', () {
+    final sten = cultAgent.answer('У меня стеноз аорты — капельницу можно?');
+    expect(sten.toLowerCase(), anyOf(contains('стеноз'), contains('аорт'), contains('кардиолог')));
+    expect(sten.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final crohn = cultAgent.answer('Можно ли капельницу при болезни Крона?');
+    expect(crohn.toLowerCase(), contains('крон'));
+    expect(crohn.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final hot = cultAgent.answer('После SMAS лицо горячее вечером — норма?');
+    expect(hot.toLowerCase(), contains('smas'));
+    expect(hot.toLowerCase(), anyOf(contains('горяч'), contains('тёпл'), contains('тепл')));
+    expect(hot.toLowerCase(), isNot(contains('не «массаж посильнее»')));
+    final combo = cultAgent.answer('Можно ли совместить RF и биоревитализацию через три недели?');
+    expect(combo.toLowerCase(), contains('rf'));
+    expect(combo.toLowerCase(), anyOf(contains('биоревитал'), contains('мезо')));
+    expect(combo.toLowerCase(), isNot(contains('скажите пару процедур')));
+  });
+
+  test('Многодетный прайс, вино+скулы, лидокаин+филлер, сменить услугу', () {
+    final kids = cultAgent.answer('Есть ли прайс для многодетных семей?');
+    expect(kids.toLowerCase(), contains('многодетн'));
+    expect(kids.toLowerCase(), isNot(contains('семейного абонемента')));
+    final wine = cultAgent.answer('Кожа краснеет только на скулах после вина');
+    expect(wine.toLowerCase(), anyOf(contains('вин'), contains('сосуд'), contains('скул')));
+    expect(wine.toLowerCase(), isNot(contains('жевательн')));
+    final lido = cultAgent.answer('У меня аллергия на лидокаин — филлер можно?');
+    expect(lido.toLowerCase(), contains('лидокаин'));
+    expect(lido.toLowerCase(), anyOf(contains('филлер'), contains('инъек')));
+    expect(lido.toLowerCase(), isNot(contains('до rf')));
+    final swap = cultAgent.answer('Хочу сменить услугу в записи голосом');
+    expect(swap.toLowerCase(), anyOf(contains('услуг'), contains('моих записей'), contains('админ')));
+    expect(swap.toLowerCase(), isNot(contains('собрали уходы и пилинги')));
+  });
+
+  test('Lumen самовывоз, набор после SMAS, мезо зуд, пилинг+HydraPure цена', () {
+    final lumen = cultAgent.answer('Можно ли купить Lumen Barrier с самовывозом завтра?');
+    expect(lumen.toLowerCase(), anyOf(contains('lumen'), contains('самовывоз')));
+    expect(lumen.toLowerCase(), isNot(contains('посмотрела lumen')));
+    final home = cultAgent.answer('Хочу домашний набор после SMAS');
+    expect(home.toLowerCase(), anyOf(contains('барьер'), contains('smas'), contains('lumen')));
+    expect(home.toLowerCase(), isNot(contains('не «массаж посильнее»')));
+    final itch = cultAgent.answer('После мезо зудит лицо на второй день — норма?');
+    expect(itch.toLowerCase(), anyOf(contains('зуд'), contains('мезо'), contains('папул')));
+    expect(itch.toLowerCase(), isNot(contains('без сауны и бассейна пару дней')));
+    final price = cultAgent.answer('Сколько стоит пилинг L3 и HydraPure вместе?');
+    expect(price.toLowerCase(), contains('hydrapure'));
+    expect(price.toLowerCase(), contains('пилинг'));
+    expect(price.toLowerCase(), contains('отдельн'));
+  });
 }
