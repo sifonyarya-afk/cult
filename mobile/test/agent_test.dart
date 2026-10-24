@@ -2174,4 +2174,27 @@ void main() {
     expect(kit.toLowerCase(), contains('филлер'));
     expect(kit.toLowerCase(), isNot(contains('инъекции (ботулин')));
   });
+
+  test('v74: подтяжка операция, SMAS+магний, без SMAS овал, Micro-Patch', () {
+    final lift = cultAgent.answer('Делаете ли подтяжку лица операцией?');
+    expect(lift.toLowerCase(), anyOf(contains('подтяжк'), contains('хирург')));
+    expect(lift.toLowerCase(), isNot(contains('не уверена')));
+    final mg = cultAgent.answer('Можно ли делать SMAS если пью магний?');
+    expect(mg.toLowerCase(), contains('smas'));
+    expect(mg.toLowerCase(), contains('магний'));
+    expect(mg.toLowerCase(), isNot(contains('массаж посильнее')));
+    final noSmas = cultAgent.answer('Хочу убрать второй подбородок без SMAS');
+    expect(noSmas.toLowerCase(), anyOf(contains('массаж'), contains('без smas')));
+    expect(noSmas.toLowerCase(), isNot(contains('массаж посильнее')));
+    final preg = cultAgent.answer('Есть ли скидка беременным на уход?');
+    expect(preg.toLowerCase(), anyOf(contains('скидк'), contains('прайс'), contains('беременн')));
+    expect(preg.toLowerCase(), isNot(contains('не записываю «на всё»')));
+    final cert = cultAgent.answer('Хочу отменить сертификат голосом');
+    expect(cert.toLowerCase(), contains('сертификат'));
+    expect(cert.toLowerCase(), isNot(contains('мои записи')));
+    final patch = cultAgent.answer('Можно ли купить NAD+ Micro-Patch с самовывозом сегодня?');
+    expect(patch.toLowerCase(), contains('micro-patch'));
+    expect(patch.toLowerCase(), contains('самовывоз'));
+    expect(patch.toLowerCase(), isNot(contains('посмотрела')));
+  });
 }
