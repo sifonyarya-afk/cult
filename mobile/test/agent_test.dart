@@ -1519,4 +1519,41 @@ void main() {
     expect(lip.toLowerCase(), anyOf(contains('асимметр'), contains('отёк'), contains('отек'), contains('губ')));
     expect(lip.toLowerCase(), isNot(contains('подбирает врач после осмотра')));
   });
+
+  test('Гипертония+RF, мочекаменная+IV, изотретиноин+филлер', () {
+    final ht = cultAgent.answer('У меня гипертония — RF можно?');
+    expect(ht.toLowerCase(), anyOf(contains('гипертон'), contains('давлен'), contains('допуск')));
+    expect(ht.toLowerCase(), isNot(contains('меню «аппаратная»')));
+    final stone = cultAgent.answer('Можно ли капельницу при мочекаменной болезни?');
+    expect(stone.toLowerCase(), contains('мочекамен'));
+    expect(stone.toLowerCase(), isNot(contains('натуральный результат')));
+    final iso = cultAgent.answer('Можно ли делать филлер если пью изотретиноин?');
+    expect(iso.toLowerCase(), anyOf(contains('изотретиноин'), contains('инъек')));
+    expect(iso.toLowerCase(), isNot(contains('да, пилим')));
+  });
+
+  test('IPL корочки, йод+IPL, двоих, сменить врача', () {
+    final crust = cultAgent.answer('После IPL появились корочки — норма?');
+    expect(crust.toLowerCase(), contains('ipl'));
+    expect(crust.toLowerCase(), isNot(contains('после rf')));
+    final iodine = cultAgent.answer('У меня аллергия на йод — IPL можно?');
+    expect(iodine.toLowerCase(), anyOf(contains('йод'), contains('ipl')));
+    expect(iodine.toLowerCase(), isNot(contains('до капельницы')));
+    final pair = cultAgent.answer('Можно ли записаться сразу на двоих с подругой?');
+    expect(pair.toLowerCase(), anyOf(contains('дво'), contains('соседн')));
+    expect(pair.toLowerCase(), isNot(contains('осталось окно')));
+    final doc = cultAgent.answer('Хочу сменить врача в записи голосом');
+    expect(doc.toLowerCase(), anyOf(contains('сменить'), contains('врач'), contains('админ')));
+  });
+
+  test('Диабет+мезо, Beauty частота, доставка за город', () {
+    final dm = cultAgent.answer('Можно ли делать мезотерапию при диабете?');
+    expect(dm.toLowerCase(), contains('диабет'));
+    expect(dm.toLowerCase(), isNot(contains('без сауны и бассейна')));
+    final glow = cultAgent.answer('Как часто можно делать Beauty & Glow?');
+    expect(glow.toLowerCase(), anyOf(contains('beauty'), contains('glow'), contains('недел')));
+    expect(glow.toLowerCase(), isNot(contains('назовите процедуры')));
+    final ship = cultAgent.answer('Можно ли заказать шоп с доставкой за город?');
+    expect(ship.toLowerCase(), anyOf(contains('город'), contains('област'), contains('курьер')));
+  });
 }
