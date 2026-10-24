@@ -1916,4 +1916,34 @@ void main() {
     expect(wed.toLowerCase(), anyOf(contains('свадьб'), contains('асимметр')));
     expect(wed.toLowerCase(), isNot(contains('аппликационной анестезией')));
   });
+
+  test('Immunity+Beauty цена, язва+IV, студент, перенос трансфера', () {
+    final price = cultAgent.answer('Сколько стоит Immunity Boost и Beauty & Glow вместе?');
+    expect(price.toLowerCase(), contains('immunity'));
+    expect(price.toLowerCase(), contains('beauty'));
+    expect(price.toLowerCase(), contains('отдельн'));
+    final ulcer = cultAgent.answer('Можно ли капельницу при язве в ремиссии?');
+    expect(ulcer.toLowerCase(), anyOf(contains('язв'), contains('жкт')));
+    expect(ulcer.toLowerCase(), isNot(contains('hydrapure')));
+    final stud = cultAgent.answer('Есть ли скидка студенту на массаж?');
+    expect(stud.toLowerCase(), contains('студенч'));
+    expect(stud.toLowerCase(), isNot(contains('welcome-бонус')));
+    final move = cultAgent.respond('Хочу перенести трансфер на час позже');
+    expect(move.reply.toLowerCase(), anyOf(contains('перенес'), contains('админ')));
+    expect(move.transfer, isNull);
+    expect(move.reply.toLowerCase(), isNot(contains('заказала трансфер')));
+  });
+
+  test('SMAS+мезонити, губы без гиалуронки, аритмия+гипертония', () {
+    final threads = cultAgent.answer('Можно ли делать SMAS если есть мезонити?');
+    expect(threads.toLowerCase(), anyOf(contains('мезонит'), contains('нит')));
+    expect(threads.toLowerCase(), contains('smas'));
+    expect(threads.toLowerCase(), isNot(contains('не «массаж посильнее»')));
+    final lips = cultAgent.answer('Делаете ли увеличение губ без гиалуронки?');
+    expect(lips.toLowerCase(), contains('без гиалурон'));
+    expect(lips.toLowerCase(), isNot(contains('шаблонная уточка')));
+    final afib = cultAgent.answer('У меня мерцательная аритмия и гипертония — капельницу можно?');
+    expect(afib.toLowerCase(), contains('аритм'));
+    expect(afib.toLowerCase(), isNot(contains('консультацию по rf')));
+  });
 }
