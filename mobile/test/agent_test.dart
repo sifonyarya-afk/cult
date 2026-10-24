@@ -1483,4 +1483,40 @@ void main() {
     final bonus = cultAgent.answer('Можно ли оплатить бонусами CULT капельницу подруге?');
     expect(bonus.toLowerCase(), anyOf(contains('подруг'), contains('сертификат'), contains('владельц')));
   });
+
+  test('Мигрень+IV, подагра+IV, домашний уход после пилинга', () {
+    final mig = cultAgent.answer('У меня мигрени часто — капельницу можно?');
+    expect(mig.toLowerCase(), contains('мигрен'));
+    expect(mig.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final gout = cultAgent.answer('Можно ли капельницу при подагре?');
+    expect(gout.toLowerCase(), contains('подагр'));
+    expect(gout.toLowerCase(), isNot(contains('меню «инфузии»')));
+    final home = cultAgent.answer('Хочу домашний уход после химического пилинга L3');
+    expect(home.toLowerCase(), anyOf(contains('барьер'), contains('пилинг'), contains('spf')));
+    expect(home.toLowerCase(), isNot(contains('меню «услуги»')));
+  });
+
+  test('SMAS+улыбка, IPL+тату, мезо+массаж через неделю', () {
+    final smile = cultAgent.answer('Что делать если после SMAS нельзя улыбнуться?');
+    expect(smile.toLowerCase(), anyOf(contains('улыб'), contains('мимик'), contains('отёк'), contains('отек')));
+    expect(smile.toLowerCase(), isNot(contains('массаж посильнее')));
+    final tattoo = cultAgent.answer('Можно ли делать IPL если есть тату на лице?');
+    expect(tattoo.toLowerCase(), contains('тату'));
+    expect(tattoo.toLowerCase(), isNot(contains('разделе «аппаратная»')));
+    final meso = cultAgent.answer('Можно ли совместить мезотерапию и массаж через неделю?');
+    expect(meso.toLowerCase(), anyOf(contains('мезо'), contains('массаж'), contains('недел')));
+    expect(meso.toLowerCase(), isNot(contains('скажите пару')));
+  });
+
+  test('Мужской абонемент барбер, Neuro-Regen, губа больше', () {
+    final men = cultAgent.answer('Есть ли мужской абонемент на барбер-массаж?');
+    expect(men.toLowerCase(), anyOf(contains('мужск'), contains('барбер'), contains('абонемент')));
+    expect(men.toLowerCase(), isNot(contains('пакет из 5')));
+    final neuro = cultAgent.answer('Что такое Neuro-Regen IV Serum простыми словами?');
+    expect(neuro.toLowerCase(), contains('neuro'));
+    expect(neuro.toLowerCase(), isNot(contains('veil peptide')));
+    final lip = cultAgent.answer('После филлера одна губа больше другой на второй день');
+    expect(lip.toLowerCase(), anyOf(contains('асимметр'), contains('отёк'), contains('отек'), contains('губ')));
+    expect(lip.toLowerCase(), isNot(contains('подбирает врач после осмотра')));
+  });
 }
