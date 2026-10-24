@@ -1869,4 +1869,51 @@ void main() {
     expect(bday.toLowerCase(), contains('именинник'));
     expect(bday.toLowerCase(), isNot(contains('welcome-бонус')));
   });
+
+  test('Биотин+ботокс, Beauty+NAD цена, промокод, отмена трансфера', () {
+    final biotin = cultAgent.answer('Можно ли делать ботокс если пью биотин?');
+    expect(biotin.toLowerCase(), contains('биотин'));
+    expect(biotin.toLowerCase(), isNot(contains('инъекции (ботулин, филлеры')));
+    final price = cultAgent.answer('Сколько стоит Beauty & Glow и NAD+ вместе?');
+    expect(price.toLowerCase(), contains('beauty'));
+    expect(price.toLowerCase(), contains('nad'));
+    expect(price.toLowerCase(), contains('отдельн'));
+    final promo = cultAgent.answer('Есть ли скидка по промокоду голосом?');
+    expect(promo.toLowerCase(), contains('промокод'));
+    expect(promo.toLowerCase(), isNot(contains('welcome-бонус')));
+    final cancel = cultAgent.respond('Хочу отменить трансфер голосом');
+    expect(cancel.reply.toLowerCase(), anyOf(contains('отмен'), contains('админ')));
+    expect(cancel.transfer, isNull);
+    expect(cancel.reply.toLowerCase(), isNot(contains('откуда забрать')));
+  });
+
+  test('Лимфо+перелёт, купероз+RF, мезо+краска, набор после барбера', () {
+    final flight = cultAgent.answer('После лимфодренажа можно лететь через день?');
+    expect(flight.toLowerCase(), anyOf(contains('лимфодрен'), contains('перел')));
+    expect(flight.toLowerCase(), isNot(contains('близкой дате')));
+    final kup = cultAgent.answer('У меня купероз — RF можно?');
+    expect(kup.toLowerCase(), contains('rf'));
+    expect(kup.toLowerCase(), contains('купероз'));
+    final dye = cultAgent.answer('После мезо можно красить волосы через четыре дня?');
+    expect(dye.toLowerCase(), anyOf(contains('мезо'), contains('окраш'), contains('красить')));
+    expect(dye.toLowerCase(), isNot(contains('без сауны и бассейна пару дней')));
+    final home = cultAgent.answer('Хочу домашний набор после барбер-массажа');
+    expect(home.toLowerCase(), anyOf(contains('барбер'), contains('барьер'), contains('магазин')));
+    expect(home.toLowerCase(), isNot(contains('кому подбираем')));
+  });
+
+  test('Филлер губы стянуты, NAD частота, баланс сертификата, свадьба асимметрия', () {
+    final lips = cultAgent.answer('Что делать если после филлера губы стянуты на второй день?');
+    expect(lips.toLowerCase(), anyOf(contains('филлер'), contains('губ')));
+    expect(lips.toLowerCase(), anyOf(contains('стянут'), contains('отёк'), contains('отек')));
+    final nad = cultAgent.answer('Как часто можно делать NAD+ Energy?');
+    expect(nad.toLowerCase(), contains('nad'));
+    expect(nad.toLowerCase(), isNot(contains('назовите процедуры')));
+    final bal = cultAgent.answer('Можно ли проверить баланс сертификата голосом?');
+    expect(bal.toLowerCase(), anyOf(contains('баланс'), contains('остаток')));
+    expect(bal.toLowerCase(), isNot(contains('купить сертификат')));
+    final wed = cultAgent.answer('Боюсь асимметрии после ботокса к свадьбе через две недели');
+    expect(wed.toLowerCase(), anyOf(contains('свадьб'), contains('асимметр')));
+    expect(wed.toLowerCase(), isNot(contains('аппликационной анестезией')));
+  });
 }
