@@ -1995,4 +1995,33 @@ void main() {
     expect(bag.toLowerCase(), contains('капельниц'));
     expect(bag.toLowerCase(), isNot(contains('на первый визит')));
   });
+
+  test('RF+ботокс цена, цинк+филлер, стенокардия+пилинг, зуд губы', () {
+    final price = cultAgent.answer('Сколько стоит RF и ботокс вместе?');
+    expect(price.toLowerCase(), anyOf(contains('rf'), contains('микроиголь')));
+    expect(price.toLowerCase(), anyOf(contains('ботокс'), contains('ботулин')));
+    expect(price.toLowerCase(), contains('отдельн'));
+    expect(price.toLowerCase(), isNot(contains('меню «аппаратная»')));
+    final zinc = cultAgent.answer('Можно ли делать филлер если пью цинк?');
+    expect(zinc.toLowerCase(), contains('цинк'));
+    expect(zinc.toLowerCase(), contains('филлер'));
+    expect(zinc.toLowerCase(), isNot(contains('отменяет ботулин')));
+    final sten = cultAgent.answer('У меня стенокардия — пилинг можно?');
+    expect(sten.toLowerCase(), contains('пилинг'));
+    expect(sten.toLowerCase(), isNot(contains('капельницу не назначаю')));
+    final itch = cultAgent.answer('После филлера зудит губа на второй день — норма?');
+    expect(itch.toLowerCase(), anyOf(contains('филлер'), contains('губ')));
+    expect(itch.toLowerCase(), contains('зуд'));
+    expect(itch.toLowerCase(), isNot(contains('инъекции (ботулин, филлеры')));
+  });
+
+  test('Пилинг горячее, Mitochondrial самовывоз', () {
+    final hot = cultAgent.answer('После пилинга лицо горячее на третий день — норма?');
+    expect(hot.toLowerCase(), contains('пилинг'));
+    expect(hot.toLowerCase(), anyOf(contains('горяч'), contains('тёпл'), contains('тепл')));
+    final fuel = cultAgent.answer('Можно ли купить Mitochondrial Fuel с самовывозом завтра?');
+    expect(fuel.toLowerCase(), contains('mitochondrial'));
+    expect(fuel.toLowerCase(), contains('самовывоз'));
+    expect(fuel.toLowerCase(), isNot(contains('посмотрела mitochondrial')));
+  });
 }
