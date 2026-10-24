@@ -1726,4 +1726,49 @@ void main() {
     expect(iodine.toLowerCase(), anyOf(contains('бот'), contains('инъек')));
     expect(iodine.toLowerCase(), isNot(contains('до капельницы')));
   });
+
+  test('RF зуд, IPL+биоревитал, сертификат филиал, тату удаление', () {
+    final itch = cultAgent.answer('После RF зудит лицо — норма?');
+    expect(itch.toLowerCase(), contains('rf'));
+    expect(itch.toLowerCase(), anyOf(contains('зуд'), contains('барьер')));
+    expect(itch.toLowerCase(), isNot(contains('давайте проще')));
+    final combo = cultAgent.answer('Можно ли совместить IPL и биоревитализацию через две недели?');
+    expect(combo.toLowerCase(), contains('ipl'));
+    expect(combo.toLowerCase(), anyOf(contains('биоревитал'), contains('мезо')));
+    expect(combo.toLowerCase(), isNot(contains('скажите пару процедур')));
+    final cert = cultAgent.answer('Можно ли перенести сертификат на другой филиал голосом?');
+    expect(cert.toLowerCase(), contains('филиал'));
+    expect(cert.toLowerCase(), isNot(contains('другого человека')));
+    final tattoo = cultAgent.answer('Делаете ли удаление татуировок лазером?');
+    expect(tattoo.toLowerCase(), anyOf(contains('тату'), contains('сведен')));
+    expect(tattoo.toLowerCase(), isNot(contains('запишем консультацию по ipl')));
+  });
+
+  test('Pacemaker родственник, стянутость пилинг, HydraPure+массаж, губы помада', () {
+    final pace = cultAgent.answer('Можно ли делать RF если стоит кардиостимулятор у родственника дома?');
+    expect(pace.toLowerCase(), contains('родствен'));
+    expect(pace.toLowerCase(), isNot(contains('жёстким ограничением или запретом')));
+    final tight = cultAgent.answer('Что делать если после пилинга лицо стянуто на пятый день?');
+    expect(tight.toLowerCase(), anyOf(contains('стянут'), contains('барьер'), contains('пилинг')));
+    expect(tight.toLowerCase(), isNot(contains('после процедуры обычно бережём')));
+    final price = cultAgent.answer('Сколько стоит HydraPure и скульптурный массаж вместе?');
+    expect(price.toLowerCase(), contains('hydrapure'));
+    expect(price.toLowerCase(), contains('массаж'));
+    expect(price.toLowerCase(), contains('отдельн'));
+    final lips = cultAgent.answer('После филлера можно красить губы через день?');
+    expect(lips.toLowerCase(), anyOf(contains('губ'), contains('помад'), contains('филлер')));
+    expect(lips.toLowerCase(), isNot(contains('что делали или планируете')));
+  });
+
+  test('Отёк к свадьбе, мезо+чистка, мерцательная аритмия', () {
+    final wed = cultAgent.answer('Боюсь отёка после филлера к свадьбе через десять дней');
+    expect(wed.toLowerCase(), anyOf(contains('свадьб'), contains('запас'), contains('отёк'), contains('отек')));
+    expect(wed.toLowerCase(), isNot(contains('голова выше подушки')));
+    final meso = cultAgent.answer('Можно ли совместить мезо и чистку через неделю?');
+    expect(meso.toLowerCase(), anyOf(contains('мезо'), contains('чистк')));
+    expect(meso.toLowerCase(), isNot(contains('скажите пару процедур')));
+    final af = cultAgent.answer('У меня мерцательная аритмия — капельницу можно?');
+    expect(af.toLowerCase(), anyOf(contains('аритм'), contains('кардиолог')));
+    expect(af.toLowerCase(), isNot(contains('меню «инфузии»')));
+  });
 }
