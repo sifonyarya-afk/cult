@@ -2115,4 +2115,23 @@ void main() {
     expect(smasRf.toLowerCase(), contains('через'));
     expect(smasRf.toLowerCase(), isNot(contains('скажите пару процедур')));
   });
+
+  test('v71: RF+краска, аспирин+пилинг, Circadian Caps, ботокс лоб горячий', () {
+    final dye = cultAgent.answer('После RF можно красить волосы через четыре дня?');
+    expect(dye.toLowerCase(), contains('rf'));
+    expect(dye.toLowerCase(), anyOf(contains('окраш'), contains('красить'), contains('волос')));
+    expect(dye.toLowerCase(), isNot(contains('слышу много нюансов')));
+    final asa = cultAgent.answer('Можно ли делать пилинг если пью аспирин?');
+    expect(asa.toLowerCase(), anyOf(contains('пилинг'), contains('чистк')));
+    expect(asa.toLowerCase(), contains('аспирин'));
+    expect(asa.toLowerCase(), isNot(contains('консультацию по rf')));
+    final circ = cultAgent.answer('Можно ли купить Circadian Caps с самовывозом сегодня?');
+    expect(circ.toLowerCase(), contains('circadian'));
+    expect(circ.toLowerCase(), contains('panel'));
+    expect(circ.toLowerCase(), isNot(contains('посмотрела')));
+    final hot = cultAgent.answer('После ботокса лоб горячий вечером — норма?');
+    expect(hot.toLowerCase(), anyOf(contains('ботулин'), contains('ботокс')));
+    expect(hot.toLowerCase(), anyOf(contains('горяч'), contains('тёпл'), contains('тепл')));
+    expect(hot.toLowerCase(), isNot(contains('избавиться «насовсем»')));
+  });
 }
